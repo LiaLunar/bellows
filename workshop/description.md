@@ -41,7 +41,7 @@ Keep Steam running and leave the computer alone while it works: about ten minute
 
 ## What it doesn't touch
 - No game files: the files the game checks stay the same, so ironman achievements stay available.
-- No gameplay changes, so it's fine in multiplayer.
+- No gameplay changes, so it's fine in multiplayer: the host's AI decides for everyone, and every player's game stays in sync.
 - Unsubscribe and it's gone. Nothing is left in your saves.
 
 ![](https://i.imgur.com/Uf8Z21n.png)
@@ -72,6 +72,9 @@ Yes. It doesn't care what your mods contain, it only helps the game read them fa
 
 ### Will it break my saves or my achievements?
 No. It changes how fast the game starts, not what the game does.
+
+### Will the AI play differently?
+Only when it has two equally good choices, like two leaders with the same pips for one army. The game then picks by where they sit in memory, and Bellows moves things around in memory, so in single player the tie can go the other way: just as sound a choice, only the other one. In multiplayer the host's AI decides for everyone, so all players keep the same game (our test: 233 days, Bellows only on the host, no out-of-sync).
 
 ### What is that little dwarf head on the thumbnail?
 If you check the mod's GitHub page, you will notice the repository belongs to Happy Dwarf Team.

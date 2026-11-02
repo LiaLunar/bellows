@@ -92,6 +92,27 @@ format change.
   original otherwise; all switch off when the game is ready (`anvil-game.ready`).
 - Counters per module are written to the plugin's section of `anvil.log` once
   the game is ready (requests, hits, fallbacks, mismatches).
+- Same answers do not mean the same heap. Two AI decisions of EU4 1.37.5 sort
+  (score, object pointer) pairs with a comparator that breaks equal scores by
+  the pointer: `0xB3450` picks leaders for armies (`assign_leader`) and
+  `0x137AC0` (`ai_foreignminister.cpp`) ranks countries (#79, a scan of the
+  whole `.text` in the lab; virtual calls not followed). mimalloc `startup`
+  moves the game's pre-ready blocks off the process heap by design, and
+  Bellows' own allocations share that heap, so objects of a save loaded after
+  ready sit elsewhere than without Bellows and such a tie can go the other
+  way. On the lab's 1640 save the first difference was one `assign_leader`
+  between two leaders with the same pips (28 March 1640), repeatable per
+  configuration. A separate arena for Bellows' allocations would not bring the
+  vanilla choice back (mimalloc `startup` changes the heap on purpose), so the
+  behaviour is documented instead (README, "AI ties and multiplayer"). In MP
+  the host's AI decides and its commands go to every player: in the lab's MP
+  test (host with 0.17.0 defaults, client without Bellows, 233 days) the
+  client received 21,011 commands from `server.cpp`, including 73
+  `assign_leader`, and there was no out-of-sync; a lab plugin that draws one
+  extra random number on the host made the client go out of sync within 2
+  days. The code every machine runs (daily tick, command execution) showed no
+  address ordering that changes game state. For determinism pairs the lab
+  breaks these ties by object id with a lab-only plugin.
 
 ## 5. Testing (D)
 
@@ -500,10 +521,11 @@ some calls may run on the AI pool's threads). No SIMULATION series yet.
 
 It stays off by default for now: without the copy the hot path allocates less,
 which changes the heap layout the way mimalloc and `range_witness` do, and AI
-ties broken by address (#79) could then go another way in single player, every
-answer still being correct. On by default only after #79 is settled, a
-determinism pair with `-randomlog` with and without the module (as for 0.15.0)
-and a SIMULATION series.
+ties broken by address (#79, section 4) could then go another way in single
+player, every answer still being correct. On by default only after a
+determinism pair with `-randomlog` with and without the module (as for 0.15.0,
+with the lab's tie-break plugin so that address ties do not count) and a
+SIMULATION series.
 
 ### save_compress (saving)
 

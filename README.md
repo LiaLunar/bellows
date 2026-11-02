@@ -120,6 +120,28 @@ them against `eu4.exe` before it loads Bellows, and on another build (or any
 mismatch) skips the plugin with the reason in `anvil/anvil.log` and the game
 starts normally.
 
+## AI ties and multiplayer
+
+Every module gives the game's own answers, so Bellows changes no rule and no
+result the game computes. One thing can still come out differently in single
+player: when the AI chooses between options with exactly the same score, for
+example two leaders with the same pips for one army, or two countries its
+diplomacy rates the same, the game breaks the tie by where the two objects lie
+in memory. `mimalloc = "startup"` (the default) and Bellows' own memory use
+change where the game's objects end up, so such a tie can go the other way
+than in a game without Bellows. The choice is as valid as the game's own, just
+the other of two equal options, and from then on that game takes its own
+course. Two computers without Bellows lay out memory differently too, so the
+same happens between them.
+
+In multiplayer this is safe. The host's AI makes these choices and sends them
+to every player as commands, so all games stay the same whoever runs Bellows.
+In the lab the host ran Bellows 0.17.0 with default settings and the other
+computer ran no Bellows: 233 game days without an out-of-sync, with the game's
+own out-of-sync check shown to catch a single extra random draw on the host.
+Details in [bellows#79](https://github.com/happy-dwarf-team/bellows/issues/79)
+and the [design notes](docs/design.md#4-correctness-safeguards-d).
+
 ## Settings
 
 Each module is a setting `on`, `off` or (where the module has it) `verify`,
