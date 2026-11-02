@@ -1,5 +1,16 @@
 # Changelog
 
+## [0.19.0](https://github.com/happy-dwarf-team/bellows/compare/v0.18.0...v0.19.0) (2026-11-02)
+
+
+### ⚠ BREAKING CHANGES
+
+* **symbols:** Bellows needs Anvil 1.7.0 or newer (anvil = ">=1.7.0"); an older Anvil rejects the `builds` key and skips the plugin.
+
+### Features
+
+* **symbols:** run on the GOG build 1.37.5.2 ([#94](https://github.com/happy-dwarf-team/bellows/issues/94)) ([c5d0530](https://github.com/happy-dwarf-team/bellows/commit/c5d053069d94d715cfe13dbc3a2f42963310c210))
+
 ## [0.18.0](https://github.com/happy-dwarf-team/bellows/compare/v0.17.0...v0.18.0) (2026-11-02)
 
 
