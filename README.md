@@ -104,6 +104,7 @@ about 1.5 s longer than the times above, which stop at `Running application`.
 | `range_witness` | **Simulation, not start-up.** Answers the country range check from the province that was in range last time instead of walking all of the country's provinces again; same answers as the game's code (lab: a year at speed 5 in 20.6 s instead of 27.6 s). `"verify"` compares every answer with the game's and writes the first mismatches to `range_witness_mismatches.tsv` |
 | `modifier_merge` | **Simulation, on by default.** Adds large modifier lists (each country's modifiers to every unit's in the monthly update) with an index instead of a scan per entry: the same entries, order, values and memory growth as the game's code. `"verify"` runs the game's merge and compares. Lab: 10.1 µs a merge against 1.08 µs, so about 0.7 s less in the merge per game year (about 3% of a year at speed 5 in 1720, 2% in 1821); 1.5 million merges compared with the game's, all the same. SIMULATION: the year 1720 in 19.45 s instead of 20.64 s (medians, p = 0.02); in 1821 the same direction, not conclusive |
 | `province_modifier_view` | **Simulation, off by default.** Reads one value from a province's modifiers in place instead of copying the whole list first (the daily knowledge refresh of every country does this for each province it owns): the same value as the game's code. `"verify"` runs the game's copy and compares |
+| `save_compress` | **Saving, on by default since 0.18.** For compressed saves (`compress_autosave = yes` and the like): compresses each member of the save with the game's own zlib, call for call as the game does, but computes its CRC-32 eight bytes at a time instead of one; the file is byte for byte the game's. `"verify"` runs the game's own compression as well, writes its result and compares the two members byte for byte. Lab, the 1719 save with `compress_autosave = yes`, 6 autosaves per setting in interleaved games: an autosave took 0.831 s (0.823–0.842) instead of 0.873 s (0.871–0.900); `"verify"` found 0 differences in 10 members. `save_compress_parallel = "on"` (off by default) compresses large members (the gamestate) in 1 MiB chunks on several threads instead: a valid archive with the same members, which the game loads and other tools read, but with other compressed bytes than the game's (`"verify"` decodes each member again before writing it). An autosave then took 0.612 s (0.575–0.637), the gamestate 80–95 ms on 7 threads instead of about 300 ms |
 | `frame_pacing` | **Simulation, on by default since 0.15.** At the fastest speed, draws frames from inside the daily tick less often while you do nothing (setting `frame_pacing_interval_ms`, 100 ms; the game's own is 50 ms), and at once when a key press, click or wheel turn waits (`frame_pacing_input = "draw"`). The simulation is the same; the map updates about 16 instead of 22 times a second at speed 5 while you do nothing (lab: a year at speed 5 in 20.8 s instead of 23.4 s; a key press at speed 5 handled after 21 ms instead of 51.5 ms in the median, a real key press after 21.6 ms instead of 56.8 ms) |
 
 Diagnostics, off by default: `zip_profile`, `token_dict_profile`,
@@ -123,8 +124,9 @@ starts normally.
 
 Each module is a setting `on`, `off` or (where the module has it) `verify`,
 plus `ram_prefetch_budget_mb` (64–8192), `frame_pacing_interval_ms`
-(0–1000; 0 keeps the game's own interval) and `frame_pacing_input` (`draw`, the
-default, or `wait`, the 0.12.0 behaviour); the defaults, labels and
+(0–1000; 0 keeps the game's own interval), `frame_pacing_input` (`draw`, the
+default, or `wait`, the 0.12.0 behaviour) and `save_compress_parallel` (`off`,
+`on` or `verify`, used while `save_compress` is on); the defaults, labels and
 descriptions are in [`plugin/settings.toml`](plugin/settings.toml). Your
 values go into `anvil/data/bellows/settings.toml`, one line each, only those
 that differ from the default, for example:
@@ -273,5 +275,5 @@ pdx-ws session export --user my_steam_name | gh secret set STEAM_SESSION --org h
 
 ## License
 
-MIT — see [LICENSE](LICENSE). Bundles mimalloc (MIT, Microsoft). Bellows is an
+MIT — see [LICENSE](LICENSE). Bundles mimalloc (MIT, Microsoft) and zlib (zlib License, Jean-loup Gailly and Mark Adler). Bellows is an
 unofficial community project, not affiliated with or endorsed by Paradox Interactive.

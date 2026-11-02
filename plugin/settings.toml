@@ -169,6 +169,24 @@ description = "Simulation: reads one value from a province's modifiers in place 
 group = "Simulation"
 restart = true
 
+[setting.save_compress]
+type = "enum"
+values = [{ name = "off", label = "Off" }, { name = "on", label = "On" }, { name = "verify", label = "Verify" }]
+default = "on"
+label = "Save compression"
+description = "Saving: compressed saves (compress_autosave and the like) without the game's byte-at-a-time CRC-32; the file is byte for byte the game's. Verify runs the game's own compression as well, writes its result and compares the two."
+group = "Saving"
+restart = true
+
+[setting.save_compress_parallel]
+type = "enum"
+values = [{ name = "off", label = "Off" }, { name = "on", label = "On" }, { name = "verify", label = "Verify" }]
+default = "off"
+label = "Parallel save compression"
+description = "Saving, with save compression on: compresses large members of a compressed save (the gamestate) on several threads. The save is a valid archive that the game and other tools read as before, but its compressed bytes differ from the game's. Verify decodes each member again before writing it."
+group = "Saving"
+restart = true
+
 [setting.frame_pacing]
 type = "enum"
 values = [{ name = "off", label = "Off" }, { name = "on", label = "On" }]

@@ -37,6 +37,25 @@ FetchContent_Declare(mimalloc
     GIT_SHALLOW TRUE)
 FetchContent_MakeAvailable(tomlplusplus mimalloc)
 
+# zlib for save_compress's parallel compression (the game's own zlib does the rest). Only the sources:
+# SOURCE_SUBDIR without a CMakeLists.txt, so zlib's own project is not added.
+FetchContent_Declare(zlib
+    URL https://github.com/madler/zlib/releases/download/v1.3.1/zlib-1.3.1.tar.gz
+    URL_HASH SHA256=9a93b2b7dfdac77ceba5a558a580e74667dd6fede4585b91eefb60f03b72df23
+    SOURCE_SUBDIR none)
+FetchContent_MakeAvailable(zlib)
+function(sb_add_zlib target dir)
+    add_library(${target} STATIC
+        ${dir}/adler32.c ${dir}/compress.c ${dir}/crc32.c ${dir}/deflate.c ${dir}/infback.c ${dir}/inffast.c
+        ${dir}/inflate.c ${dir}/inftrees.c ${dir}/trees.c ${dir}/uncompr.c ${dir}/zutil.c)
+    target_include_directories(${target} PUBLIC ${dir})
+    target_compile_definitions(${target} PRIVATE _CRT_SECURE_NO_DEPRECATE _CRT_NONSTDC_NO_DEPRECATE)
+    if(MSVC)
+        target_compile_options(${target} PRIVATE /W0)
+    endif()
+endfunction()
+sb_add_zlib(sb_zlib ${zlib_SOURCE_DIR})
+
 # The Anvil SDK: the AnvilPlugin CMake package (anvil_add_plugin, the headers,
 # anvil.exe for `anvil gen` and `anvil check`).
 #   - By default the SDK archive of the Anvil release SB_ANVIL_VERSION, checked
@@ -80,6 +99,8 @@ set(SB_SOURCES
     src/modules/frame_pacing.cpp
     src/modules/modifier_merge.cpp
     src/modules/province_modifier_view.cpp
+    src/modules/save_compress.cpp
+    src/modules/save_compress_parallel.cpp
     src/modules/tick_profile.cpp
     src/modules/army_search_profile.cpp
     src/modules/score_probe.cpp
@@ -91,7 +112,7 @@ configure_file(src/version.rc.in ${CMAKE_CURRENT_BINARY_DIR}/sb_version.rc @ONLY
 anvil_add_plugin(bellows PLUGIN_DIR plugin
     SOURCES src/plugin.cpp ${SB_SOURCES} ${CMAKE_CURRENT_BINARY_DIR}/sb_version.rc)
 target_include_directories(bellows PRIVATE src)
-target_link_libraries(bellows PRIVATE tomlplusplus::tomlplusplus mimalloc-static shell32 ole32 uuid)
+target_link_libraries(bellows PRIVATE tomlplusplus::tomlplusplus mimalloc-static sb_zlib shell32 ole32 uuid)
 target_compile_definitions(bellows PRIVATE WIN32_LEAN_AND_MEAN NOMINMAX)
 if(MSVC)
     target_compile_options(bellows PRIVATE /EHsc)
@@ -141,6 +162,14 @@ if(SB_BUILD_TESTS)
         target_compile_options(test_mimalloc_heap PRIVATE /utf-8 /permissive- /EHsc /UNDEBUG)
     endif()
     add_test(NAME mimalloc_heap COMMAND test_mimalloc_heap)
+    # save_compress: the CRC, the game's 0x153C790 written out and the parallel compression, with Bellows' zlib.
+    add_executable(test_save_compress tests/test_save_compress.cpp src/modules/save_compress_parallel.cpp)
+    target_include_directories(test_save_compress PRIVATE src)
+    target_link_libraries(test_save_compress PRIVATE sb_zlib)
+    if(MSVC)
+        target_compile_options(test_save_compress PRIVATE /utf-8 /permissive- /EHsc /UNDEBUG)
+    endif()
+    add_test(NAME save_compress COMMAND test_save_compress)
     # bellows.dll's anvil_plugin_load against a stand-in host (tests/test_plugin_load.cpp).
     add_executable(test_plugin_load tests/test_plugin_load.cpp)
     target_include_directories(test_plugin_load PRIVATE $<TARGET_PROPERTY:bellows,INCLUDE_DIRECTORIES>)
@@ -157,6 +186,31 @@ if(SB_BUILD_TESTS)
     add_test(NAME symbols_lock COMMAND ${SB_ANVIL_TOOL} check ${CMAKE_CURRENT_SOURCE_DIR}/plugin)
 endif()
 
+# Offline checks of save_compress on compressed saves (tools/save_compress_offline.cpp): with zlib 1.2.8,
+# the game's version, CompressEntry must give the bytes the game wrote; with Bellows' zlib, the parallel
+# compression must decode to the same member. Off by default: it downloads zlib 1.2.8 too.
+option(SB_BUILD_SAVE_TOOLS "Build the offline save compression checks" OFF)
+if(SB_BUILD_SAVE_TOOLS)
+    FetchContent_Declare(zlib128
+        URL https://github.com/madler/zlib/archive/refs/tags/v1.2.8.tar.gz
+        URL_HASH SHA256=e380bd1bdb6447508beaa50efc653fe45f4edc1dafe11a251ae093e0ee97db9a
+        SOURCE_SUBDIR none)
+    FetchContent_MakeAvailable(zlib128)
+    sb_add_zlib(sb_zlib128 ${zlib128_SOURCE_DIR})
+    add_executable(save_compress_check_game tools/save_compress_offline.cpp)
+    target_include_directories(save_compress_check_game PRIVATE src)
+    target_compile_definitions(save_compress_check_game PRIVATE SB_TOOL_GAME_ZLIB WIN32_LEAN_AND_MEAN NOMINMAX)
+    target_link_libraries(save_compress_check_game PRIVATE sb_zlib128)
+    add_executable(save_compress_check tools/save_compress_offline.cpp src/modules/save_compress_parallel.cpp)
+    target_include_directories(save_compress_check PRIVATE src)
+    target_compile_definitions(save_compress_check PRIVATE WIN32_LEAN_AND_MEAN NOMINMAX)
+    target_link_libraries(save_compress_check PRIVATE sb_zlib)
+    if(MSVC)
+        target_compile_options(save_compress_check_game PRIVATE /utf-8 /permissive- /EHsc)
+        target_compile_options(save_compress_check PRIVATE /utf-8 /permissive- /EHsc)
+    endif()
+endif()
+
 # Plugin folder layout: <prefix>/bellows/{plugin.toml, symbols.toml, settings.toml, bellows.dll, profiles/, LICENSE}
 install(TARGETS bellows RUNTIME DESTINATION bellows COMPONENT plugin)
 install(FILES plugin/plugin.toml plugin/symbols.toml plugin/settings.toml LICENSE DESTINATION bellows COMPONENT plugin)
@@ -164,3 +218,4 @@ install(DIRECTORY plugin/profiles DESTINATION bellows COMPONENT plugin)
 # Third-party code compiled into the DLL (MIT): ship its license texts.
 install(FILES ${mimalloc_SOURCE_DIR}/LICENSE DESTINATION bellows/third-party RENAME mimalloc-LICENSE.txt COMPONENT plugin)
 install(FILES ${tomlplusplus_SOURCE_DIR}/LICENSE DESTINATION bellows/third-party RENAME tomlplusplus-LICENSE.txt COMPONENT plugin)
+install(FILES ${zlib_SOURCE_DIR}/LICENSE DESTINATION bellows/third-party RENAME zlib-LICENSE.txt COMPONENT plugin)

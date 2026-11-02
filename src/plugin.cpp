@@ -36,6 +36,7 @@ DWORD WINAPI FinishAfterReady(void*) {
     sb::ReportFramePacing();
     sb::ReportModifierMerge();
     sb::ReportProvinceModifierView();
+    sb::ReportSaveCompress();
     sb::bench::Done();  // the profiles are saved and the reports made
     return 0;
 }
@@ -104,6 +105,7 @@ struct Bellows : anvil::Plugin {
             {"frame_pacing", cfg::frame_pacing.id, sb::InstallFramePacing},
             {"modifier_merge", cfg::modifier_merge.id, sb::InstallModifierMerge},
             {"province_modifier_view", cfg::province_modifier_view.id, sb::InstallProvinceModifierView},
+            {"save_compress", cfg::save_compress.id, sb::InstallSaveCompress},
             // diagnostic; its hook on 0x769EA0 sits at the entry, frame_pacing's inside the function.
             {"tick_profile", cfg::tick_profile.id, sb::InstallTickProfile},
             {"army_search_profile", cfg::army_search_profile.id, sb::InstallArmySearchProfile},  // diagnostic
@@ -139,6 +141,9 @@ struct Bellows : anvil::Plugin {
         sb::SetRamPrefetchBudget(static_cast<std::uint64_t>(budget));
         sb::SetFramePacingInterval(cfg::frame_pacing_interval_ms.get(),
                                    cfg::frame_pacing_input.get() == cfg::frame_pacing_input.draw);
+        sb::SetSaveCompressParallel(cfg::save_compress_parallel.get() == cfg::save_compress_parallel.on       ? 1
+                                    : cfg::save_compress_parallel.get() == cfg::save_compress_parallel.verify ? 2
+                                                                                                              : 0);
 
         std::string summary;
         for (const auto& m : modules) {

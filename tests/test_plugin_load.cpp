@@ -360,7 +360,7 @@ int main(int argc, char** argv) {
     assert(Logged("config.toml migrated to settings.toml (1 value(s)"));
 
     const std::string rest = ", metascript_subst=off, metascript_blocks=on, attr_cache=verify, zip_profile=on, token_dict_cache=on, "
-                             "token_dict_profile=off, range_profile=on, range_witness=on, frame_pacing=on, modifier_merge=on, province_modifier_view=on, tick_profile=on, army_search_profile=on, score_probe=on, monthly_probe=on";
+                             "token_dict_profile=off, range_profile=on, range_witness=on, frame_pacing=on, modifier_merge=on, province_modifier_view=on, save_compress=on, tick_profile=on, army_search_profile=on, score_probe=on, monthly_probe=on";
     if (g_scenario != "refuse") {
         assert(Logged("modules: mimalloc=startup, open_warmup=off, ram_prefetch=off, verifypath_listing=on, "
                       "exists_index=on, trigger_intern=on" + rest));
@@ -452,7 +452,7 @@ int main(int argc, char** argv) {
             {"verifypath_listing", "on"}, {"exists_index", "on"}, {"trigger_intern", ok ? "on" : "failed"},
             {"metascript_subst", "off"}, {"metascript_blocks", "on"}, {"attr_cache", "verify"}, {"zip_profile", "on"},
             {"token_dict_cache", "on"}, {"token_dict_profile", "off"}, {"range_profile", "on"},
-            {"range_witness", "on"}, {"frame_pacing", "on"}, {"modifier_merge", "on"}, {"province_modifier_view", "on"}, {"tick_profile", "on"}, {"army_search_profile", "on"}, {"score_probe", "on"}, {"monthly_probe", "on"},
+            {"range_witness", "on"}, {"frame_pacing", "on"}, {"modifier_merge", "on"}, {"province_modifier_view", "on"}, {"save_compress", "on"}, {"tick_profile", "on"}, {"army_search_profile", "on"}, {"score_probe", "on"}, {"monthly_probe", "on"},
         };
         for (const auto& [module, mode] : modes) assert(g_values.at(module + ".mode") == mode);
         for (const char* field : {"exists_index.requests", "exists_index.listings", "verifypath_listing.mismatches",

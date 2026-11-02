@@ -13,6 +13,8 @@ The monthly update of the units is also faster: the game adds every country’s 
 
 New and still off by default: “Province modifier view”. Every day each country looks up one value in the modifiers of every province it owns, and the game copies the province’s whole list first just to read it; Bellows reads it in place. In our tests all of about 12 million values it read matched the game’s own. By its own clocks a year might pass about 2–4% sooner, but that is an estimate, not a timed year, and we keep it off until we know it can’t nudge the AI into other choices.
 
+Compressed autosaves are a little quicker too (if you have the game compress them): Bellows works out each save’s checksum eight bytes at a time instead of one, and the file comes out byte for byte as the game writes it. On our test save an autosave took about 0.83 instead of 0.87 seconds (“Save compression” in the settings). Want more? “Parallel save compression” (off by default) packs the save on several cores: about 0.6 seconds, and a file that is laid out a little differently but holds exactly the same save, which the game and save tools read as before.
+
 ![](https://i.imgur.com/Uf8Z21n.png)
 
 ## Before you subscribe

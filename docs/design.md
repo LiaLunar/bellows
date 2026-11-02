@@ -505,6 +505,98 @@ answer still being correct. On by default only after #79 is settled, a
 determinism pair with `-randomlog` with and without the module (as for 0.15.0)
 and a SIMULATION series.
 
+### save_compress (saving)
+
+On by default since 0.18.0 (`save_compress_parallel` stays off). With `compress_autosave = yes` (and for every other compressed
+save) the game writes a ZIP archive in memory and compresses each member on the
+calling thread: `gamestate`, `meta`, `ai` and, with a random New World, its
+archive. One function does all of it, `0x153C790` (writer, input, buffer, size,
+crc, level), called from the member writer `0x153B9A0` and for `ai` straight
+from `0x5CE5F0`: `deflateInit2_(level 3, 8, -15, 9, 0)` of the zlib 1.2.8
+linked into `eu4.exe` (`0x181FC70`), then, while input is left, it seeks the
+input stream to what deflate consumed, reads at most half the buffer, calls
+`deflate(Z_NO_FLUSH)` with the other half as output, runs CRC-32 over the
+consumed bytes one byte per turn (table `0x1D91CD0`) and writes the new output;
+then `deflate(Z_FINISH)` until the stream ends. The callers write the local
+header before it and rewrite it with the sizes and CRC afterwards (no data
+descriptor). Lab (lab `docs/autosave-cost.md`): compression adds about 0.35 s
+to every autosave of a 62–65 MB gamestate, and the screen stands for about
+0.9 s instead of 0.55 s.
+
+The hook replaces `0x153C790` as a whole. `"on"` runs `CompressEntry`
+(`save_compress_core.hpp`): the function call for call with the game's own
+`deflateInit2_`, `deflate` and `deflateEnd`, the same reads, seeks, buffers and
+flushes (and the same failure when the end of the stream does not fit the
+output half), with a slice-by-8 CRC-32 instead of the byte loop. The CRC is a
+function of the bytes, so the file is byte for byte the game's. `"verify"` runs
+the game's own `0x153C790` first, on the same input into a capture writer
+(only its write slot, `+0x50`, is expected), then `CompressEntry` with the
+game's byte loop as well into another; the game's writes, CRC and result go
+into the archive, and a difference in the bytes, the CRC, the result or between
+the two CRC loops is counted and logged. It compares the module with the game
+on the very state being saved, which two games cannot do (two runs of the same
+save do not reach the same state). `symbols.toml` checks the function's entry, its zlib calls, the
+CRC loop and the finish loop, so another build of the function is refused.
+
+`save_compress_parallel = "on"` (separate, off by default) compresses members of
+at least 4 MiB differently (`save_compress_parallel.hpp`): the member is read
+whole, cut into 1 MiB chunks, and each chunk is compressed on one of up to 8
+threads (the process's CPUs) with the zlib 1.3.1 linked into Bellows, level and
+parameters as the game's, the 32 KiB before it as its dictionary
+(`deflateSetDictionary`), ending with `Z_SYNC_FLUSH` (the last with
+`Z_FINISH`), as pigz does. Joined in order, the pieces are one valid raw DEFLATE
+stream; the CRC comes from the chunks' CRCs (`crc32_combine`). The member keeps
+its name, method 8 and headers, with its own CRC and sizes, but its compressed
+bytes differ from the game's, so a file compared byte for byte with one written
+without the option differs. `"verify"` decodes the joined stream with zlib's
+inflate and compares it with the input before anything is written. When
+anything fails before the first byte is written (memory, zlib, a decode
+mismatch), the member goes the `"on"` way. Every call appends a row (path,
+sizes, chunks, threads, total and CRC time) to `save_compress.tsv`.
+
+Offline (lab, without the game; `tools/save_compress_offline.cpp`, built with
+`-DSB_BUILD_SAVE_TOOLS=ON`): on three compressed saves written by the game
+(autosaves from the 1719 and 1821 runs with `compress_autosave = yes`, a 1444
+save), `CompressEntry` with zlib 1.2.8 at level 3 gives every member byte for
+byte as in the file, with work buffers of 50,000,000 bytes, 20 MiB, 4 MiB and
+64 KiB (except the 64 KiB buffer on the 1719 autosave: the end of the stream
+does not fit, and the function returns 0 as the game's would; the game passes
+50,000,000 bytes or the rest of its 90 MiB arena). The CRC-32 of the 64 MB
+gamestate took 22 ms slice-by-8 against 85 ms byte by byte. In parallel the
+gamestate took 57 ms on 7 threads against about 320 ms on one; it decodes to
+the same bytes with zlib's inflate, Python's `zipfile` and Windows `tar`, with
+the CRC in the headers, and is 0.1–0.24% smaller than the game's.
+
+In the game (lab `docs/autosave-cost.md`, 2 November 2026): the Russia save of
+17 March 1719 with `compress_autosave = yes`, a separate game profile, the
+process on CPUs 1–7, observer mode at speed 5 to 10 January 1722 (autosaves of
+1720–1722), Bellows with default settings otherwise. Interleaved games with
+`save_compress` off, `"on"` and `"on"` with `save_compress_parallel = "on"`,
+two games of three autosaves each per setting; the time from the game's
+`autosave.tmp` to its rename:
+
+| Setting | Autosaves | Median | Range | Gamestate member |
+| --- | ---: | ---: | --- | --- |
+| off | 6 | 0.873 s | 0.871–0.900 s | – |
+| `"on"` | 6 | 0.831 s | 0.823–0.842 s | 296–302 ms |
+| `"on"`, parallel `"on"` | 6 | 0.612 s | 0.575–0.637 s | 80–95 ms, 7 threads |
+
+The ranges do not overlap. `"verify"` (one game each) compared every member
+with the game's own function on the same input: 10 members with
+`save_compress = "verify"` (three autosaves and one level 9 member, below) and
+the small members with both settings on `"verify"`, 0 differences; every
+parallel member decoded to its input. Offline, the members of all 15 autosaves
+written with the module off, `"on"` and `"verify"` are byte for byte what the
+game's function gives with zlib 1.2.8. A save written with
+`save_compress_parallel` loaded in a game without Bellows (single player, the
+game then ran a month); Python's `zipfile`, Windows `tar`, NanaZip and Etch's
+save reader read it with the CRCs of its headers. Loading a plain-text save
+also goes through the function once: the game's load path (`0xD84B80`) compresses
+the whole file at level 9 into an archive in memory (64.5 MB in about 2.4 s on
+the game's function, 0.74 s in parallel); what the game uses that copy for was
+not followed further. Not tested: multiplayer (joining, host transfer) with a
+parallel save, ironman and cloud saves.
+
 ### tick_profile (diagnostic, simulation)
 
 Off by default. Where the daily tick spends its time, without a sampler.
