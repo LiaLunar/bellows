@@ -33,7 +33,7 @@ Anvil asks again after every update. Until you approve, the version you trusted 
 ![](https://i.imgur.com/Uf8Z21n.png)
 
 ## Measure it yourself
-Don't take our word for it. With Anvil 1.5 or newer and Bellows enabled and approved, open Anvil Manager (`AnvilManager.exe` in the game folder), go to the **Benchmark** tab, pick Bellows and start the series. The game then starts several times on its own, without Bellows and with it in turn, and closes each time it reaches the main menu. At the end you see the typical start time of both, side by side. Your saves, mods and settings stay as they were.
+Don't take our word for it. With Bellows enabled and approved, open Anvil Manager (`AnvilManager.exe` in the game folder), go to the **Benchmark** tab, pick Bellows and start the series. The game then starts several times on its own, without Bellows and with it in turn, and closes each time it reaches the main menu. At the end you see the typical start time of both, side by side. Your saves, mods and settings stay as they were.
 
 Keep Steam running and leave the computer alone while it works: about ten minutes with the default settings. Afterwards you can send the report to us, after seeing exactly what it contains ([what we collect](https://github.com/happy-dwarf-team/anvil/blob/main/docs/benchmark-privacy.md)), or copy it into a [performance report](https://github.com/happy-dwarf-team/bellows/issues/new?template=performance_report.yml). A dwarf trusts the scales, not the boasting.
 

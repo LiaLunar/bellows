@@ -26,11 +26,11 @@ see [Updating from EU4 Startup Boost](#updating-from-eu4-startup-boost).
 > Status: public releases before 1.0 — see
 > [Releases](https://github.com/happy-dwarf-team/bellows/releases) and
 > [CHANGELOG.md](CHANGELOG.md); what is left before 1.0 is in
-> [#90](https://github.com/happy-dwarf-team/bellows/issues/90). Bellows 0.8.0 and newer is a plugin for
-> Anvil's plugin API 2 and needs **Anvil 1.0 or newer**; 0.7.0 and earlier
-> need Anvil 0.2. From 0.9.0 it is also published as a Steam Workshop mod for
-> Anvil 1.3 or newer (see [Steam Workshop](#steam-workshop)). From 0.19.0 it
-> needs **Anvil 1.7 or newer** and also runs on the GOG build of EU4.
+> [#90](https://github.com/happy-dwarf-team/bellows/issues/90). Bellows 0.19.0 and newer
+> needs **Anvil 1.7 or newer** and also runs on the GOG build of EU4; 0.8.0 to
+> 0.18.0 need Anvil 1.0 (plugin API 2), 0.7.0 and earlier Anvil 0.2. From
+> 0.9.0 it is also published as a Steam Workshop mod (see
+> [Steam Workshop](#steam-workshop)).
 > Design: [docs/design.md](docs/design.md).
 
 ## Measured
@@ -79,7 +79,7 @@ start after a reboot was not measured on this mod set.
 
 ### Measure your own
 
-Anvil 1.5 or newer has a **Benchmark** tab in the Anvil Manager
+Anvil Manager has a **Benchmark** tab (since Anvil 1.5)
 (`AnvilManager.exe` in the game folder). It starts the game again and again,
 without Bellows and with it in turn; each start quits by itself once the game
 is ready, and nothing in your saves, mods or `anvil.toml` changes. The tab
@@ -230,7 +230,7 @@ was moved or left out. The `EU4SB_<NAME>` variables are no longer read: use
 ## Install / uninstall
 
 Install [Anvil](https://github.com/happy-dwarf-team/anvil#install--uninstall)
-1.0 or newer first (it includes the `anvil-game` plugin Bellows needs). Then
+1.7 or newer first (it includes the `anvil-game` plugin Bellows needs). Then
 download `bellows-windows-x64.zip` from the
 [latest release](https://github.com/happy-dwarf-team/bellows/releases/latest)
 and extract it into `<EU4>/anvil/plugins/`; it contains the `bellows`
@@ -272,8 +272,8 @@ Contributions, the commit convention and the release process: see
 
 ## Steam Workshop
 
-Bellows can also be published as a Steam Workshop mod for Anvil 1.3 or newer,
-which loads plugins from enabled mods after the player approves each version.
+Bellows can also be published as a Steam Workshop mod; Anvil (since 1.3)
+loads plugins from enabled mods after the player approves each version.
 The mod is the `workshop/` folder ([`workshop.toml`](workshop.toml)):
 `descriptor.mod`, `thumbnail.png` and `anvil/bellows/`, the plugin folder of a
 release, which is not in Git. [`workshop/description.md`](workshop/description.md)
