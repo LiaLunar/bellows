@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.18.0](https://github.com/happy-dwarf-team/bellows/compare/v0.17.0...v0.18.0) (2026-11-02)
+
+
+### Features
+
+* **save_compress:** compress saves without the game's byte-at-a-time CRC (on by default), optionally in parallel ([#85](https://github.com/happy-dwarf-team/bellows/issues/85)) ([95de7c6](https://github.com/happy-dwarf-team/bellows/commit/95de7c695d10151f11f83a4e6d04d89b5a38b1b7))
+
 ## [0.17.0](https://github.com/happy-dwarf-team/bellows/compare/v0.16.0...v0.17.0) (2026-11-01)
 
 
