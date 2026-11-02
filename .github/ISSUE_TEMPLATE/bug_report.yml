@@ -24,7 +24,7 @@ body:
     id: versions
     attributes:
       label: Plugin and Anvil versions
-      description: "From `anvil/anvil.log`, e.g. `Anvil 0.2.0` and `bellows 0.2.0: loaded`."
+      description: "From `anvil/anvil.log`, e.g. `Anvil 1.7.0` and `bellows 0.18.0: loaded`."
     validations:
       required: true
   - type: input
@@ -52,8 +52,8 @@ body:
   - type: textarea
     id: config
     attributes:
-      label: config.toml
-      description: Contents of `anvil/data/bellows/config.toml`.
+      label: settings.toml
+      description: Contents of `anvil/data/bellows/settings.toml` (only the settings you changed; empty or missing means the defaults).
       render: toml
   - type: textarea
     id: mods

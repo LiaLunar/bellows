@@ -71,7 +71,7 @@ Some of Bellows' tricks learn what your mod set needs during one start and pay o
 Yes. It doesn't care what your mods contain, it only helps the game read them faster. Bigger mod sets usually gain the most: on our test machine, Anbennar with Proper 2K UI Enhanced and its patch went from about 85 seconds to about 22.
 
 ### Will it break my saves or my achievements?
-No. It changes how fast the game starts, not what the game does.
+No. It changes how fast the game starts and runs, not what the game does. When the game compresses a save, Bellows writes exactly the file the game would write, byte for byte (unless you turn on parallel save compression, which packs the same save a little differently).
 
 ### Will the AI play differently?
 Only when it has two equally good choices, like two leaders with the same pips for one army. The game then picks by where they sit in memory, and Bellows moves things around in memory, so in single player the tie can go the other way: just as sound a choice, only the other one. In multiplayer the host's AI decides for everyone, so all players keep the same game (our test: 233 days, Bellows only on the host, no out-of-sync).

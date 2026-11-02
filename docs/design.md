@@ -1,6 +1,8 @@
 # Bellows — design
 
-Status: draft 3 (2026-10-20; §6b: plugin API 2 for Anvil 1.0). Decisions marked **D** are agreed; **Q** are open.
+Status: draft 4 (2026-11-02; §2 lists every shipped module, §5 the tests, §7 the decided `mimalloc` question;
+the road to 1.0 is [#90](https://github.com/happy-dwarf-team/bellows/issues/90)). Decisions marked **D** are
+agreed; **Q** are open.
 Background, measurements and reverse-engineering notes come from the private
 research repository (`eu4-engine-lab`); this repository contains production
 code only.
@@ -30,10 +32,21 @@ code only.
 | `metascript_subst` | Single-pass `$param$` substitution in scripted effects/triggers | −0.75 s |
 | `metascript_blocks` | Single-pass resolution of the `[[param] ...]` blocks of scripted effects/triggers | Anbennar: 34.4 → 24.0 s; lab playset: no change |
 | `frame_pacing` | Simulation, on by default since 0.15: at speed 5, frames drawn from inside the daily tick at most every 100 ms instead of 50 ms while no input waits, at once for a waiting press | year 1720: 23.4 → 20.8 s; key press 51.5 → 21 ms |
-| `open_warmup` | Opens the files the game will need on parallel threads (learned list per mod set) so first-open costs after a reboot or antivirus update are paid off the critical path | cold start 61 → 15 s |
+| `open_warmup` | Opens the files the game will need on parallel threads (learned list per mod set) so first-open costs after a reboot or antivirus update are paid off the critical path | cold start 61 → 15 s (lab build; not measured with the plugin) |
+| `token_dict_cache` | Caches the script tokenizer's keyword lookups during start-up | −0.4 s |
+| `range_witness` | Simulation: answers the country range check from the province that was in range last time (§6a) | year 1720: 27.6 → 20.6 s |
+| `modifier_merge` | Simulation: adds large modifier lists with an index instead of a scan per entry (§6a) | year 1720: 20.64 → 19.45 s |
+| `province_modifier_view` | Simulation, off: reads one value of a province's modifiers without copying the list (§6a) | exact, no gain shown |
+| `save_compress` | Saving: the game's own zlib with a faster CRC-32 (the game's bytes); optionally in parallel (§6a) | autosave 0.873 → 0.831 s; parallel 0.612 s |
 
-Diagnostics from the lab (`file_trace`, deep API counters, heap sampling) are
-not shipped in release builds; they may exist behind a build flag.
+The table's start-up modules are in the order they were ported; §6a has the
+results per module and release.
+
+Diagnostics, off by default and meant for the lab (`zip_profile`,
+`token_dict_profile`, `range_profile`, `tick_profile`, `army_search_profile`,
+`score_probe`, `monthly_probe`), are shipped as settings; their output files
+and counters may change in any release. The lab's deeper tools (`file_trace`,
+deep API counters, heap sampling) are not shipped.
 
 ## 3. Changes needed when moving from the lab (D)
 
@@ -116,12 +129,21 @@ format change.
 
 ## 5. Testing (D)
 
-- Native unit tests ported from the lab (`test_startup_*`): exists index,
-  verifyPath listing, mimalloc hook, trigger interning, metascript
-  substitution, warm-up lists.
-- In-game validation with the lab harness: start-up series against vanilla and
-  against the lab build, game logs compared, save loading checked, verify-mode
-  runs for `trigger_intern` and `metascript_subst` before every release.
+- Native unit tests in `tests/` (one program per test, run by `ctest`): the
+  cores of the modules that compute something (access profiles, path rules,
+  the ZIP reader, mimalloc heap, trigger interning, metascript substitution and
+  blocks, token dictionary cache, range witness and its statistics, frame
+  pacing, modifier merge, province modifier view, save compression, the
+  diagnostics' cores), settings and their migration, the rename from EU4
+  Startup Boost, `bellows.dll` loaded against a stand-in host
+  (`test_plugin_load`, with the benchmark service) and `anvil check plugin`
+  (`symbols_lock`). `exists_index` and `verifypath_listing` are covered only
+  through the stand-in host (installed, modes, counters), not with listings.
+- In-game validation with the lab harness: start-up series against vanilla,
+  game logs compared, save loading checked, and `"verify"` sessions for the
+  modules that replace a game computation (start-up and simulation). Which of
+  these every release runs before its draft is published is not written down
+  yet (#90).
 
 ## 6. Stages
 
@@ -965,6 +987,14 @@ call does nothing.
   `done()`; the `old` scenario has no service.
 
 ## 7. Open questions (Q)
+
+None at the moment; the open points before 1.0 are in
+[#90](https://github.com/happy-dwarf-team/bellows/issues/90).
+
+Answered: since 0.11.0 `startup` is the default and `mimalloc` has stayed a
+Bellows module. With `startup` the year was not separable from `off` (series
+below), so the cost in play that would have called for a plugin of its own
+was not found. The question and the series:
 
 - Whether `mimalloc` should be its own plugin (it stays active during play,
   unlike the start-up-only modules). In the lab (Russia 1719, year 1720 at
