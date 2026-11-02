@@ -137,8 +137,8 @@ format change.
   diagnostics' cores), settings and their migration, the rename from EU4
   Startup Boost, `bellows.dll` loaded against a stand-in host
   (`test_plugin_load`, with the benchmark service) and `anvil check plugin`
-  (`symbols_lock`). `exists_index` and `verifypath_listing` are covered only
-  through the stand-in host (installed, modes, counters), not with listings.
+  (`symbols_lock`). `verifypath_listing` and `exists_index` are tested on real
+  folders (with a junction), apart from their hooks.
 - In-game validation with the lab harness: start-up series against vanilla,
   game logs compared, save loading checked, and `"verify"` sessions for the
   modules that replace a game computation (start-up and simulation). What
