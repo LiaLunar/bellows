@@ -986,6 +986,54 @@ call does nothing.
   or after `done()`) and checks the modes, some counters and the single
   `done()`; the `old` scenario has no service.
 
+## 6d. The GOG build 1.37.5.2 (D)
+
+Anvil 1.7 knows the GOG `eu4.exe` 1.37.5.2 (`eu4-1.37.5.2-gog-win64`,
+SHA-256 `D29CF745…5319`) and lets one `symbols.toml` list several builds
+(Anvil design §5.2, [anvil#160](https://github.com/happy-dwarf-team/anvil/issues/160)).
+Bellows declares both builds and needs Anvil 1.7 (`anvil = ">=1.7.0"`, SDK
+1.7.0): an older Anvil rejects the `builds` key and skips the plugin.
+
+- **Same code, other addresses.** Every symbol was matched to the same
+  instructions in the GOG executable: functions through `.pdata` and their
+  disassembly with addresses masked, leaf code by the gap between two matched
+  functions, pointer slots by the matched target and the neighbouring slots.
+  The GOG build ships `eu4.pdb`, which names each match
+  (`CCountry::GetTradingRangeTo`, `CPdxSystem::FileExists`,
+  `CZipArchive::WriteDeflateCompressed`, …); `modifier_merge` is
+  `CModifier::operator+=` there, whose first chunk equals that of
+  `operator-=`, so whole bodies were compared. 72 symbols keep their bytes
+  and only move; 20 differ only in RIP-relative or call displacements (and
+  one absolute table address in `nested_frame_threshold`) and get their bytes
+  per build. No value with a size differs, and the numbers in the functions
+  around every symbol are the same apart from addresses, so the struct
+  layouts written in the modules (`range_witness`, `trigger_intern`,
+  `token_dict_profile`, `metascript_*`, `modifier_merge`, the ZIP entry) hold
+  on both builds; the PDB's types agree (`CProvince` 0x2E10 bytes, `CMap`,
+  the game root's province and country arrays). The offsets that do differ
+  in that code (the application at `+0xB48`/`+0xB38`, the session's speed
+  object at `+0x418`/`+0x408`) are not ones Bellows reads.
+- **Profiles.** The shipped base layers are lists of files in the game
+  folder, so `plugin/profiles/eu4-1.37.5.2-gog-win64.txt` and `.zip.txt` are
+  the same lists under the GOG build's name. Files of DLCs a copy does not
+  have are skipped, as on Steam.
+- **Lock.** `anvil check plugin --exe` once with each build's `eu4.exe`
+  writes `symbols.lock` format 2 with one check per build.
+- **Live check (2026-11-02).** A copy of the GOG game (folders as junctions,
+  without Steam's environment), Anvil 1.7.0 from its release, Bellows and
+  Tongs from their branches, `range_witness = "verify"` and
+  `save_compress = "verify"`, a private profile with `compress_autosave =
+  yes`. Anvil: `game build: eu4-1.37.5.2-gog-win64`, 4 loaded, 0 failed, 0
+  skipped; every start-up module ran (`open_warmup` with the GOG base layer:
+  11 175 opened, 238 files of DLCs this copy lacks failed; `ram_prefetch`
+  2 433 of 2 523 members failed for the same reason) with 0 mismatches in
+  their verifications. The Russia 1719 save, loaded from the menu, ran at
+  speed 5 to 1720-01-03 (292 days, 23.8 s): `range_witness` 96 453 calls,
+  86 946 answers compared, 0 disagreements, 0 differing values;
+  `modifier_merge` 63 verifications, 0 mismatches; the autosave of
+  1720-01-01 (3 members, 61.6 MB gamestate) the same bytes as the game's own
+  compression, and a valid zip.
+
 ## 7. Open questions (Q)
 
 None at the moment; the open points before 1.0 are in

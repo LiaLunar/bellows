@@ -29,7 +29,8 @@ see [Updating from EU4 Startup Boost](#updating-from-eu4-startup-boost).
 > [#90](https://github.com/happy-dwarf-team/bellows/issues/90). Bellows 0.8.0 and newer is a plugin for
 > Anvil's plugin API 2 and needs **Anvil 1.0 or newer**; 0.7.0 and earlier
 > need Anvil 0.2. From 0.9.0 it is also published as a Steam Workshop mod for
-> Anvil 1.3 or newer (see [Steam Workshop](#steam-workshop)).
+> Anvil 1.3 or newer (see [Steam Workshop](#steam-workshop)). From 0.19.0 it
+> needs **Anvil 1.7 or newer** and also runs on the GOG build of EU4.
 > Design: [docs/design.md](docs/design.md).
 
 ## Measured
@@ -118,8 +119,10 @@ answers of the AI army search), `score_probe` (how often the inputs of the AI
 search's scoring functions repeat within a game day), `monthly_probe` (time of
 the monthly tick's loops, modifier merges and random draws per context).
 
-Supported game build: EU4 1.37.5 (Steam, Windows 64-bit). Every game address
-is declared in [`plugin/symbols.toml`](plugin/symbols.toml); Anvil checks
+Supported game builds: EU4 1.37.5 (Steam, Windows 64-bit) and EU4 1.37.5.2
+(GOG, Windows 64-bit), with Anvil 1.7 or newer. Every game address
+is declared in [`plugin/symbols.toml`](plugin/symbols.toml) for both builds
+([design §6d](docs/design.md#6d-the-gog-build-13752-d)); Anvil checks
 them against `eu4.exe` before it loads Bellows, and on another build (or any
 mismatch) skips the plugin with the reason in `anvil/anvil.log` and the game
 starts normally.

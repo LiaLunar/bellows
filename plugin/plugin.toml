@@ -4,7 +4,7 @@ version = "0.18.0"
 authors = ["Happy Dwarf Team"]
 description = "Faster Europa Universalis IV start-up, simulation and saves, with the game's own results and no change to game files."
 api = 2
-anvil = ">=1.0.0"
+anvil = ">=1.7.0"
 entry = "bellows.dll"
 # Early: mimalloc must replace the heap imports before the game's C runtime
 # allocates, and the warm-up threads must run ahead of the game.

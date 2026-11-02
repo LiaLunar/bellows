@@ -18,8 +18,8 @@ Compressed autosaves are a little quicker too (if you have the game compress the
 ![](https://i.imgur.com/Uf8Z21n.png)
 
 ## Before you subscribe
-- **[Anvil](https://anvil.happydwarf.dev/) 1.3 or newer** must be installed in the game folder (1.5 or newer if you want to measure the gain yourself). Get it from [anvil.happydwarf.dev](https://anvil.happydwarf.dev/) and press Download. The Workshop can't install it for you: a dwarf has to carry it in by hand, once.
-- **EU4 1.37.5** (Steam, Windows). On any other version Bellows politely stays out of the way and the game starts as usual.
+- **[Anvil](https://anvil.happydwarf.dev/) 1.7 or newer** must be installed in the game folder. Get it from [anvil.happydwarf.dev](https://anvil.happydwarf.dev/) and press Download. The Workshop can't install it for you: a dwarf has to carry it in by hand, once.
+- **EU4 1.37.5** (Steam, Windows; the GOG build 1.37.5.2 works too). On any other version Bellows politely stays out of the way and the game starts as usual.
 
 ![](https://i.imgur.com/Uf8Z21n.png)
 
