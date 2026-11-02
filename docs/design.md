@@ -141,9 +141,9 @@ format change.
   through the stand-in host (installed, modes, counters), not with listings.
 - In-game validation with the lab harness: start-up series against vanilla,
   game logs compared, save loading checked, and `"verify"` sessions for the
-  modules that replace a game computation (start-up and simulation). Which of
-  these every release runs before its draft is published is not written down
-  yet (#90).
+  modules that replace a game computation (start-up and simulation). What
+  every release runs before its draft is published, and the budgets, are in
+  [release-gate.md](release-gate.md).
 
 ## 6. Stages
 

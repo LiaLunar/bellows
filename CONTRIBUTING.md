@@ -42,7 +42,8 @@ measured.
 `CHANGELOG.md`. Merging it tags `vX.Y.Z` and creates a **draft** GitHub
 release; the release workflow then builds the tag and attaches
 `bellows-windows-x64.zip` (the `bellows/` plugin folder) and `SHA256SUMS.txt`
-with a build provenance attestation to the draft. Once they are attached,
+with a build provenance attestation to the draft. Once they are attached and
+the release has passed the checks in [docs/release-gate.md](docs/release-gate.md),
 publish the draft on GitHub: that makes the release public, rebuilds
 anvil.happydwarf.dev and happydwarf.dev (`website.yml`) and, when it is turned
 on, publishes the Steam Workshop mod (see the README,
