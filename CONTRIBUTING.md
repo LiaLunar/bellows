@@ -26,9 +26,19 @@ Scopes: the module name (`ram_prefetch`, `attr_cache`, `open_warmup`,
 `verifypath_listing`, `zip_reader`, …), `settings`, `symbols`, `plugin`
 (manifest, packaging), `profiles`. A module that is off by default and changes
 game behaviour when enabled is still a `feat`; say so in the description.
-Breaking changes (a setting renamed or removed, a different Anvil
-requirement) take `!` and a `BREAKING CHANGE:` paragraph; before 1.0.0 they
-bump the minor version.
+Breaking changes (a setting renamed or removed, a value that means something
+else, a higher Anvil requirement) take `!` and a `BREAKING CHANGE:` paragraph;
+before 1.0.0 they bump the minor version, from 1.0.0 the major. What counts is
+the list in the README, [Compatibility](README.md#compatibility): the module
+settings and their values, `ram_prefetch_budget_mb`, `frame_pacing_*`,
+`save_compress_parallel` and the Anvil requirement. The diagnostics
+(`zip_profile`, `token_dict_profile`, `range_profile`, `tick_profile`,
+`army_search_profile`, `score_probe`, `monthly_probe`), log lines, counters,
+Benchmark fields and `.tsv` files are outside it: changing them is a `feat`
+or `fix` without `!`. A new default for a module is not breaking either; say
+it in the title. The migrations from 0.7.0 and earlier (`config.toml`, the
+`eu4-startup-boost` folder, `EU4SB_*` variables) stay in 1.x and go only in
+2.0.
 
 Performance claims in a pull request follow the measurement rules of the lab:
 same save/mod set, interleaved runs, median and spread, and what was not

@@ -4,6 +4,9 @@
 # Every module is installed while the game starts, so every setting applies at
 # the next start (restart = true). "verify" also runs the game's own code and
 # keeps its result: slower, for checking correctness.
+# From 1.0 the names and values of these settings keep their meaning in every
+# 1.x release (README, "Compatibility"), except the group "Diagnostics": lab
+# tools whose names, counters and output files may change in a minor release.
 
 [setting.mimalloc]
 type = "enum"
@@ -64,7 +67,7 @@ type = "enum"
 values = [{ name = "on", label = "On" }, { name = "off", label = "Off" }]
 default = "on"
 label = "Open warm-up"
-description = "Opens the files the game will need ahead of it on parallel threads (big gain on the first start after a reboot)."
+description = "Opens the files the game will need ahead of it on parallel threads (meant for the first start after a reboot)."
 group = "Start-up"
 restart = true
 

@@ -102,7 +102,7 @@ about 1.5 s longer than the times above, which stop at `Running application`.
 | `trigger_intern` | Faster trigger interning at the end of loading (~0.4 s instead of ~0.6 s for the game's own code with the shipped trigger profile; a `config.toml` written by 0.3.0 or earlier said `trigger_intern = "off"`, and the migration keeps that: delete the line from `settings.toml` to use the default `"on"`) |
 | `metascript_subst` | Single-pass `$parameter$` substitution in scripted effects |
 | `metascript_blocks` | Single-pass resolution of the `[[parameter] ...]` blocks of scripted effects and triggers (matters for mods with large scripted effects, e.g. Anbennar) |
-| `open_warmup` | Opens the files the game will need ahead of it on parallel threads, from a profile learned per mod set (meant for the first start after a reboot: 61 → 15 s in the lab's build before the plugin; the plugin's own cold start has not been measured yet) |
+| `open_warmup` | Opens the files the game will need ahead of it on parallel threads, from a profile learned per mod set (meant for the first start after a reboot, when every first open of a file is slow: 61 → 15 s in the lab's build before the plugin; the first start after a reboot with the plugin has not been measured, so Bellows makes no claim for it) |
 | `ram_prefetch` | Reads and unpacks the DLC archive members the game will need into RAM on worker threads (learned per mod set; uses up to 1 GB of extra RAM during start-up, setting `ram_prefetch_budget_mb`) |
 | `attr_cache` | Remembers "file not found" answers for game and mod files during start-up (off by default: ~0.1 s left next to the other modules) |
 | `token_dict_cache` | Caches the script tokenizer's keyword lookups (~0.4 s) |
@@ -119,7 +119,7 @@ answers of the AI army search), `score_probe` (how often the inputs of the AI
 search's scoring functions repeat within a game day), `monthly_probe` (time of
 the monthly tick's loops, modifier merges and random draws per context).
 They are tools for the lab: their names, counters and output files may
-change in any release.
+change in any release (see [Compatibility](#compatibility)).
 
 Supported game builds: EU4 1.37.5 (Steam, Windows 64-bit) and EU4 1.37.5.2
 (GOG, Windows 64-bit), with Anvil 1.7 or newer. Every game address
@@ -177,7 +177,29 @@ writes its counters to `anvil/anvil.log` when the game is ready.
 the defaults; `[ram_prefetch] budget_mb` becomes `ram_prefetch_budget_mb`)
 and keeps the old file as `config.toml.migrated`; `anvil/anvil.log` says what
 was moved or left out. The `EU4SB_<NAME>` variables are no longer read: use
-`ANVIL_BELLOWS_<NAME>` (a set `EU4SB_` variable is named in the log).
+`ANVIL_BELLOWS_<NAME>` (a set `EU4SB_` variable is named in the log). These
+migrations stay in every 1.x release and are removed only in 2.0.
+
+### Compatibility
+
+From 1.0 on, every 1.x release keeps these as they are, so a
+`settings.toml` written for 1.0 means the same in any later 1.x:
+
+- the name of every module setting and the meaning of its values (`on`,
+  `off`, `verify`, and `startup` for `mimalloc`);
+- `ram_prefetch_budget_mb`, `frame_pacing_interval_ms`, `frame_pacing_input`
+  and `save_compress_parallel`, with their ranges and values;
+- the oldest Anvil Bellows needs (Anvil 1.7).
+
+A release that renames or removes one of these, gives a value another
+meaning or needs a newer Anvil is 2.0. A module's default may still change in
+a minor release, after the checks in [docs/release-gate.md](docs/release-gate.md);
+the changelog says so. Not covered: the diagnostics (`zip_profile`,
+`token_dict_profile`, `range_profile`, `tick_profile`, `army_search_profile`,
+`score_probe`, `monthly_probe`), which are lab tools, and the wording of the
+lines and counters Bellows writes to `anvil/anvil.log`, the fields it adds to
+the Benchmark report and the modules' `.tsv` files, which may change in any
+release.
 
 ## Troubleshooting
 
