@@ -274,8 +274,7 @@ BufferPtr Take(const std::string& archiveKey, const char* member) {
 
 void StopBackend() {
     Backend* b = g_backend.load();
-    if (b == nullptr || b->stopping.exchange(true)) return;
-    b->budgetCv.notify_all();
+    if (b == nullptr || !prefetch::Stop(*b)) return;
     if (!b->threads.empty()) {
         WaitForMultipleObjects(static_cast<DWORD>(b->threads.size()), b->threads.data(), TRUE, 10000);
     }

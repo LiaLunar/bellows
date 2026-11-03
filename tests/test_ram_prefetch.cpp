@@ -55,14 +55,20 @@ void TestBudget() {
     });
     std::this_thread::sleep_for(50ms);
     assert(state == 0);
-    {
-        std::lock_guard<std::mutex> lock(b.mutex);
-        b.stopping = true;
-    }
-    b.budgetCv.notify_all();
+    assert(prefetch::Stop(b) && !prefetch::Stop(b));
     waiting.join();
     assert(state == 2 && b.committed == 90);
     assert(!prefetch::Reserve(b, 1, 100));  // nothing more once stopping
+
+    // Stopping while a worker is about to wait: it always wakes (a lost wake-up would hang here).
+    for (int round = 0; round < 2000; ++round) {
+        prefetch::Budget full;
+        assert(prefetch::Reserve(full, 100, 100));
+        std::thread late([&] { assert(!prefetch::Reserve(full, 1, 100)); });
+        if (round % 2) std::this_thread::yield();
+        prefetch::Stop(full);
+        late.join();
+    }
 }
 
 void TestStatus() {

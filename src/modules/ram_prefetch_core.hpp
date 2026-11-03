@@ -44,6 +44,17 @@ inline bool Reserve(Budget& b, std::uint64_t bytes, std::uint64_t limit) {
     return true;
 }
 
+// Waiting workers wake and get nothing; false when it was stopping already. stopping changes under
+// the mutex, so a worker between its check and its wait cannot miss the wake-up.
+inline bool Stop(Budget& b) {
+    {
+        std::lock_guard<std::mutex> lock(b.mutex);
+        if (b.stopping.exchange(true)) return false;
+    }
+    b.budgetCv.notify_all();
+    return true;
+}
+
 inline void Release(Budget& b, std::uint64_t bytes) {
     {
         std::lock_guard<std::mutex> lock(b.mutex);
