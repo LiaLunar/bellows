@@ -136,7 +136,7 @@ endif()
 
 if(SB_BUILD_TESTS)
     enable_testing()
-    foreach(test rename trigger_intern token_dict_cache metascript_subst metascript_blocks settings access_profile path_rules zip_reader range_stats range_witness tick_profile army_search score_probe monthly_probe modifier_merge province_modifier_view frame_pacing verifypath_listing exists_index)
+    foreach(test rename trigger_intern token_dict_cache metascript_subst metascript_blocks settings access_profile path_rules zip_reader range_stats range_witness tick_profile army_search score_probe monthly_probe modifier_merge province_modifier_view frame_pacing verifypath_listing exists_index open_warmup ram_prefetch)
         add_executable(test_${test} tests/test_${test}.cpp src/benchmark.cpp src/common.cpp src/settings.cpp src/rename.cpp
             src/modules/access_profile.cpp src/modules/zip_reader.cpp)
         # The SDK headers and the generated symbols.gen.hpp / settings.gen.hpp of the plugin.
@@ -151,6 +151,8 @@ if(SB_BUILD_TESTS)
         endif()
         add_test(NAME ${test} COMMAND test_${test})
     endforeach()
+    # DEFLATE members with zlib's raw inflate in place of the game's tinfl.
+    target_link_libraries(test_ram_prefetch PRIVATE sb_zlib)
     # The mimalloc heap functions without the import slots (SB_MIMALLOC_TEST: InitMimallocForTest).
     add_executable(test_mimalloc_heap tests/test_mimalloc_heap.cpp src/modules/mimalloc_heap.cpp src/benchmark.cpp
         src/common.cpp src/settings.cpp)

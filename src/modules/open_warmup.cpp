@@ -20,6 +20,7 @@
 #include "modules.hpp"
 
 #include "access_profile.hpp"
+#include "open_warmup_core.hpp"
 
 #include <memory>
 #include <string>
@@ -28,16 +29,12 @@
 namespace {
 
 namespace profile = sb::profile;
+namespace warmup = sb::warmup;
 
 constexpr std::size_t kLearnCapacity = 65536;
-constexpr std::size_t kPathChars = 259;
 
 using CreateFileWFn = HANDLE(WINAPI*)(LPCWSTR, DWORD, DWORD, LPSECURITY_ATTRIBUTES, DWORD, DWORD, HANDLE);
-
-struct LearnRecord {
-    volatile LONG done;
-    wchar_t path[kPathChars + 1];
-};
+using warmup::LearnRecord;
 
 std::vector<std::wstring>* g_paths = nullptr;
 volatile LONG g_next = 0;
@@ -76,15 +73,10 @@ extern "C" HANDLE WINAPI SB_LearnCreateFileW(LPCWSTR path, DWORD access, DWORD s
                                              DWORD disposition, DWORD flags, HANDLE templateFile) {
     const HANDLE result = g_realCreateFileW(path, access, share, security, disposition, flags, templateFile);
     const DWORD error = GetLastError();
-    if (result != INVALID_HANDLE_VALUE && path != nullptr && access == GENERIC_READ && disposition == OPEN_EXISTING &&
-        InterlockedCompareExchange(&g_learnStopped, 0, 0) == 0) {
+    if (warmup::Recorded(result, path, access, disposition) && InterlockedCompareExchange(&g_learnStopped, 0, 0) == 0) {
         const LONG index = InterlockedIncrement(&g_learnNext) - 1;
         if (index >= 0 && static_cast<std::size_t>(index) < kLearnCapacity) {
-            LearnRecord& r = g_learn[index];
-            std::size_t length = 0;
-            for (; length < kPathChars && path[length] != L'\0'; ++length) r.path[length] = path[length];
-            r.path[length] = L'\0';
-            if (path[length] == L'\0') InterlockedExchange(&r.done, 1);  // truncated paths are dropped
+            warmup::Record(g_learn[index], path);
             sb::Increment(&EU4SB_OpenWarmupLearn.requests);
         } else {
             sb::Increment(&EU4SB_OpenWarmupLearn.skips);
@@ -105,13 +97,10 @@ DWORD WINAPI Worker(LPVOID) {
             sb::Increment(&EU4SB_OpenWarmupStats.skips);
             continue;
         }
-        HANDLE file = CreateFileW((*g_paths)[static_cast<std::size_t>(index)].c_str(), GENERIC_READ,
-                                  FILE_SHARE_READ | FILE_SHARE_WRITE, nullptr, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, nullptr);
-        if (file == INVALID_HANDLE_VALUE) {
-            sb::Increment(&EU4SB_OpenWarmupStats.misses);
-        } else {
-            CloseHandle(file);
+        if (warmup::OpenAhead((*g_paths)[static_cast<std::size_t>(index)])) {
             sb::Increment(&EU4SB_OpenWarmupStats.hits);
+        } else {
+            sb::Increment(&EU4SB_OpenWarmupStats.misses);
         }
     }
     if (InterlockedDecrement(&g_running) == 0) {
@@ -154,19 +143,11 @@ DWORD WINAPI Starter(LPVOID) {
         const std::wstring dir = *g_dataDir + L"\\profiles";
         CreateDirectoryW(dir.c_str(), nullptr);
         auto* target = new std::wstring(dir + L"\\" + profile::ProfileKey(g_buildId, json) + L".txt");
-        std::string text;
         std::vector<std::wstring> lines;
-        LONG source = 0;
-        if (profile::ReadWhole(*target, text) && !(lines = profile::ParseList(text)).empty()) {
-            source = 1;
-        } else {
-            std::string base;
-            const std::wstring basePath = *g_pluginDir + L"\\profiles\\" + profile::Widen(g_buildId) + L".txt";
-            const bool hasBase = profile::ReadWhole(basePath, base) && !(lines = profile::ParseList(base)).empty();
-            const auto mods = profile::BuildAllList(*g_gameDir, user, profile::ParseEnabledMods(json), hasBase);
-            lines.insert(lines.end(), mods.begin(), mods.end());
-            source = hasBase ? 2 : 3;
-        }
+        const std::wstring basePath = *g_pluginDir + L"\\profiles\\" + profile::Widen(g_buildId) + L".txt";
+        const LONG source = warmup::ChooseList(*target, basePath, [&](bool skipGame) {
+            return profile::BuildAllList(*g_gameDir, user, profile::ParseEnabledMods(json), skipGame);
+        }, lines);
         for (const auto& line : lines) g_paths->push_back(profile::FromStored(line, *g_gameDir));
         InterlockedExchangePointer(reinterpret_cast<void* volatile*>(&g_profileTarget), target);
         InterlockedExchange(&g_listSource, source);
@@ -224,13 +205,8 @@ void FinishOpenWarmup() {
     InterlockedExchange(&g_learnStopped, 1);
     Sleep(200);  // let calls that claimed a row finish writing it
     const LONG claimed = InterlockedCompareExchange(&g_learnNext, 0, 0);
-    const std::size_t count = static_cast<std::size_t>(claimed) < kLearnCapacity ? static_cast<std::size_t>(claimed) : kLearnCapacity;
     try {
-        std::vector<std::wstring> paths;
-        paths.reserve(count);
-        for (std::size_t index = 0; index < count; ++index) {
-            if (g_learn[index].done) paths.emplace_back(g_learn[index].path);
-        }
+        const auto paths = warmup::RecordedPaths(g_learn, claimed, kLearnCapacity);
         std::string previousText;
         std::vector<std::wstring> previous;
         if (profile::ReadWhole(*g_profileTarget, previousText)) previous = profile::ParseList(previousText);

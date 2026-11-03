@@ -30,6 +30,7 @@
 #include "modules.hpp"
 
 #include "access_profile.hpp"
+#include "ram_prefetch_core.hpp"
 #include "zip_reader.hpp"
 
 #include <atomic>
@@ -45,6 +46,7 @@
 namespace {
 
 namespace profile = sb::profile;
+namespace prefetch = sb::prefetch;
 
 std::uint64_t g_budgetBytes = 1024ULL << 20;  // set from config before install
 constexpr unsigned kWorkers = 8;
@@ -99,8 +101,6 @@ struct Buffer {
 };
 using BufferPtr = std::shared_ptr<const Buffer>;
 
-enum Status : int { Pending, Running, Ready, Failed, Taken, Abandoned };
-
 struct Archive {
     std::wstring path;
     std::once_flag scanOnce;
@@ -113,19 +113,14 @@ struct Archive {
 struct Member {
     std::size_t archive = 0;
     std::string name;
-    std::atomic<int> status{Pending};
+    std::atomic<int> status{prefetch::Pending};
     BufferPtr buffer;  // guarded by Backend::mutex
 };
 
-struct Backend {
+struct Backend : prefetch::Budget {
     std::vector<std::unique_ptr<Archive>> archives;
     std::vector<std::unique_ptr<Member>> members;  // first-use order
     std::unordered_map<std::string, std::size_t> index;  // "<archive key>\n<member>"
-    std::mutex mutex;
-    std::condition_variable budgetCv;
-    std::uint64_t committed = 0;
-    std::uint64_t committedPeak = 0;
-    std::atomic<bool> stopping{false};
     volatile LONG next = 0;
     std::vector<HANDLE> threads;
 };
@@ -186,24 +181,6 @@ bool Inflate(const std::uint8_t* input, std::size_t inputSize, std::uint8_t* out
     return status == 0 && in == inputSize && out == outputSize;  // TINFL_STATUS_DONE
 }
 
-void Release(Backend& b, std::uint64_t bytes) {
-    {
-        std::lock_guard<std::mutex> lock(b.mutex);
-        b.committed -= bytes;
-    }
-    b.budgetCv.notify_all();
-}
-
-bool Reserve(Backend& b, std::uint64_t bytes) {
-    if (bytes > g_budgetBytes) return false;
-    std::unique_lock<std::mutex> lock(b.mutex);
-    b.budgetCv.wait(lock, [&] { return b.stopping.load() || b.committed + bytes <= g_budgetBytes; });
-    if (b.stopping.load()) return false;
-    b.committed += bytes;
-    if (b.committed > b.committedPeak) b.committedPeak = b.committed;
-    return true;
-}
-
 void Scan(Archive& a) {
     a.file = CreateFileW(a.path.c_str(), GENERIC_READ, FILE_SHARE_READ | FILE_SHARE_DELETE, nullptr, OPEN_EXISTING,
                          FILE_ATTRIBUTE_NORMAL, nullptr);
@@ -219,10 +196,9 @@ void Prefetch(Backend& b, Member& m) {
     Archive& a = *b.archives[m.archive];
     std::call_once(a.scanOnce, [&a] { Scan(a); });
     const auto found = a.valid ? a.entries.find(m.name) : a.entries.end();
-    int running = Running;
     if (found == a.entries.end() || found->second.unsupported || found->second.duplicate ||
-        !Reserve(b, found->second.uncompressedSize)) {
-        m.status.compare_exchange_strong(running, Failed);
+        !prefetch::Reserve(b, found->second.uncompressedSize, g_budgetBytes)) {
+        prefetch::Publish(m.status, false, false);
         InterlockedIncrement64(&g_failed);
         return;
     }
@@ -242,19 +218,15 @@ void Prefetch(Backend& b, Member& m) {
     bool published = false;
     {
         std::lock_guard<std::mutex> lock(b.mutex);
-        if (ok && !b.stopping.load() && m.status.compare_exchange_strong(running, Ready)) {
-            m.buffer = std::move(buffer);
-            published = true;
-        }
+        published = prefetch::Publish(m.status, ok, b.stopping.load());
+        if (published) m.buffer = std::move(buffer);
     }
     if (published) {
         sb::Increment(&EU4SB_RamPrefetchStats.duplicateKeys);
         InterlockedExchangeAdd64(&g_bytesPrefetched, static_cast<LONG64>(meta.uncompressedSize));
     } else {
-        running = Running;
-        m.status.compare_exchange_strong(running, Failed);  // an Abandoned member stays Abandoned
         if (!ok) InterlockedIncrement64(&g_failed);
-        Release(b, meta.uncompressedSize);
+        prefetch::Release(b, meta.uncompressedSize);
     }
 }
 
@@ -268,8 +240,7 @@ DWORD WINAPI Worker(LPVOID) {
         const LONG index = InterlockedIncrement(&b.next) - 1;
         if (index >= count) break;
         Member& m = *b.members[static_cast<std::size_t>(index)];
-        int pending = Pending;
-        if (!m.status.compare_exchange_strong(pending, Running)) continue;  // abandoned before we got here
+        if (!prefetch::Claim(m.status)) continue;  // abandoned before we got here
         Prefetch(b, m);
     }
     t_tinflState = nullptr;
@@ -290,18 +261,12 @@ BufferPtr Take(const std::string& archiveKey, const char* member) {
     BufferPtr buffer;
     {
         std::lock_guard<std::mutex> lock(b->mutex);
-        int ready = Ready;
-        if (m.status.compare_exchange_strong(ready, Taken)) buffer = std::move(m.buffer);
+        // Not ready: Take drops it from the queue (or discards the running read) so no work is wasted.
+        if (prefetch::Take(m.status)) buffer = std::move(m.buffer);
     }
     if (buffer) {
-        Release(*b, buffer->size);  // owned by the game's Io from now on
+        prefetch::Release(*b, buffer->size);  // owned by the game's Io from now on
         return buffer;
-    }
-    // Not ready: drop it from the queue (or discard the running decode) so no work is wasted.
-    int pending = Pending;
-    if (!m.status.compare_exchange_strong(pending, Abandoned)) {
-        int running = Running;
-        m.status.compare_exchange_strong(running, Abandoned);
     }
     sb::Increment(&EU4SB_RamPrefetchStats.misses);
     return nullptr;
@@ -352,15 +317,13 @@ Io* Wrap(Io* real, BufferPtr buffer, bool verify);
 std::int64_t WRead(Io* io, void* destination, std::uint64_t length) {
     Wrapped* w = W(io);
     if (!w->buffer) return w->real->read(w->real, destination, length);
-    const std::uint64_t available = w->buffer->size - w->position;
-    const std::uint64_t count = length < available ? length : available;
+    const std::uint64_t count = prefetch::ReadCount(w->buffer->size, w->position, length);
     if (w->verify) {
         const DWORD before = GetLastError();
         const std::int64_t n = w->real->read(w->real, destination, length);
         const DWORD after = GetLastError();
         sb::Increment(&EU4SB_RamPrefetchStats.verifications);
-        if (n != static_cast<std::int64_t>(count) ||
-            (count != 0 && std::memcmp(destination, w->buffer->bytes.get() + w->position, static_cast<std::size_t>(count)) != 0)) {
+        if (!prefetch::SameRead(n, destination, w->buffer->bytes.get(), w->position, count)) {
             sb::Increment(&EU4SB_RamPrefetchStats.mismatches);
             Disable();
             w->buffer.reset();  // the original's bytes are already in the caller's buffer
@@ -485,10 +448,10 @@ extern "C" Io* SB_ZipOpenRead(void* archive, const char* name) {
                 sb::Increment(&EU4SB_RamPrefetchStats.requests);
                 Learn(opened.stored, member);
                 if (BufferPtr buffer = Take(opened.key, member)) {
-                    if (buffer->meta.method != sb::Read<std::uint16_t>(entry, g_offMethod) ||
-                        buffer->meta.crc32 != sb::Read<std::uint32_t>(entry, g_offCrc) ||
-                        buffer->meta.compressedSize != sb::Read<std::uint64_t>(entry, g_offCompressed) ||
-                        buffer->meta.uncompressedSize != sb::Read<std::uint64_t>(entry, g_offUncompressed)) {
+                    if (!prefetch::SameEntry(buffer->meta, sb::Read<std::uint16_t>(entry, g_offMethod),
+                                             sb::Read<std::uint32_t>(entry, g_offCrc),
+                                             sb::Read<std::uint64_t>(entry, g_offCompressed),
+                                             sb::Read<std::uint64_t>(entry, g_offUncompressed))) {
                         sb::Increment(&EU4SB_RamPrefetchStats.mismatches);
                         Disable();
                     } else {
@@ -544,16 +507,16 @@ DWORD WINAPI Starter(LPVOID) {
         std::unordered_map<std::wstring, std::size_t> archiveIndex;
         const std::wstring lowerGame = profile::Lower(*g_gameDir);
         for (const auto& line : lines) {
-            const std::size_t tab = line.find(L'\t');
-            if (tab == std::wstring::npos || tab == 0 || tab + 1 >= line.size()) continue;
-            const std::wstring key = LowerFull(profile::FromStored(line.substr(0, tab), lowerGame));
+            std::wstring storedArchive, storedMember;
+            if (!prefetch::SplitLine(line, storedArchive, storedMember)) continue;
+            const std::wstring key = LowerFull(profile::FromStored(storedArchive, lowerGame));
             auto [slot, added] = archiveIndex.emplace(key, backend->archives.size());
             if (added) {
                 auto archive = std::make_unique<Archive>();
                 archive->path = key;
                 backend->archives.push_back(std::move(archive));
             }
-            const std::string member = profile::Narrow(line.substr(tab + 1));
+            const std::string member = profile::Narrow(storedMember);
             if (!backend->index.emplace(profile::Narrow(key) + "\n" + member, backend->members.size()).second) continue;
             auto m = std::make_unique<Member>();
             m->archive = slot->second;
@@ -633,20 +596,16 @@ void FinishRamPrefetch() {
     g_learnStopped.store(true);
     if (g_profileTarget == nullptr) return;
     try {
-        std::vector<std::wstring> merged;
+        std::vector<std::wstring> learned;
         {
             std::lock_guard<std::mutex> lock(g_learnMutex);
-            merged = *g_learned;
+            learned = *g_learned;
         }
-        if (merged.empty()) return;
-        std::unordered_set<std::wstring> seen(merged.begin(), merged.end());
+        if (learned.empty()) return;
         std::string previousText;
-        if (profile::ReadWhole(*g_profileTarget, previousText)) {
-            for (auto& line : profile::ParseList(previousText)) {
-                if (merged.size() >= kMaxProfileEntries) break;
-                if (seen.insert(line).second) merged.push_back(std::move(line));
-            }
-        }
+        std::vector<std::wstring> previous;
+        if (profile::ReadWhole(*g_profileTarget, previousText)) previous = profile::ParseList(previousText);
+        const auto merged = prefetch::MergeProfile(std::move(learned), std::move(previous), kMaxProfileEntries);
         if (!profile::WriteList(*g_profileTarget, merged)) Log(ANVIL_LOG_WARNING, "ram_prefetch: profile NOT saved");
     } catch (...) {
         Log(ANVIL_LOG_WARNING, "ram_prefetch: profile NOT saved");

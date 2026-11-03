@@ -138,7 +138,12 @@ format change.
   Startup Boost, `bellows.dll` loaded against a stand-in host
   (`test_plugin_load`, with the benchmark service) and `anvil check plugin`
   (`symbols_lock`). `verifypath_listing` and `exists_index` are tested on real
-  folders (with a junction), apart from their hooks.
+  folders (with a junction), apart from their hooks. `open_warmup` is tested on
+  real folders too (the list a start chooses, the opens it learns, the open
+  ahead of the game), and `ram_prefetch` without the game (the budget with
+  waiting workers, a member's states when the game opens it first, reads served
+  from a buffer, DEFLATE members with zlib in place of the game's `tinfl`).
+  `attr_cache`, off by default, has its path rules tested, not its hooks.
 - In-game validation with the lab harness: start-up series against vanilla,
   game logs compared, save loading checked, and `"verify"` sessions for the
   modules that replace a game computation (start-up and simulation). What
