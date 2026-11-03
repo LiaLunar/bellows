@@ -1,9 +1,9 @@
-**Your game starts in about 12 seconds instead of 39. The forge gets hot sooner.**
+**Your game starts in about 13 seconds instead of 41. The forge gets hot sooner.**
 
 Bellows makes EU4 reach the main menu much sooner and lets the years pass a little faster at speed 5. Your game stays exactly the same: Bellows only helps it do its work quicker.
 
 ## What you get
-- **A much shorter start:** about 12 seconds instead of 39 on our test machine (10 mods). Big mod sets gain the most: Anbennar went from about 85 seconds to about 22.
+- **A much shorter start:** about 13 seconds instead of 41 on our test machine (10 mods). Big mod sets gain the most: Anbennar went from about 85 seconds to about 22.
 - **Faster years at speed 5:** a year passes about 10% sooner, and the game still answers every click at once.
 - **Quicker compressed autosaves,** with the same file the game would write.
 - **Safe to keep on:** no game files change, so ironman achievements stay available, and the rules stay the game's own, so multiplayer stays in sync.
