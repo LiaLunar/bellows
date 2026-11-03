@@ -37,27 +37,34 @@ see [Updating from EU4 Startup Boost](#updating-from-eu4-startup-boost).
 
 EU4 1.37.5 (Steam, Windows 64-bit, 10 UI/graphics/music mods), warm start to
 the main menu (`Running application` in `system.log`), original `eu4.exe`,
-Anvil 1.5.0 and Bellows 0.10.0 from the release files, Bellows with default
-settings and the profiles it learned on an earlier start, 3 interleaved
-starts each, every start only after no other program had used the processor
-for 15 seconds:
+Anvil 1.8.0 and Bellows 0.19.0 from the release files (checksums and build
+attestations checked), Bellows with default settings and the profiles it
+learned on an earlier start, 5 interleaved starts each with the order turned
+every round, 3 November 2026:
 
 | Setup | Starts | Median |
 | --- | --- | ---: |
-| Anvil without plugins | 39.24 / 38.68 / 38.44 s | 38.68 s |
-| Anvil + anvil-game | 39.74 / 39.22 / 39.51 s | 39.51 s |
-| Anvil + anvil-game + Bellows 0.10.0 | 12.79 / 12.24 / 12.28 s | **12.28 s** |
+| Anvil without plugins | 40.99 / 39.73 / 40.81 / 47.69 s | 40.90 s |
+| Anvil + anvil-game | 41.36 / 40.63 / 40.48 / 40.80 / 46.91 s | 40.80 s |
+| Anvil + anvil-game + Bellows 0.19.0 | 12.76 / 12.49 / 12.47 / 13.31 / 12.81 s | **12.76 s** |
 
-Bellows needs the standard plugin anvil-game, which on its own made no clear
-difference (the ranges overlap). The very first start, with the profile
-shipped in the release, took 12.80 s. Starts on the same day while other
-programs were busy took 40–46 s without Bellows and 12.8–13.6 s with it;
-they are left out of the table.
+So about 28 s less, a start a little over three times as fast. Bellows needs
+the standard plugin anvil-game, which on its own made no difference. One
+start without plugins (55.05 s) ran while a build used the same processor
+and is left out; the fifth round without Bellows (46.91 s and 47.69 s) was
+slower for a reason not found and is kept. Unlike the 0.10.0 series, the
+starts did not wait for an idle processor. The first start with the profile
+shipped in the release was not timed cleanly in this series.
 
-The game's `setup.log`, `error.log` and `system.log` were byte for byte the
-same in all 31 starts of that day, with and without Bellows. With default settings
-the modules also compare a sample of their answers with the game's own code
-(about 45,700 comparisons per start): 0 differences.
+The game's `setup.log`, `error.log` and `system.log` were the same, apart
+from times and counts, in every round with and without Bellows. With default
+settings the modules also compare a sample of their answers with the game's
+own code (about 45,700 comparisons per start): 0 differences, and no module
+`FAILED`.
+
+Earlier: Bellows 0.10.0 on Anvil 1.5.0 (October 2026, 3 starts each, every
+start after 15 s of an idle processor) took 12.28 s against 39.51 s with
+anvil-game alone.
 
 ### A big mod set: Anbennar
 

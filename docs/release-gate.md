@@ -51,7 +51,7 @@ Measured on Bellows 0.18.0 with default settings, EU4 1.37.5 (Steam), the lab pl
 | Memory held by `ram_prefetch` during start-up | `ram_prefetch_budget_mb` (1024 MB) | peak 1023 of 1024 MB | `ram_prefetch: … peak not yet taken …` |
 | Process commit after the ready collect | not set | 3733 / 3808 / 3863 MiB | `commit … -> … MiB` |
 | Answers compared with the game's | 0 mismatches | 0 | every module's counters |
-| Start-up against Anvil + anvil-game without Bellows | not slower | 12.28 s against 39.51 s (0.10.0, README) | Benchmark tab or lab series |
+| Start-up against Anvil + anvil-game without Bellows | not slower | 12.76 s against 40.80 s (0.19.0 on Anvil 1.8.0, README) | Benchmark tab or lab series |
 | A game year at speed 5 with the default simulation modules | not slower than all of them `off` | per module in the README | SIMULATION series |
 
 Not measured yet, so without a budget: the process commit without Bellows at the same
