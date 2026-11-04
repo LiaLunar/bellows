@@ -11,19 +11,15 @@ Bellows makes EU4 reach the main menu much sooner and lets the years pass a litt
 
 ![](https://i.imgur.com/Uf8Z21n.png)
 
-## Before you subscribe
-- **[Anvil](https://anvil.happydwarf.dev/) 1.7 or newer** must be installed in the game folder. Get it from [anvil.happydwarf.dev](https://anvil.happydwarf.dev/) and press Download. The Workshop can't install it for you: a dwarf has to carry it in by hand, once.
-- **EU4 1.37.5** (Steam, Windows; the GOG build 1.37.5.2 works too, see the FAQ). On any other version Bellows politely stays out of the way and the game starts as usual.
+## Install
+Bellows runs on EU4 1.37.5 (Steam, Windows; the GOG build 1.37.5.2 too, see the FAQ). On any other version it politely stays out of the way and the game starts as usual.
 
-![](https://i.imgur.com/Uf8Z21n.png)
+1. **Install [Anvil](https://anvil.happydwarf.dev/) 1.7 or newer.** Download it, run it and click **Install Anvil**. If Windows warns, choose **More info**, then **Run anyway**. You do this once; the Workshop can't do it for you.
+2. **Subscribe** and enable Bellows in your playset.
+3. **Start the game.** Anvil says a plugin is waiting: press **Ctrl+Shift+F12**, open **Mods** and approve Bellows.
+4. **Restart the game.** Enjoy the shorter wait.
 
-## Getting it running
-1. Subscribe and enable Bellows in your playset.
-2. Start the game. Anvil will tell you a new plugin is waiting.
-3. Press **Ctrl+Shift+F12**, open **Mods** and approve Bellows. You can also approve it before playing, in Anvil Manager.
-4. Restart. Enjoy the shorter wait.
-
-Anvil asks again after every update. Until you approve, the version you trusted before keeps working.
+Anvil asks again after an update; the version you approved keeps working until then.
 
 ![](https://i.imgur.com/Uf8Z21n.png)
 
@@ -52,13 +48,12 @@ Keep Steam running and leave the computer alone while it works: about ten minute
 ![](https://i.imgur.com/Uf8Z21n.png)
 
 ## More from Happy Dwarf Team
-- **[Anvil](https://anvil.happydwarf.dev/)**: the free loader that lets plugins like Bellows into EU4, with a Manager to approve them, keep them updated and measure what they give you.
+- **[Anvil](https://anvil.happydwarf.dev/)**: the free loader that lets plugins like Bellows into EU4, with a Manager to approve and update them.
 - **[Hamweard](https://steamcommunity.com/sharedfiles/filedetails/?id=3832650792)**: and once you play, Exit to Menu takes you back to the main menu without a restart.
+- **[Mei](https://steamcommunity.com/sharedfiles/filedetails/?id=3832685486)**: Chinese, Japanese and Korean text in EU4, for the translation mod of your choice.
 - **[Tongs](https://steamcommunity.com/sharedfiles/filedetails/?id=3826695093)**: for mod testers and tool makers, let your scripts and AI agents see the game and press its buttons.
 - **[Etch](https://etch.happydwarf.dev/)**: for interface modders, see your `.gui` window as the game draws it, right in VS Code.
 - Everything we make: [happydwarf.dev](https://happydwarf.dev/)
-
-![](https://i.imgur.com/Uf8Z21n.png)
 
 ### Alternative download
 [GitHub](https://github.com/happy-dwarf-team/bellows), also for the GOG build.
@@ -71,10 +66,10 @@ Keep Steam running and leave the computer alone while it works: about ten minute
 Bellows is a real program running inside your game, not just a pile of text files. Anvil makes sure nothing like that runs without your nod. Trust, but verify. Dwarf law.
 
 ### My game didn't get any faster.
-Some of Bellows' tricks learn what your mod set needs during one start and pay off from the next, so give it two runs. Still slow? The **Mods** tab in Anvil's panel tells you if Bellows was skipped and why. For a fair number, run the benchmark from **Measure it yourself** above and attach the report to a [performance report](https://github.com/happy-dwarf-team/bellows/issues/new?template=performance_report.yml).
+Some of Bellows' tricks learn what your mod set needs during one start and pay off from the next, so give it two runs. Still slow? The **Mods** tab in Anvil's panel tells you if Bellows was skipped and why. For a fair number, run the benchmark from **Measure it yourself** above.
 
 ### Does it work with big overhaul mods?
-Yes. It doesn't care what your mods contain, it only helps the game read them faster. Bigger mod sets usually gain the most: on our test machine, Anbennar with Proper 2K UI Enhanced and its patch went from about 85 seconds to about 22.
+Yes. It doesn't care what your mods contain, it only helps the game read them faster. Bigger mod sets usually gain the most: on our test machine, Anbennar with Proper 2K UI Enhanced went from about 85 seconds to about 22.
 
 ### Will it break my saves or my achievements?
 No. It changes how fast the game starts and runs, not what the game does. When the game compresses a save, Bellows writes exactly the file the game would write, byte for byte (unless you turn on parallel save compression, which packs the same save a little differently).
