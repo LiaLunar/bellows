@@ -259,13 +259,26 @@ release.
 
 ## Install / uninstall
 
-Install [Anvil](https://github.com/happy-dwarf-team/anvil#install--uninstall)
-1.7 or newer first (it includes the `anvil-game` plugin Bellows needs). Then
-download `bellows-windows-x64.zip` from the
-[latest release](https://github.com/happy-dwarf-team/bellows/releases/latest)
-and extract it into `<EU4>/anvil/plugins/`; it contains the `bellows`
-folder (`SHA256SUMS.txt` next to the archive holds its checksum). Delete that
-folder to uninstall.
+[Install Anvil](https://anvil.happydwarf.dev/docs/install/) 1.7 or newer first
+(it includes the `anvil-game` plugin Bellows needs). Then get Bellows in one of
+these ways:
+
+- **Anvil Manager:** click **Install** next to Bellows on the **Catalog** tab
+  (Anvil 1.9 or newer; Steam and GOG). To uninstall, click **Remove** on the
+  **Plugins** tab.
+- **Steam Workshop:** subscribe to
+  [Bellows](https://steamcommunity.com/sharedfiles/filedetails/?id=3823747170),
+  enable it in your playset, and approve it on the Manager's **Mods** tab or in
+  the Anvil panel in the game (`Ctrl+Shift+F12`). It loads from the next start.
+  To uninstall, unsubscribe.
+- **By hand:** download `bellows-windows-x64.zip` from the
+  [latest release](https://github.com/happy-dwarf-team/bellows/releases/latest)
+  and extract it into `<EU4>/anvil/plugins/`; it contains the `bellows` folder
+  (`SHA256SUMS.txt` next to the archive holds its checksum). Delete that folder
+  to uninstall.
+
+If something does not work, see
+[Troubleshooting](https://anvil.happydwarf.dev/docs/troubleshooting/).
 
 ### Updating from EU4 Startup Boost
 
