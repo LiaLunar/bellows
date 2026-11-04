@@ -4,6 +4,7 @@
 // PhysFS side.
 #include <windows.h>
 
+#include <cstdint>
 #include <cstring>
 #include <memory>
 #include <string>
@@ -17,10 +18,20 @@ struct Listing {
     bool usable = false;
     bool missing = false;  // the directory itself does not exist
     std::unordered_map<std::string, Kind> names;  // upper-cased ASCII names
+    std::uint64_t readAtMs = 0;  // GetTickCount64 when it was read
 };
+
+// verifypath_session = "on": after the game is ready a listing is read again once it is this old, so a file
+// added to or removed from a game or mod folder during a session counts after at most this long.
+inline constexpr std::uint64_t kSessionListingMs = 30000;
+
+inline bool Expired(const Listing& listing, std::uint64_t nowMs) noexcept {
+    return nowMs - listing.readAtMs >= kSessionListingMs;
+}
 
 inline std::shared_ptr<const Listing> ReadListing(const std::wstring& directory) {
     auto listing = std::make_shared<Listing>();
+    listing->readAtMs = GetTickCount64();
     const std::wstring pattern = directory + L"\\*";
     WIN32_FIND_DATAW data{};
     HANDLE find = FindFirstFileExW(pattern.c_str(), FindExInfoBasic, &data, FindExSearchNameMatch, nullptr,

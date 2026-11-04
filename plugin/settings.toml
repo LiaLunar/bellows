@@ -26,6 +26,15 @@ description = "Answers PhysFS path checks from directory listings."
 group = "Start-up"
 restart = true
 
+[setting.verifypath_session]
+type = "enum"
+values = [{ name = "off", label = "Off" }, { name = "on", label = "On" }]
+default = "on"
+label = "PhysFS path checks after start-up"
+description = "Loading: keeps answering PhysFS path checks from directory listings after the main menu is up (used while verifypath_listing is on), so loading a save finds its textures about 1.8 s sooner. A listing is read again once it is 30 s old."
+group = "Loading"
+restart = true
+
 [setting.exists_index]
 type = "enum"
 values = [{ name = "on", label = "On" }, { name = "off", label = "Off" }, { name = "verify", label = "Verify" }]

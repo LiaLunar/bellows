@@ -15,14 +15,23 @@
 // verifyPath's purposes: existing directory/junction -> rc 1, filetype 1;
 // existing file -> rc 1, filetype 0; missing name or directory -> rc 0 with
 // PHYSFS_setErrorCode(0xb). Symbolic links, other reparse points, unusual
-// spellings, non-directory archives, unreadable listings, a disabled module
-// and anything after the game is ready go to the original stat. Every 256th
-// answer is compared with the original; a disagreement disables the module
-// ("verify" mode compares every answer). Assumes game and mod files do not
-// change while the game starts.
+// spellings, non-directory archives, unreadable listings and a disabled module
+// go to the original stat, and so does anything after the game is ready unless
+// verifypath_session = "on". Every 256th answer is compared with the original;
+// a disagreement disables the module ("verify" mode compares every answer).
+// Assumes game and mod files do not change while the game starts.
+//
+// verifypath_session = "on" (on by default since 1.2) keeps the module past the ready
+// event: loading a save or starting a game makes the game look for thousands
+// of textures in every mod, and each look stats every prefix in every search
+// path (lab docs: docs/autosave-cost.md, "Co zostaje w Continue"). After the
+// ready event a listing older than 30 s is read again, so a file added to a
+// game or mod folder during a session counts after at most 30 s. The counters
+// after the ready event go to verifypath_listing.tsv every 5 s.
 #include "modules.hpp"
 #include "verifypath_listing_core.hpp"
 
+#include <fstream>
 #include <memory>
 #include <string>
 #include <unordered_map>
@@ -60,6 +69,9 @@ SRWLOCK g_lock = SRWLOCK_INIT;
 std::unordered_map<std::wstring, std::shared_ptr<const Listing>>* g_listings = nullptr;
 volatile LONG64 g_answerSequence = 0;
 bool g_verifyAll = false;
+bool g_session = false;  // verifypath_session
+std::wstring* g_dir = nullptr;
+constexpr DWORD kWriteEveryMs = 5000;
 
 }  // namespace
 
@@ -79,13 +91,13 @@ std::shared_ptr<const Listing> GetListing(const std::wstring& directory) {
     auto found = g_listings->find(directory);
     if (found != g_listings->end()) existing = found->second;
     ReleaseSRWLockShared(&g_lock);
-    if (existing) return existing;
+    if (existing && !(g_session && sb::ReadyReached() && sb::verifypath::Expired(*existing, GetTickCount64()))) return existing;
     std::shared_ptr<const Listing> fresh = ReadListing(directory);
     sb::Increment(&EU4SB_VerifyPathStats.duplicateKeys);
     AcquireSRWLockExclusive(&g_lock);
     std::shared_ptr<const Listing> result;
     try {
-        result = g_listings->emplace(directory, fresh).first->second;
+        result = existing ? ((*g_listings)[directory] = fresh) : g_listings->emplace(directory, fresh).first->second;
     } catch (...) {
         result = fresh;
     }
@@ -108,11 +120,38 @@ Answer Decide(const char* root, const char* name, Kind& kind) {
 bool Disabled() noexcept {
     if (InterlockedCompareExchange(&EU4SB_VerifyPathStats.cacheDisabled, 0, 0) != 0) return true;
     if (InterlockedCompareExchange(&EU4SB_VerifyPathStats.readyDisabled, 0, 0) != 0) return true;
-    if (sb::ReadyReached()) {
+    if (!g_session && sb::ReadyReached()) {
         InterlockedExchange(&EU4SB_VerifyPathStats.readyDisabled, 1);
         return true;
     }
     return false;
+}
+
+void WriteFile() {
+    const sb::Stats& s = EU4SB_VerifyPathStats;
+    try {
+        const std::wstring path = *g_dir + L"\\verifypath_listing.tsv";
+        const std::wstring temp = path + L".tmp";
+        {
+            std::ofstream out(temp, std::ios::binary | std::ios::trunc);
+            out << "requests\texists\tnot_found\tto_game\tlistings\tverifications\tmismatches\tdisabled\n"
+                << s.requests << "\t" << s.hits << "\t" << s.misses << "\t" << s.skips << "\t" << s.duplicateKeys << "\t"
+                << s.verifications << "\t" << s.mismatches << "\t" << s.cacheDisabled << "\n";
+        }
+        MoveFileExW(temp.c_str(), path.c_str(), MOVEFILE_REPLACE_EXISTING);
+    } catch (...) {
+    }
+}
+
+DWORD WINAPI WriterThread(void*) {
+    LONG64 written = -1;
+    for (;;) {
+        Sleep(kWriteEveryMs);
+        if (sb::ReadyReached() && EU4SB_VerifyPathStats.requests != written) {
+            written = EU4SB_VerifyPathStats.requests;
+            WriteFile();
+        }
+    }
 }
 
 }  // namespace
@@ -174,6 +213,8 @@ extern "C" int SB_VerifyPathStat(void* opaque, const char* name, void* statOut, 
 
 namespace sb {
 
+void SetVerifyPathSession(bool on) noexcept { g_session = on; }
+
 bool InstallVerifyPathListing(anvil::Host& host, Mode mode) {
     if (mode == Mode::Off) return false;
     g_setError = host.function(sym::physfs_set_error_code);
@@ -181,6 +222,7 @@ bool InstallVerifyPathListing(anvil::Host& host, Mode mode) {
     g_getWriteDir = host.function(sym::physfs_get_write_dir);
     try {
         g_listings = new std::unordered_map<std::wstring, std::shared_ptr<const Listing>>();
+        g_dir = new std::wstring(host.data_dir().wstring());
     } catch (...) {
         return false;
     }
@@ -200,6 +242,14 @@ bool InstallVerifyPathListing(anvil::Host& host, Mode mode) {
         }).release();  // kept for the process
     InterlockedExchange(&EU4SB_VerifyPathStats.mode, 1);
     InterlockedExchange(&EU4SB_VerifyPathStats.initialized, 1);
+    if (g_session) {
+        HANDLE thread = CreateThread(nullptr, 0, WriterThread, nullptr, 0, nullptr);
+        if (thread != nullptr) {
+            SetThreadDescription(thread, L"bellows verifypath_listing writer");
+            CloseHandle(thread);
+        }
+        Log(ANVIL_LOG_INFO, "verifypath_listing: also after the game is ready, listings at most 30 s old");
+    }
     return true;
 }
 

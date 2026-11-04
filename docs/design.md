@@ -784,6 +784,23 @@ Not run: hosted multiplayer (the module leaves it alone; a host in the game
 needs the user present), a client, ironman and cloud saves. Compressed saves are
 not affected.
 
+### verifypath_session (loading)
+
+`verifypath_listing` stopped at the ready event, because its answers rest on game and mod files not
+changing. Loading a save builds the in-game interface, and that looks up thousands of textures: in the lab's
+profile of "Continue" (1821 save, 10 mods) more than half of the last 3 s of an 8.6 s load were PhysFS
+stat calls, about 225,000 of them through `verifyPath`.
+
+`verifypath_session = "on"` lets the module go on. After the ready event a listing older than 30 s is read
+again at its next use, so a file added or removed during a session counts after at most 30 s; a listing
+read during a load is fresh enough for that load. The write directory stays with the game as before, and every
+256th answer is still compared with the game's stat, which turns the module off on a difference.
+
+Lab ("verify" of `verifypath_listing`, every answer compared): 0 differences in the 648,000 answers of each
+session on the 1719 and 1821 saves (about 102,000 after the ready event), 92,000 on a vanilla save, and 653,000
+in a session that played on. Interleaved "Continue": 8.55 s without it, 6.79 s with it (README, "Loading a
+save"), `setup.log`, `error.log`, `system.log` and `game.log` the same apart from times and counts.
+
 ### tick_profile (diagnostic, simulation)
 
 Off by default. Where the daily tick spends its time, without a sampler.

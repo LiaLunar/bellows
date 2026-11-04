@@ -95,6 +95,13 @@ int main() {
     assert(!vp::IsWriteRoot("C:\\Games\\EU4\\", ""));
 
     fs::remove_all(base);
+    // A listing is good for 30 s after it was read (verifypath_session).
+    const auto fresh = vp::ReadListing(base.wstring());
+    assert(fresh->readAtMs != 0);
+    assert(!vp::Expired(*fresh, fresh->readAtMs));
+    assert(!vp::Expired(*fresh, fresh->readAtMs + vp::kSessionListingMs - 1));
+    assert(vp::Expired(*fresh, fresh->readAtMs + vp::kSessionListingMs));
+
     std::puts("verifypath_listing: ok");
     return 0;
 }

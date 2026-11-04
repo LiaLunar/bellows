@@ -31,7 +31,7 @@ else, a higher Anvil requirement) take `!` and a `BREAKING CHANGE:` paragraph;
 before 1.0.0 they bump the minor version, from 1.0.0 the major. What counts is
 the list in the README, [Compatibility](README.md#compatibility): the module
 settings and their values, `ram_prefetch_budget_mb`, `frame_pacing_*`,
-`save_compress_parallel` and the Anvil requirement. The diagnostics
+`save_compress_parallel`, `verifypath_session` and the Anvil requirement. The diagnostics
 (`zip_profile`, `token_dict_profile`, `range_profile`, `tick_profile`,
 `army_search_profile`, `score_probe`, `monthly_probe`), log lines, counters,
 Benchmark fields and `.tsv` files are outside it: changing them is a `feat`

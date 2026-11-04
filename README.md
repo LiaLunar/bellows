@@ -85,6 +85,26 @@ for Anbennar's large scripted effects and makes no difference on the 10-mod set
 above. The game's logs were the same in all five pairs of starts. The first
 start after a reboot was not measured on this mod set.
 
+### Loading a save
+
+"Continue" on the main menu until the game is ready, EU4 1.37.5 (Steam), original
+`eu4.exe`, Anvil 1.9.0, a build of Bellows from before 1.2 with default settings
+apart from the settings shown, each run a new start of the game, interleaved, 4 November 2026:
+
+| Save | Setup | Runs | Median (range) |
+| --- | --- | ---: | --- |
+| 1821, text, 64.5 MB, 10 mods | Bellows 1.1 defaults | 5 | 8.55 s (8.32–8.88) |
+| | + `verifypath_session` | 5 | 6.79 s (6.72–7.09) |
+| | + `history_add` as well | 5 | **6.27 s** (6.13–6.92) |
+| 1450, text, 40 MB, vanilla | Bellows 1.1 defaults | 3 | 4.43 s (4.28–4.86) |
+| | + both | 3 | **4.22 s** (4.15–4.40) |
+
+The game's `setup.log`, `error.log`, `system.log` and `game.log` were the same
+apart from times and counts, and so were the game's random count and its own
+values for three countries, the player and three provinces read after the load.
+A compressed save, a first load after a reboot, multiplayer and the GOG build were
+not timed.
+
 ### Measure your own
 
 Anvil Manager has a **Benchmark** tab (since Anvil 1.5)
@@ -105,7 +125,7 @@ about 1.5 s longer than the times above, which stop at `Running application`.
 | Module | What it does |
 | --- | --- |
 | `mimalloc` | Faster memory allocator for the game's C runtime until the main menu (`startup`, the default; later allocations use the Windows heap), or for the whole session (`on`, which made the simulation about 5% slower in the lab) |
-| `verifypath_listing` | Answers PhysFS path checks from directory listings |
+| `verifypath_listing` | Answers PhysFS path checks from directory listings. With `verifypath_session = "on"` (**loading, on by default since 1.2**) it goes on after the main menu is up, so loading a save finds its textures sooner; a listing is then read again once it is 30 s old. `verifypath_listing = "verify"` compares every answer, also after the main menu: 0 differences in about 650,000 answers on three saves. Lab: see [Loading a save](#loading-a-save) |
 | `exists_index` | Answers "does this file exist" for the modifier icon check |
 | `trigger_intern` | Faster trigger interning at the end of loading (~0.4 s instead of ~0.6 s for the game's own code with the shipped trigger profile; a `config.toml` written by 0.3.0 or earlier said `trigger_intern = "off"`, and the migration keeps that: delete the line from `settings.toml` to use the default `"on"`) |
 | `metascript_subst` | Single-pass `$parameter$` substitution in scripted effects |
@@ -167,8 +187,9 @@ and the [design notes](docs/design.md#4-correctness-safeguards-d).
 Each module is a setting `on`, `off` or (where the module has it) `verify`,
 plus `ram_prefetch_budget_mb` (64–8192), `frame_pacing_interval_ms`
 (0–1000; 0 keeps the game's own interval), `frame_pacing_input` (`draw`, the
-default, or `wait`, the 0.12.0 behaviour) and `save_compress_parallel` (`off`,
-`on` or `verify`, used while `save_compress` is on); the defaults, labels and
+default, or `wait`, the 0.12.0 behaviour), `save_compress_parallel` (`off`,
+`on` or `verify`, used while `save_compress` is on) and `verifypath_session`
+(`off` or `on`, used while `verifypath_listing` is on); the defaults, labels and
 descriptions are in [`plugin/settings.toml`](plugin/settings.toml). Your
 values go into `anvil/data/bellows/settings.toml`, one line each, only those
 that differ from the default, for example:
@@ -198,8 +219,9 @@ From 1.0 on, every 1.x release keeps these as they are, so a
 
 - the name of every module setting and the meaning of its values (`on`,
   `off`, `verify`, and `startup` for `mimalloc`);
-- `ram_prefetch_budget_mb`, `frame_pacing_interval_ms`, `frame_pacing_input`
-  and `save_compress_parallel`, with their ranges and values;
+- `ram_prefetch_budget_mb`, `frame_pacing_interval_ms`, `frame_pacing_input`,
+  `save_compress_parallel` and `verifypath_session`, with their ranges and
+  values;
 - the oldest Anvil Bellows needs (Anvil 1.7).
 
 A release that renames or removes one of these, gives a value another
@@ -251,7 +273,11 @@ release.
   that a tool writes into the game or mod folders while the game is loading
   may be missed, and one it deletes may still be found, until the next start.
   Edit your files between starts, or turn those modules off while you develop. Nothing of this applies
-  after the main menu is up: the start-up modules stop there.
+  after the main menu is up: the start-up modules stop there. The exception is
+  `verifypath_session` (on by default since 1.2): a file added or deleted in the
+  game or mod folders during a session counts after at most 30 s. Turn it off
+  while you develop if you need new files to count at once. Mods in the game's
+  user folder (Documents) are not affected: that folder always goes to the game.
 - Learned profiles are per mod set (the enabled mods in `dlc_load.json` and
   the game build), not per mod version. After an update of your mod the
   profile adds the new files on the next start and drops the ones no longer
