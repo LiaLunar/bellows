@@ -865,3 +865,19 @@ note = "CGameSetup::Load: CSession::_bIsServer and _bIsDummy; both zero is a cli
 build."eu4-1.37.5-steam-win64" = { rva = 0x1133713 }
 build."eu4-1.37.5.2-gog-win64" = { rva = 0x112DA83 }
 
+
+# --- army_search_memo ------------------------------------------------------------------
+
+[symbol.army_search_call]
+bytes = "E8 4C 67 01 00"               # call 0x1022B0
+memory = "code"
+note = "0xEAB50 (ai_army.cpp): the only call of the AI army search 0x1022B0"
+build."eu4-1.37.5-steam-win64" = { rva = 0xEBB5F }
+build."eu4-1.37.5.2-gog-win64" = { rva = 0xEBB8F }
+
+[symbol.zoc_flag_call]
+bytes = "E8 4A B8 FF FF"               # call 0xD40AE0, after mov edx,0E0h and xor r8d,r8d
+memory = "code"
+note = "0xD45250 (is a move blocked by a fort's zone of control): 0xD40AE0(army, 0xE0, 0), whether modifier 0xE0 applies to the army"
+build."eu4-1.37.5-steam-win64" = { rva = 0xD45291 }
+build."eu4-1.37.5.2-gog-win64" = { rva = 0xD43A41 }

@@ -172,6 +172,15 @@ description = "Simulation: reads one value from a province's modifiers in place 
 group = "Simulation"
 restart = true
 
+[setting.army_search_memo]
+type = "enum"
+values = [{ name = "off", label = "Off" }, { name = "on", label = "On" }, { name = "verify", label = "Verify" }]
+default = "off"
+label = "AI army search memo"
+description = "Simulation: in the AI's daily search for each army, works out once per search whether the army ignores forts' zones of control, instead of for every move it checks; the same answer. Verify runs the game's check every time and compares."
+group = "Simulation"
+restart = true
+
 [setting.save_compress]
 type = "enum"
 values = [{ name = "off", label = "Off" }, { name = "on", label = "On" }, { name = "verify", label = "Verify" }]

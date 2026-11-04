@@ -36,6 +36,7 @@ DWORD WINAPI FinishAfterReady(void*) {
     sb::ReportFramePacing();
     sb::ReportModifierMerge();
     sb::ReportProvinceModifierView();
+    sb::ReportArmySearchMemo();
     sb::ReportSaveCompress();
     sb::ReportTransferSkip();
     sb::bench::Done();  // the profiles are saved and the reports made
@@ -106,6 +107,8 @@ struct Bellows : anvil::Plugin {
             {"frame_pacing", cfg::frame_pacing.id, sb::InstallFramePacing},
             {"modifier_merge", cfg::modifier_merge.id, sb::InstallModifierMerge},
             {"province_modifier_view", cfg::province_modifier_view.id, sb::InstallProvinceModifierView},
+            // redirects the call of 0x1022B0 in 0xEAB50; army_search_profile hooks its entry, so both chain.
+            {"army_search_memo", cfg::army_search_memo.id, sb::InstallArmySearchMemo},
             {"save_compress", cfg::save_compress.id, sb::InstallSaveCompress},
             {"transfer_skip", cfg::transfer_skip.id, sb::InstallTransferSkip},
             // diagnostic; its hook on 0x769EA0 sits at the entry, frame_pacing's inside the function.
