@@ -1,7 +1,7 @@
 # Bellows — design
 
-Status: draft 4 (2026-11-02; §2 lists every shipped module, §5 the tests, §7 the decided `mimalloc` question;
-the road to 1.0 is [#90](https://github.com/happy-dwarf-team/bellows/issues/90)). Decisions marked **D** are
+Status: 1.0 (§2 lists every shipped module, §5 the tests, §7 the decided `mimalloc` question; what 1.0 was
+checked against is [#90](https://github.com/happy-dwarf-team/bellows/issues/90)). Decisions marked **D** are
 agreed; **Q** are open.
 Background, measurements and reverse-engineering notes come from the private
 research repository (`eu4-engine-lab`); this repository contains production
@@ -1041,7 +1041,8 @@ Bellows declares both builds and needs Anvil 1.7 (`anvil = ">=1.7.0"`, SDK
 
 ## 7. Open questions (Q)
 
-None at the moment; the open points before 1.0 are in
+None at the moment. Work after 1.0 (the `army_search_memo` default, `save_compress_parallel`
+on by default, the GOG build 1.37.5.0) is listed at the end of
 [#90](https://github.com/happy-dwarf-team/bellows/issues/90).
 
 Answered: since 0.11.0 `startup` is the default and `mimalloc` has stayed a

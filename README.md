@@ -23,9 +23,10 @@ the rest of Happy Dwarf Team's tools for EU4 are on
 Formerly **EU4 Startup Boost** (plugin id `eu4-startup-boost`, up to 0.5.0);
 see [Updating from EU4 Startup Boost](#updating-from-eu4-startup-boost).
 
-> Status: public releases before 1.0 — see
+> Status: 1.0 — the settings, their values and the Anvil requirement stay the
+> same in every 1.x release (see [Compatibility](#compatibility)); see
 > [Releases](https://github.com/happy-dwarf-team/bellows/releases) and
-> [CHANGELOG.md](CHANGELOG.md); what is left before 1.0 is in
+> [CHANGELOG.md](CHANGELOG.md). What 1.0 was checked against is in
 > [#90](https://github.com/happy-dwarf-team/bellows/issues/90). Bellows 0.19.0 and newer
 > needs **Anvil 1.7 or newer** and also runs on the GOG build of EU4; 0.8.0 to
 > 0.18.0 need Anvil 1.0 (plugin API 2), 0.7.0 and earlier Anvil 0.2. From
