@@ -28,9 +28,37 @@ std::size_t IndexOf(const std::vector<std::wstring>& v, const std::wstring& item
     return it == v.end() ? static_cast<std::size_t>(-1) : static_cast<std::size_t>(it - v.begin());
 }
 
+// UserDirectory() of this program started with `arguments`, as the game's
+// process reads its own command line.
+std::wstring UserDirectoryWith(const std::wstring& arguments, const std::wstring& outFile) {
+    wchar_t exe[MAX_PATH] = {};
+    GetModuleFileNameW(nullptr, exe, MAX_PATH);
+    std::wstring line = L"\"" + std::wstring(exe) + L"\" " + arguments;
+    SetEnvironmentVariableW(L"SB_PROFILE_TEST_OUT", outFile.c_str());
+    STARTUPINFOW start{};
+    start.cb = sizeof(start);
+    PROCESS_INFORMATION process{};
+    const BOOL started = CreateProcessW(exe, line.data(), nullptr, nullptr, FALSE, 0, nullptr, nullptr, &start, &process);
+    assert(started);
+    WaitForSingleObject(process.hProcess, 30000);
+    CloseHandle(process.hThread);
+    CloseHandle(process.hProcess);
+    SetEnvironmentVariableW(L"SB_PROFILE_TEST_OUT", nullptr);
+    std::string text;
+    assert(ReadWhole(outFile, text));
+    const auto lines = ParseList(text);
+    assert(lines.size() == 1);
+    DeleteFileW(outFile.c_str());
+    return lines[0];
+}
+
 }  // namespace
 
 int main() {
+    wchar_t childOut[MAX_PATH] = {};
+    if (GetEnvironmentVariableW(L"SB_PROFILE_TEST_OUT", childOut, MAX_PATH) > 0) {
+        return WriteList(childOut, {UserDirectory()}) ? 0 : 1;
+    }
     wchar_t temp[MAX_PATH] = {};
     GetTempPathW(MAX_PATH, temp);
     const std::wstring root = std::wstring(temp) + L"sb-profile-test-" + std::to_wstring(GetCurrentProcessId());
@@ -44,6 +72,46 @@ int main() {
     Touch(root + L"\\goggame-2057001589.info");
     assert(UserFolderName(root) == L"Europa Universalis IV GOG");
     DeleteFileW((root + L"\\goggame-2057001589.info").c_str());
+
+    // -userdir is the game's own choice (how Etch starts its live game), bare or in quotes.
+    const std::wstring childOut2 = root + L"\\child.txt";
+    const std::wstring profile = root + L"\\profile dir";
+    Dir(profile);
+    const std::wstring usual = UserDirectoryWith(L"", childOut2);
+    assert(usual != profile);
+    assert(UserDirectoryWith(L"\"-userdir=" + profile + L"\" -nolauncher", childOut2) == profile);
+    std::wstring slashes = profile;
+    std::replace(slashes.begin(), slashes.end(), L'\\', L'/');
+    assert(UserDirectoryWith(L"-userdir=" + slashes + L"/ -nolauncher", childOut2) == profile);
+    assert(UserDirectoryWith(L"-userdir=" + root + L"\\missing", childOut2) == usual);
+
+    assert(UserDirArgument(L"eu4.exe") == L"");
+    assert(UserDirArgument(L"eu4.exe -debug") == L"");
+    assert(UserDirArgument(L"eu4.exe -userdir=C:/p/ -debug") == L"C:/p/");
+    assert(UserDirArgument(L"eu4.exe -userdir=C:/a b/ continue=x.eu4") == L"C:/a b/");
+    assert(UserDirArgument(L"eu4.exe -userdir=") == L"");
+    assert(UserDirArgument(L"\"C:\\g -userdir=C:\\no\\eu4.exe\" -debug") == L"");
+    assert(UserDirArgument(L"\"C:\\g\\eu4.exe\" \"-userdir=C:\\a b\" -debug") == L"C:\\a b");
+    assert(UserDirArgument(L"eu4.exe -xuserdir=C:/no") == L"");
+
+    // The order: -userdir, userdir.txt, Documents.
+    const std::wstring gameDir = root + L"\\game";
+    const std::wstring other = root + L"\\other";
+    Dir(gameDir);
+    Dir(other);
+    const std::wstring line = L"eu4.exe -userdir=" + profile + L" -debug";
+    const std::wstring standard = L"D:\\docs\\Paradox Interactive\\Europa Universalis IV";
+    assert(UserDirectoryFor(L"eu4.exe", gameDir, L"D:\\docs") == standard);
+    assert(UserDirectoryFor(L"eu4.exe", gameDir, L"") == L"");
+    Touch(gameDir + L"\\userdir.txt", "");  // the game ships an empty one
+    assert(UserDirectoryFor(L"eu4.exe", gameDir, L"D:\\docs") == standard);
+    Touch(gameDir + L"\\userdir.txt", "\xEF\xBB\xBF  " + Narrow(other) + "/\r\n");
+    assert(UserDirectoryFor(L"eu4.exe", gameDir, L"D:\\docs") == other);
+    assert(UserDirectoryFor(line, gameDir, L"D:\\docs") == profile);
+    Touch(gameDir + L"\\goggame-2057001589.info");
+    DeleteFileW((gameDir + L"\\userdir.txt").c_str());
+    assert(UserDirectoryFor(L"eu4.exe", gameDir, L"D:\\docs") == standard + L" GOG");
+    assert(UserDirectoryFor(line, gameDir, L"D:\\docs") == profile);
 
     Dir(copy);
     Dir(copy + L"\\common");

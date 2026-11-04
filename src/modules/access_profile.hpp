@@ -10,6 +10,7 @@
 
 #include <cstdint>
 #include <string>
+#include <string_view>
 #include <vector>
 
 namespace sb::profile {
@@ -53,7 +54,19 @@ bool WriteList(const std::wstring& target, const std::vector<std::wstring>& line
 // install, whose eu4.exe adds " GOG" (GOG leaves goggame-2057001589.info there).
 std::wstring UserFolderName(const std::wstring& gameDir);
 
-// That folder in Documents for the running game (empty when unknown).
+// The folder `-userdir=<path>` names on eu4.exe's command line, empty without
+// one. The whole argument may be in quotes, as Node's spawn passes a path with
+// a space. Without quotes it ends where the game ends an argument, at a space
+// before -, + or /, or at a bare ` continue=`. The same reading as Anvil's
+// user_dir_argument (anvil#207), which no Anvil exposes to plugins yet.
+std::wstring UserDirArgument(std::wstring_view commandLine);
+
+// The game's user folder as the game chooses it: the folder of -userdir when it
+// exists, then the path in <gameDir>\userdir.txt, then UserFolderName in
+// `documents` (`documents` empty: empty). With backslashes, no slash at the end.
+std::wstring UserDirectoryFor(const std::wstring& commandLine, const std::wstring& gameDir, const std::wstring& documents);
+
+// That folder for the running game (empty when unknown).
 std::wstring UserDirectory();
 
 }  // namespace sb::profile

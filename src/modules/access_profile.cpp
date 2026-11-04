@@ -300,6 +300,61 @@ std::wstring UserFolderName(const std::wstring& gameDir) {
     return marker != INVALID_FILE_ATTRIBUTES ? L"Europa Universalis IV GOG" : L"Europa Universalis IV";
 }
 
+std::wstring UserDirArgument(std::wstring_view line) {
+    // Past the program's name, whose path may hold the same text.
+    std::size_t at = line.starts_with(L'"') ? line.find(L'"', 1) : line.find(L' ');
+    if (at == std::wstring_view::npos) return {};
+    constexpr std::wstring_view key = L"-userdir=";
+    for (at = line.find(key, at + 1); at != std::wstring_view::npos; at = line.find(key, at + 1)) {
+        const wchar_t before = line[at - 1];
+        if (before != L' ' && before != L'\t' && before != L'"') continue;
+        std::wstring_view value = line.substr(at + key.size());
+        std::size_t end = std::wstring_view::npos;
+        if (before == L'"') {
+            end = value.find(L'"');
+        } else {
+            for (const std::wstring_view stop : {L" -", L" +", L" /", L" continue="}) end = (std::min)(end, value.find(stop));
+        }
+        value = value.substr(0, end);
+        while (!value.empty() && value.back() == L' ') value.remove_suffix(1);
+        return std::wstring(value);
+    }
+    return {};
+}
+
+namespace {
+
+// Backslashes, and no slash at the end of anything but a drive's root.
+std::wstring Tidy(std::wstring path) {
+    path = Normalize(std::move(path));
+    while (path.size() > 3 && path.back() == L'\\') path.pop_back();
+    return path;
+}
+
+bool IsFolder(const std::wstring& path) {
+    const DWORD attributes = GetFileAttributesW(path.c_str());
+    return attributes != INVALID_FILE_ATTRIBUTES && (attributes & FILE_ATTRIBUTE_DIRECTORY) != 0;
+}
+
+}  // namespace
+
+std::wstring UserDirectoryFor(const std::wstring& commandLine, const std::wstring& gameDir, const std::wstring& documents) {
+    const std::wstring named = UserDirArgument(commandLine);
+    if (!named.empty() && IsFolder(named)) return Tidy(named);
+    std::string text;
+    if (ReadWhole(gameDir + L"\\userdir.txt", text, 1 << 16)) {
+        const auto lines = ParseList(text);
+        if (!lines.empty()) {
+            std::wstring path = lines.front();
+            while (!path.empty() && (path.back() == L' ' || path.back() == L'\t')) path.pop_back();
+            path.erase(0, path.find_first_not_of(L" \t"));
+            if (!path.empty()) return Tidy(path);
+        }
+    }
+    if (documents.empty()) return {};
+    return documents + L"\\Paradox Interactive\\" + UserFolderName(gameDir);
+}
+
 std::wstring UserDirectory() {
     wchar_t exe[MAX_PATH * 2] = {};
     const DWORD length = GetModuleFileNameW(nullptr, exe, static_cast<DWORD>(std::size(exe)));
@@ -307,12 +362,10 @@ std::wstring UserDirectory() {
     std::wstring gameDir(exe, length);
     gameDir.resize(gameDir.find_last_of(L'\\'));
     PWSTR documents = nullptr;
-    std::wstring out;
-    if (SUCCEEDED(SHGetKnownFolderPath(FOLDERID_Documents, 0, nullptr, &documents)) && documents != nullptr) {
-        out = std::wstring(documents) + L"\\Paradox Interactive\\" + UserFolderName(gameDir);
-    }
+    std::wstring folder;
+    if (SUCCEEDED(SHGetKnownFolderPath(FOLDERID_Documents, 0, nullptr, &documents)) && documents != nullptr) folder = documents;
     if (documents != nullptr) CoTaskMemFree(documents);
-    return out;
+    return UserDirectoryFor(GetCommandLineW(), gameDir, folder);
 }
 
 }  // namespace sb::profile

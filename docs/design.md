@@ -79,7 +79,8 @@ mod.
 1. **Base layer, shipped with the plugin per game build**: generated in the
    lab from a start without mods; contains only paths, sizes and order (no game
    content). Works from the very first start on any machine.
-2. **Per-mod-set profile, learned**: key = enabled mods (from `dlc_load.json`)
+2. **Per-mod-set profile, learned**: key = enabled mods (from `dlc_load.json`
+   in the game's user folder: `-userdir`, then `userdir.txt`, then Documents)
    + game build. Every start records what the game actually opened/read and
    merges it into the profile (new entries appended in first-use order;
    entries unused for N consecutive starts are dropped). First start of a new
