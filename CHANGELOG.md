@@ -1,5 +1,17 @@
 # Changelog
 
+## [1.0.0](https://github.com/happy-dwarf-team/bellows/compare/v0.19.0...v1.0.0) (2026-11-04)
+
+
+### Bug Fixes
+
+* **ram_prefetch:** wake every waiting worker when prefetch stops at ready ([#102](https://github.com/happy-dwarf-team/bellows/issues/102)) ([24972e5](https://github.com/happy-dwarf-team/bellows/commit/24972e5f931d16010d95b9e0186e605f4726522c))
+
+
+### Documentation
+
+* say Bellows is 1.0 in the README status and the design notes ([#104](https://github.com/happy-dwarf-team/bellows/issues/104)) ([ca61697](https://github.com/happy-dwarf-team/bellows/commit/ca61697c8f2ea939e1792d8146af2025e46a653b))
+
 ## [0.19.0](https://github.com/happy-dwarf-team/bellows/compare/v0.18.0...v0.19.0) (2026-11-02)
 
 
