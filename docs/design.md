@@ -466,6 +466,25 @@ this module, year 1720 at speed 5 through Tongs; lab `docs/bellows-frame-pacing.
 - Not measured: time until the reaction is on screen, other saves and dates.
   Experimental and off by default, since the median latency cost stays.
 
+### pops_pacing (simulation)
+
+The main loop calls `POPS_RunCallbacks` (`pops_api.dll`, Paradox's online services) twice a frame:
+from `0x14C5810` and from `CPopsWrapper::Update` (`0x14ADA90`). When no socket is ready the library
+ends that call in `Sleep(1)` on the main thread. At the fastest speed a frame follows every game day,
+so these sleeps add up to a few percent of a year in which the main thread does nothing.
+
+The module replaces the import of `POPS_RunCallbacks` in `eu4.exe` (no game address, no change to
+`pops_api.dll`). A hook on the daily tick notes the time of the last game day and the speed the game
+ran it at. A call of the pump waits when all of this holds: single player (anvil-game's session
+event), speed index 4, a game day less than 1 s ago, and that context was pumped less than 500 ms ago.
+Every other call goes to the game's function as it came, so the menus, a paused game and the
+slower speeds keep the game's rate. Each of the two contexts gets its own clock: both also run
+the library's work behind the callbacks (HTTP transfers), which only comes later, never not at all.
+
+The simulation is the same because only the moment the callbacks run changes, and nothing in the
+daily tick waits for them. `"verify"` calls the game's function every time and counts what `"on"` would
+leave out; `pops_pacing.tsv` has the calls, what was left out and the time in the pump.
+
 ### modifier_merge (simulation)
 
 On by default. `0x8EA420` adds the (id, value) entries of one modifier list

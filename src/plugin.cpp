@@ -34,6 +34,7 @@ DWORD WINAPI FinishAfterReady(void*) {
     sb::ReportRangeProfile();
     sb::ReportRangeWitness();
     sb::ReportFramePacing();
+    sb::ReportPopsPacing();
     sb::ReportModifierMerge();
     sb::ReportProvinceModifierView();
     sb::ReportArmySearchMemo();
@@ -105,6 +106,7 @@ struct Bellows : anvil::Plugin {
             // range_witness answers before 0x3526B0 runs: range_profile then sees only the walks it still makes.
             {"range_witness", cfg::range_witness.id, sb::InstallRangeWitness},
             {"frame_pacing", cfg::frame_pacing.id, sb::InstallFramePacing},
+            {"pops_pacing", cfg::pops_pacing.id, sb::InstallPopsPacing},
             {"modifier_merge", cfg::modifier_merge.id, sb::InstallModifierMerge},
             {"province_modifier_view", cfg::province_modifier_view.id, sb::InstallProvinceModifierView},
             // redirects the call of 0x1022B0 in 0xEAB50; army_search_profile hooks its entry, so both chain.
@@ -173,6 +175,7 @@ struct Bellows : anvil::Plugin {
             const auto* session = static_cast<const AnvilGameSession*>(payload);
             const bool ended = session != nullptr && session->change == ANVIL_GAME_SESSION_ENDED;
             sb::CollectMimalloc(ended ? "session end" : "session start");
+            sb::NotePopsSession(session != nullptr && !ended && session->multiplayer != 0);
         });
         // ... and so does a save loaded from the in-game menu, which publishes no session event in
         // anvil-game 1.5: a frame collects once enough was freed (a counter read otherwise).

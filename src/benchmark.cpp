@@ -44,6 +44,17 @@ constexpr Counter kCounters[] = {
     {"verifications", &Stats::verifications}, {"mismatches", &Stats::mismatches},
 };
 
+// The report's 128 fields are nearly gone: a diagnostic, off for every player, gets no mode field.
+constexpr const char* kDiagnostics[] = {"zip_profile",  "token_dict_profile", "range_profile", "tick_profile",
+                                        "army_search_profile", "score_probe", "monthly_probe"};
+
+bool IsDiagnostic(const char* module) {
+    for (const char* name : kDiagnostics) {
+        if (std::string(name) == module) return true;
+    }
+    return false;
+}
+
 const CounterModule* FindCounterModule(const char* module) {
     for (const auto& m : kCounterModules) {
         if (std::string(m.name) == module) return &m;
@@ -113,6 +124,7 @@ void Join(anvil::Host& host, std::span<const char* const> modules) {
     names.reserve(modules.size() + std::size(kCounterModules) * (std::size(kCounters) + 1));
     std::vector<AnvilBenchmarkField> fields;
     for (const char* module : modules) {
+        if (IsDiagnostic(module)) continue;
         names.push_back(std::string(module) + ".mode");
         fields.push_back(B::enum_field(nullptr, kModes, "Mode"));
     }
@@ -135,6 +147,7 @@ void Join(anvil::Host& host, std::span<const char* const> modules) {
 const anvil::Benchmark& Get() { return g_benchmark; }
 
 void SetMode(const char* module, const char* mode) {
+    if (IsDiagnostic(module)) return;
     g_benchmark.set_enum((std::string(module) + ".mode").c_str(), mode);
 }
 

@@ -163,6 +163,15 @@ description = "Simulation: adds large modifier lists (each country's modifiers t
 group = "Simulation"
 restart = true
 
+[setting.pops_pacing]
+type = "enum"
+values = [{ name = "off", label = "Off" }, { name = "on", label = "On" }, { name = "verify", label = "Verify" }]
+default = "off"
+label = "Online service pacing"
+description = "Simulation: at the fastest speed, runs the game's Paradox online-service callbacks every 500 ms instead of twice a frame. With nothing to deliver, each run makes the main thread sleep 1 ms. Multiplayer keeps the game's rate. Verify runs them as the game does and counts what would be left out."
+group = "Simulation"
+restart = true
+
 [setting.province_modifier_view]
 type = "enum"
 values = [{ name = "off", label = "Off" }, { name = "on", label = "On" }, { name = "verify", label = "Verify" }]
