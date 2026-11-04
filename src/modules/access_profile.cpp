@@ -5,6 +5,7 @@
 
 #include <algorithm>
 #include <cwchar>
+#include <iterator>
 #include <unordered_set>
 
 namespace sb::profile {
@@ -294,11 +295,21 @@ bool WriteList(const std::wstring& target, const std::vector<std::wstring>& line
     return MoveFileExW(temp.c_str(), target.c_str(), MOVEFILE_REPLACE_EXISTING | MOVEFILE_WRITE_THROUGH) != 0;
 }
 
+std::wstring UserFolderName(const std::wstring& gameDir) {
+    const DWORD marker = GetFileAttributesW((gameDir + L"\\goggame-2057001589.info").c_str());
+    return marker != INVALID_FILE_ATTRIBUTES ? L"Europa Universalis IV GOG" : L"Europa Universalis IV";
+}
+
 std::wstring UserDirectory() {
+    wchar_t exe[MAX_PATH * 2] = {};
+    const DWORD length = GetModuleFileNameW(nullptr, exe, static_cast<DWORD>(std::size(exe)));
+    if (length == 0 || length >= std::size(exe)) return {};
+    std::wstring gameDir(exe, length);
+    gameDir.resize(gameDir.find_last_of(L'\\'));
     PWSTR documents = nullptr;
     std::wstring out;
     if (SUCCEEDED(SHGetKnownFolderPath(FOLDERID_Documents, 0, nullptr, &documents)) && documents != nullptr) {
-        out = std::wstring(documents) + L"\\Paradox Interactive\\Europa Universalis IV";
+        out = std::wstring(documents) + L"\\Paradox Interactive\\" + UserFolderName(gameDir);
     }
     if (documents != nullptr) CoTaskMemFree(documents);
     return out;

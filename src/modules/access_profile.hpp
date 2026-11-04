@@ -48,7 +48,12 @@ std::vector<std::wstring> UniqueStored(const std::vector<std::wstring>& paths, c
 // Writes via a temporary file and an atomic replace.
 bool WriteList(const std::wstring& target, const std::vector<std::wstring>& lines);
 
-// Documents\Paradox Interactive\Europa Universalis IV (empty when unknown).
+// The name of the game's folder in Documents\Paradox Interactive for the game
+// in `gameDir`: "Europa Universalis IV", or "Europa Universalis IV GOG" in a GOG
+// install, whose eu4.exe adds " GOG" (GOG leaves goggame-2057001589.info there).
+std::wstring UserFolderName(const std::wstring& gameDir);
+
+// That folder in Documents for the running game (empty when unknown).
 std::wstring UserDirectory();
 
 }  // namespace sb::profile

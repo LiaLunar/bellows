@@ -38,6 +38,13 @@ int main() {
     const std::wstring user = root + L"\\user";
     const std::wstring modAbs = root + L"\\workshop\\111";
     Dir(root);
+
+    // A GOG install has its own user folder beside Steam's.
+    assert(UserFolderName(root) == L"Europa Universalis IV");
+    Touch(root + L"\\goggame-2057001589.info");
+    assert(UserFolderName(root) == L"Europa Universalis IV GOG");
+    DeleteFileW((root + L"\\goggame-2057001589.info").c_str());
+
     Dir(copy);
     Dir(copy + L"\\common");
     Dir(copy + L"\\gfx");
