@@ -1,5 +1,17 @@
 # Changelog
 
+## [1.1.0](https://github.com/happy-dwarf-team/bellows/compare/v1.0.0...v1.1.0) (2026-11-04)
+
+
+### Features
+
+* **transfer_skip:** load a text save in single player without its transfer copy ([#112](https://github.com/happy-dwarf-team/bellows/issues/112)) ([31e1ae3](https://github.com/happy-dwarf-team/bellows/commit/31e1ae3511246d9cb8543bef789c5566f4564324))
+
+
+### Bug Fixes
+
+* read the mods of a GOG install from its own user folder ([#111](https://github.com/happy-dwarf-team/bellows/issues/111)) ([f3f7901](https://github.com/happy-dwarf-team/bellows/commit/f3f7901b93086afb347f4548a571c07e64e8036a))
+
 ## [1.0.0](https://github.com/happy-dwarf-team/bellows/compare/v0.19.0...v1.0.0) (2026-11-04)
 
 
