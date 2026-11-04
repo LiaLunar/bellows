@@ -36,6 +36,7 @@ bool InstallPopsPacing(anvil::Host& host, Mode mode);
 void NotePopsSession(bool multiplayer) noexcept;  // from anvil-game's session event
 bool InstallSaveCompress(anvil::Host& host, Mode mode);
 bool InstallTransferSkip(anvil::Host& host, Mode mode);
+bool InstallHistoryAdd(anvil::Host& host, Mode mode);
 bool InstallTickProfile(anvil::Host& host, Mode mode);  // diagnostic
 bool InstallArmySearchProfile(anvil::Host& host, Mode mode);  // diagnostic
 bool InstallScoreProbe(anvil::Host& host, Mode mode);  // diagnostic
@@ -83,6 +84,7 @@ void ReportArmySearchMemo();
 void ReportPopsPacing();
 void ReportSaveCompress();
 void ReportTransferSkip();
+void ReportHistoryAdd();
 void ReportFramePacing();
 
 }  // namespace sb

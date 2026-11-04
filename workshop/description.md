@@ -29,7 +29,8 @@ In Anvil's panel (**Ctrl+Shift+F12**, Settings) or in Anvil Manager:
 - **Modifier merge index** (on): the monthly update of the units finds modifiers with an index instead of searching a list. Exactly the game's result, and a year passes about 5% sooner.
 - **Province modifier view** (off): reads province modifiers in place instead of copying them first. About 12 million values matched the game's; off until we know it can't nudge the AI.
 - **Save compression** (on, for compressed saves): an autosave in about 0.83 instead of 0.87 seconds, byte for byte the game's file. **Parallel save compression** (off) packs it on several cores in about 0.6 seconds: laid out a little differently, the same save.
-- **Skip transfer compression** (new, on): Continue in single player, about 2 seconds sooner on a 64 MB text save.
+- **Skip transfer compression** (on): Continue in single player, about 2 seconds sooner on a 64 MB text save.
+- **PhysFS path checks after start-up** and **Dated lists while loading** (new, on): Continue another 2 seconds sooner with 10 mods (8.6 to 6.3 s in our tests), about 0.2 s on vanilla.
 
 ![](https://i.imgur.com/Uf8Z21n.png)
 

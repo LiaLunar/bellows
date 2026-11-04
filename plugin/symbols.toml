@@ -823,6 +823,36 @@ signature = "int (void* strm)"
 note = "deflateEnd of the zlib 1.2.8 linked into eu4.exe"
 build."eu4-1.37.5-steam-win64" = { rva = 0x181FB90 }
 build."eu4-1.37.5.2-gog-win64" = { rva = 0x1809810 }
+# --- history_add -------------------------------------------------------------------
+
+[symbol.history_add_call]
+bytes = "FF 90 98 00 00 00"            # call [rax+98h], after mov rdx,rdi; mov rcx,r14
+memory = "code"
+note = "0xDA66A0 (reads one entry of a dated list from a save): the add of the entry it allocated, rdx = the entry"
+build."eu4-1.37.5-steam-win64" = { rva = 0xDA69E5 }
+build."eu4-1.37.5.2-gog-win64" = { rva = 0xDA5195 }
+
+[symbol.history_add_global_call]
+bytes = "FF 90 A0 00 00 00"            # call [rax+0A0h], after mov rdx,[rdx]; mov rcx,[rax+38h]; mov rax,[rcx]
+memory = "code"
+note = "0xDA66A0: the same entry goes to the list of all such entries (0x7EC6C0 + 0x38) too, rdx = the entry"
+build."eu4-1.37.5-steam-win64" = { rva = 0xDA6A1D }
+build."eu4-1.37.5.2-gog-win64" = { rva = 0xDA51CD }
+
+[symbol.history_add_walk]
+bytes = "48 8B 41 20 48 8B FA 48 8B F1"  # mov rax,[rcx+20h]; mov rdi,rdx; mov rsi,rcx
+memory = "code"
+note = "0x7E7CD0 (add to a dated list): the head of the list, before the walk that looks for the entry; +0x20 is history_add_core.hpp's head"
+build."eu4-1.37.5-steam-win64" = { rva = 0x7E7CDA }
+build."eu4-1.37.5.2-gog-win64" = { rva = 0x7E704A }
+
+[symbol.history_add_after_walk]
+bytes = "48 8B 06 48 8B CE 48 89 5C 24 38"  # mov rax,[rsi]; mov rcx,rsi; mov [rsp+38h],rbx
+memory = "code"
+note = "0x7E7CD0: where the walk ends when the entry is not in the list; reads rsi and rdi only"
+build."eu4-1.37.5-steam-win64" = { rva = 0x7E7D0E }
+build."eu4-1.37.5.2-gog-win64" = { rva = 0x7E707E }
+
 # --- transfer_skip -----------------------------------------------------------------
 
 [symbol.file_transfer_add]

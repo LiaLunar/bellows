@@ -40,6 +40,7 @@ DWORD WINAPI FinishAfterReady(void*) {
     sb::ReportArmySearchMemo();
     sb::ReportSaveCompress();
     sb::ReportTransferSkip();
+    sb::ReportHistoryAdd();
     sb::bench::Done();  // the profiles are saved and the reports made
     return 0;
 }
@@ -113,6 +114,7 @@ struct Bellows : anvil::Plugin {
             {"army_search_memo", cfg::army_search_memo.id, sb::InstallArmySearchMemo},
             {"save_compress", cfg::save_compress.id, sb::InstallSaveCompress},
             {"transfer_skip", cfg::transfer_skip.id, sb::InstallTransferSkip},
+            {"history_add", cfg::history_add.id, sb::InstallHistoryAdd},
             // diagnostic; its hook on 0x769EA0 sits at the entry, frame_pacing's inside the function.
             {"tick_profile", cfg::tick_profile.id, sb::InstallTickProfile},
             {"army_search_profile", cfg::army_search_profile.id, sb::InstallArmySearchProfile},  // diagnostic
