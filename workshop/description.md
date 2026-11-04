@@ -29,10 +29,11 @@ Anvil asks again after every update. Until you approve, the version you trusted 
 
 ## In the settings
 In Anvil's panel (**Ctrl+Shift+F12**, Settings) or in Anvil Manager:
-- **Frame pacing at speed 5** (on): while you just watch, the map is drawn about 16 instead of 22 times a second, so the years pass about 10% sooner. A click still gets an answer at once.
+- **Frame pacing at speed 5** (on): while you just watch, the map is drawn about 16 instead of 22 times a second, so the years pass about 10% sooner.
 - **Modifier merge index** (on): the monthly update of the units finds modifiers with an index instead of searching a list. Exactly the game's result, and a year passes about 5% sooner.
-- **Province modifier view** (new, off): reads province modifiers in place instead of copying them first. All of about 12 million values matched the game's own; off until we know it can't nudge the AI.
+- **Province modifier view** (off): reads province modifiers in place instead of copying them first. About 12 million values matched the game's; off until we know it can't nudge the AI.
 - **Save compression** (on, for compressed saves): an autosave in about 0.83 instead of 0.87 seconds, byte for byte the game's file. **Parallel save compression** (off) packs it on several cores in about 0.6 seconds: laid out a little differently, the same save.
+- **Skip transfer compression** (new, on): Continue in single player, about 2 seconds sooner on a 64 MB text save.
 
 ![](https://i.imgur.com/Uf8Z21n.png)
 

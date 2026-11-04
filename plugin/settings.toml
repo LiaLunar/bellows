@@ -190,6 +190,15 @@ description = "Saving, with save compression on: compresses large members of a c
 group = "Saving"
 restart = true
 
+[setting.transfer_skip]
+type = "enum"
+values = [{ name = "off", label = "Off" }, { name = "on", label = "On" }, { name = "verify", label = "Verify" }]
+default = "on"
+label = "Skip transfer compression"
+description = "Loading in single player: does not compress a text save for a multiplayer transfer that nobody receives; the game loads the same file as before. Hosted multiplayer is left as it is. Verify keeps the game's copy and checks that nothing reads it."
+group = "Saving"
+restart = true
+
 [setting.frame_pacing]
 type = "enum"
 values = [{ name = "off", label = "Off" }, { name = "on", label = "On" }]

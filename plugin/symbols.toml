@@ -823,3 +823,45 @@ signature = "int (void* strm)"
 note = "deflateEnd of the zlib 1.2.8 linked into eu4.exe"
 build."eu4-1.37.5-steam-win64" = { rva = 0x181FB90 }
 build."eu4-1.37.5.2-gog-win64" = { rva = 0x1809810 }
+# --- transfer_skip -----------------------------------------------------------------
+
+[symbol.file_transfer_add]
+bytes = "48 89 5C 24 08 48 89 74 24 10 48 89 7C 24 20 55 41 54 41 55 41 56 41 57"
+memory = "code"
+signature = "int (void* manager, const char* name, void** data, bool compress)"
+note = "CFileTransferManager::AddFile: compress = true deflates the file at level 9 into SFileDesc::CompressedData"
+build."eu4-1.37.5-steam-win64" = { rva = 0xD7AAD0 }
+build."eu4-1.37.5.2-gog-win64" = { rva = 0xD79280 }
+
+[symbol.file_transfer_send]
+bytes = "48 89 5C 24 10 55 56 57 41 56 41 57 48 83 EC 40 45 8B F8 48 8B E9 4C 8B 49 28"
+memory = "code"
+signature = "uint64_t (void* manager, uint32_t index, uint32_t peer)"
+note = "CFileTransferManager::SendFile: the only reader of CompressedData; the bytes prove _Files at manager+0x28"
+build."eu4-1.37.5-steam-win64" = { rva = 0xD7B2A0 }
+build."eu4-1.37.5.2-gog-win64" = { rva = 0xD79A50 }
+
+[symbol.game_setup_load_file]
+bytes = "48 89 5C 24 10 48 89 74 24 18 55 57 41 56 48 8D 6C 24 B0"
+memory = "code"
+signature = "uint64_t (void* handler, const char* name, void* data, bool compressed)"
+note = "CGameSetup::LoadFile, what the start command calls with the entry's Data and the flag 0"
+build."eu4-1.37.5-steam-win64" = { rva = 0x110D760 }
+build."eu4-1.37.5.2-gog-win64" = { rva = 0x1108310 }
+
+[symbol.file_transfer_get_session]
+bytes = "49 8B 4D 20 48 8B 01 FF 50 08 48 8B D0"  # mov rcx,[r13+20h] (_Parent); mov rax,[rcx]; call [rax+8]; mov rdx,rax
+memory = "code"
+note = "AddFile asks its handler for the session: manager+0x20, slot 1, the offsets of transfer_skip_core.hpp"
+build."eu4-1.37.5-steam-win64" = { rva = 0xD7AE4E }
+build."eu4-1.37.5.2-gog-win64" = { rva = 0xD795FE }
+
+[symbol.session_kind_check]
+bytes = "80 78 54 00 75 2B 80 78 55 00 75 25"  # cmp byte [rax+54h],0; jne; cmp byte [rax+55h],0; jne
+memory = "code"
+values.session_is_server = { at = 2, size = 1 }
+values.session_is_dummy = { at = 8, size = 1 }
+note = "CGameSetup::Load: CSession::_bIsServer and _bIsDummy; both zero is a client, who loads at once"
+build."eu4-1.37.5-steam-win64" = { rva = 0x1133713 }
+build."eu4-1.37.5.2-gog-win64" = { rva = 0x112DA83 }
+

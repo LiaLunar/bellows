@@ -101,6 +101,7 @@ set(SB_SOURCES
     src/modules/province_modifier_view.cpp
     src/modules/save_compress.cpp
     src/modules/save_compress_parallel.cpp
+    src/modules/transfer_skip.cpp
     src/modules/tick_profile.cpp
     src/modules/army_search_profile.cpp
     src/modules/score_probe.cpp
@@ -172,6 +173,14 @@ if(SB_BUILD_TESTS)
         target_compile_options(test_save_compress PRIVATE /utf-8 /permissive- /EHsc /UNDEBUG)
     endif()
     add_test(NAME save_compress COMMAND test_save_compress)
+    # transfer_skip: the decision, the reads of the game's structures and the check of a transfer copy.
+    add_executable(test_transfer_skip tests/test_transfer_skip.cpp)
+    target_include_directories(test_transfer_skip PRIVATE src)
+    target_link_libraries(test_transfer_skip PRIVATE sb_zlib)
+    if(MSVC)
+        target_compile_options(test_transfer_skip PRIVATE /utf-8 /permissive- /EHsc /UNDEBUG)
+    endif()
+    add_test(NAME transfer_skip COMMAND test_transfer_skip)
     # bellows.dll's anvil_plugin_load against a stand-in host (tests/test_plugin_load.cpp).
     add_executable(test_plugin_load tests/test_plugin_load.cpp)
     target_include_directories(test_plugin_load PRIVATE $<TARGET_PROPERTY:bellows,INCLUDE_DIRECTORIES>)

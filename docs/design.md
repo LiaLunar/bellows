@@ -38,6 +38,7 @@ code only.
 | `modifier_merge` | Simulation: adds large modifier lists with an index instead of a scan per entry (§6a) | year 1720: 20.64 → 19.45 s |
 | `province_modifier_view` | Simulation, off: reads one value of a province's modifiers without copying the list (§6a) | exact, no gain shown |
 | `save_compress` | Saving: the game's own zlib with a faster CRC-32 (the game's bytes); optionally in parallel (§6a) | autosave 0.873 → 0.831 s; parallel 0.612 s |
+| `transfer_skip` | Loading in single player: no level 9 copy of a text save for a transfer nobody receives (§6a) | "Continue" of a 64.5 MB save 10.91 → 8.95 s |
 
 The table's start-up modules are in the order they were ported; §6a has the
 results per module and release.
@@ -639,12 +640,81 @@ written with the module off, `"on"` and `"verify"` are byte for byte what the
 game's function gives with zlib 1.2.8. A save written with
 `save_compress_parallel` loaded in a game without Bellows (single player, the
 game then ran a month); Python's `zipfile`, Windows `tar`, NanaZip and Etch's
-save reader read it with the CRCs of its headers. Loading a plain-text save
-also goes through the function once: the game's load path (`0xD84B80`) compresses
-the whole file at level 9 into an archive in memory (64.5 MB in about 2.4 s on
-the game's function, 0.74 s in parallel); what the game uses that copy for was
-not followed further. Not tested: multiplayer (joining, host transfer) with a
-parallel save, ironman and cloud saves.
+save reader read it with the CRCs of its headers. Starting a game from a
+plain-text save also goes through the function once, at level 9, for a copy that
+only a multiplayer client reads (64.5 MB in about 2.4 s on the game's function,
+0.5 s in parallel; `transfer_skip` below). Not tested: multiplayer (joining, host
+transfer) with a parallel save, ironman and cloud saves.
+
+### transfer_skip (loading)
+
+On by default since 1.1.0. Starting a game from a save (`CGameSetup::Load`,
+`0x1132CA0`; "Continue" and the lobby's Play go this way) reads the whole file
+and, on a session that is a server or a dummy, hands it to
+`CFileTransferManager::AddFile` (`0xD7AAD0`), which makes it an entry of the
+transfer manager. For a file that is not a ZIP yet, `AddFile` first deflates it
+at level 9 into a second buffer, `SFileDesc::CompressedData` ("Compressing save
+for transfer" in the game's log): about 2.4 s for a 64.5 MB save, on the main
+thread, before anything is parsed. That buffer has one reader,
+`CFileTransferManager::SendFile` (`0xD7B2A0`), which sends it to a client instead
+of `Data` when it exists and sets the receiver's "compressed" flag from it. The
+game's own load does not use it: the start command (`0x279310`) calls
+`CGameSetup::LoadFile` (`0x110D760`) with the entry's `Data` and the flag 0, with
+or without a copy. A save that is compressed already has no copy, so every path
+after `AddFile` runs without one in the unmodified game.
+
+A single-player session is the dummy session (`CSession::_bIsDummy`, `+0x55`,
+next to `_bIsServer`, `+0x54`; the constructor sets one of the two from the
+session's basic type). When `AddFile` is asked to compress and its session (the
+handler's slot 1, as `CFileTransferManager::GetSession`) is a dummy and not a
+server, the hook calls the game's `AddFile` with `compress = false`. Nothing else
+changes: the entry has its bytes and checksum, the load gets the same bytes and
+flag. Hosted multiplayer is a server session and keeps its copy, compressed by
+the game or with `save_compress_parallel`; a client never reaches `AddFile`. If a
+session did turn out to send an entry without a copy, `SendFile` sends `Data`
+with the flag off, as it does for a compressed save: a larger transfer, not a
+wrong one.
+
+`"verify"` keeps the game's copy and checks each thing `"on"` relies on: the copy
+is an archive of one member that decodes to exactly `Data` with its CRC-32, the
+next `LoadFile` gets that entry's `Data` with the flag 0, and `SendFile` is not
+called in a dummy session (the last two with hooks that `"on"` does not install).
+Every `AddFile` asked to compress appends a row (action, session bytes, sizes,
+time) to `transfer_skip.tsv`.
+
+The names come from the `eu4.pdb` of the GOG build; the Steam build has the same
+code and offsets. `symbols.toml` checks both functions' entries, the game's own
+reads of the session bytes in `CGameSetup::Load` and of the handler in `AddFile`.
+
+In the game (lab `docs/autosave-cost.md`, 4 November 2026): `eu4.exe` 1.37.5
+(Steam), Anvil 1.9.0, Tongs 0.26.0, the process on CPUs 1–7, a warm start to the
+main menu per run, "Continue" clicked through Tongs; the time from the click to
+Tongs' readiness (the game in its session, an outer frame run, paused). Five
+interleaved runs per arm on each save: the 1821 save (text, 64,542,833 bytes,
+10 mods) and a vanilla autosave of 1450 (text, 40,240,990 bytes, no mods).
+Bellows with default settings otherwise; "no Bellows" is Anvil, anvil-game and
+Tongs.
+
+| Save | No Bellows | `transfer_skip` off | `save_compress_parallel` on, `transfer_skip` off | `transfer_skip` on |
+| --- | --- | --- | --- | --- |
+| 1821 | 11.26 s (10.84–11.69) | 10.91 s (10.78–11.06) | 8.97 s (8.88–9.18) | **8.95 s** (8.55–9.23) |
+| Vanilla 1450 | 6.11 s (5.70–6.17) | 5.84 s (5.70–6.14) | not run | **4.47 s** (4.35–4.99) |
+
+The ranges of on and off do not overlap. `AddFile` itself took 2,459 ms and 1,385 ms
+with the copy and 66 ms and 41 ms without it (what remains is the game's CRC-32
+of the file). On the 1821 save the module and the parallel compression come out
+the same to within the spread, but the parallel way changes bytes a client
+receives and stays opt-in, while this one changes nothing that is read. `"verify"`
+on both saves (two sessions each, on a dummy session, not a server): the copy decoded
+to the save with its CRC, the load got the entry's `Data` with the flag 0, `SendFile`
+was not called, 0 mismatches. After the load, with the module on and off, `game.log`
+and `error.log` are the same once digits are replaced, `RandomCount` is the same in
+all runs of a save, and Tongs' reads of the player, three countries and three
+provinces are the same. On the GOG build the hook ran with `"on"` on the vanilla
+save (41 ms, the game loaded it).
+Not run: hosted multiplayer (the module leaves it alone; a host in the game
+needs the user present), a client, ironman and cloud saves. Compressed saves are
+not affected.
 
 ### tick_profile (diagnostic, simulation)
 
