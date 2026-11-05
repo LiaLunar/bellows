@@ -191,10 +191,10 @@ the other of two equal options, and from then on that game takes its own
 course. Two computers without Bellows lay out memory differently too, so the
 same happens between them.
 
-Ties do not explain everything. On a vanilla save of 1444, 8 of 22 runs with
-Bellows' default modules became a different game, against 0 of 8 without
-Bellows, and `verify` does not show it. Breaking the known ties the same way
-does not stop it. The cause is not found yet.
+Ties do not explain everything. In the lab, runs of one vanilla save of 1444
+sometimes became a different game with the same seed, also with no Bellows at
+all. The cause is not found yet, and neither is whether Bellows changes how
+often it happens.
 
 In multiplayer the known ties are safe. The host's AI makes these choices and sends them
 to every player as commands, so all games stay the same whoever runs Bellows.
