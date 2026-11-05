@@ -56,7 +56,8 @@ std::wstring UserFolderName(const std::wstring& gameDir);
 
 // The folder `-userdir=<path>` names on eu4.exe's command line, empty without
 // one. The whole argument may be in quotes, as Node's spawn passes a path with
-// a space. Without quotes it ends where the game ends an argument, at a space
+// a space, or only the path, as a player writes it in Steam's launch options.
+// Without quotes it ends where the game ends an argument, at a space
 // before -, + or /, or at a bare ` continue=`. The same reading as Anvil's
 // user_dir_argument (anvil#207), which no Anvil exposes to plugins yet.
 std::wstring UserDirArgument(std::wstring_view commandLine);

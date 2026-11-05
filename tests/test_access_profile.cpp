@@ -93,6 +93,8 @@ int main() {
     assert(UserDirArgument(L"\"C:\\g -userdir=C:\\no\\eu4.exe\" -debug") == L"");
     assert(UserDirArgument(L"\"C:\\g\\eu4.exe\" \"-userdir=C:\\a b\" -debug") == L"C:\\a b");
     assert(UserDirArgument(L"eu4.exe -xuserdir=C:/no") == L"");
+    assert(UserDirArgument(L"eu4.exe -userdir=\"D:/EU4 -data/p/\" -debug") == L"D:/EU4 -data/p/");
+    assert(UserDirArgument(L"eu4.exe -userdir=\"\" -debug") == L"");
 
     // The order: -userdir, userdir.txt, Documents.
     const std::wstring gameDir = root + L"\\game";

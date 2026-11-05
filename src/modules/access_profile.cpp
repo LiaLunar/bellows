@@ -312,6 +312,9 @@ std::wstring UserDirArgument(std::wstring_view line) {
         std::size_t end = std::wstring_view::npos;
         if (before == L'"') {
             end = value.find(L'"');
+        } else if (value.starts_with(L'"')) {  // -userdir="C:/a b/": the C runtime takes the quotes off for the game
+            value.remove_prefix(1);
+            end = value.find(L'"');
         } else {
             for (const std::wstring_view stop : {L" -", L" +", L" /", L" continue="}) end = (std::min)(end, value.find(stop));
         }
