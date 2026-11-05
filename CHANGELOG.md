@@ -1,5 +1,20 @@
 # Changelog
 
+## [1.2.0](https://github.com/happy-dwarf-team/bellows/compare/v1.1.0...v1.2.0) (2026-11-05)
+
+
+### Features
+
+* **army_search_memo:** the army's zone-of-control flag once per AI army search (off by default) ([#89](https://github.com/happy-dwarf-team/bellows/issues/89)) ([f07ce5f](https://github.com/happy-dwarf-team/bellows/commit/f07ce5f44d418bf3cdf51f8a95fbad1941f256ca))
+* **history_add:** no walk over a dated list for an entry just read ([#121](https://github.com/happy-dwarf-team/bellows/issues/121)) ([a06f2ca](https://github.com/happy-dwarf-team/bellows/commit/a06f2ca6b7ea5c581a3f92066693866e2e3fc2ba))
+* **pops_pacing:** the online-service pump every 500 ms at the fastest speed ([#119](https://github.com/happy-dwarf-team/bellows/issues/119)) ([e84eba5](https://github.com/happy-dwarf-team/bellows/commit/e84eba58255e193dcea0014aff418858397e2dc8))
+* **verifypath_listing:** verifypath_session keeps the listings past the main menu ([#120](https://github.com/happy-dwarf-team/bellows/issues/120)) ([5221060](https://github.com/happy-dwarf-team/bellows/commit/5221060a06478ab7c66271b6fe93384ce560e3b3))
+
+
+### Bug Fixes
+
+* read the mods from the folder the game was started with ([#115](https://github.com/happy-dwarf-team/bellows/issues/115)) ([ee28ea7](https://github.com/happy-dwarf-team/bellows/commit/ee28ea7815a03e43acdab2d4383986b9200c13c6))
+
 ## [1.1.0](https://github.com/happy-dwarf-team/bellows/compare/v1.0.0...v1.1.0) (2026-11-04)
 
 
