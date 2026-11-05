@@ -2,7 +2,8 @@
 // whole list first to see whether that new entry is in it (the reasoning in history_add_core.hpp).
 //
 // Mid hooks on the two adds in 0xDA66A0 (to the owner's list, then to the list of all such entries) note the
-// entry on this thread. A mid hook at the start of 0x7E7CD0, before the walk, jumps past it when the call adds
+// entry on this thread; the second add's site is also reached with an older entry, which stays with the game
+// (history_add_core.hpp). A mid hook at the start of 0x7E7CD0, before the walk, jumps past it when the call adds
 // that entry. Nothing else about the add changes: the game finds the
 // entry's place and links it as it always does. "verify" lets the game walk and walks the list as well, comparing
 // the answers; "on" does that for every 1024th entry and goes back to the game's walk for good after a mismatch.
@@ -29,13 +30,12 @@ volatile LONG64 g_sequence = 0;
 std::wstring* g_dir = nullptr;
 constexpr DWORD kWriteEveryMs = 5000;
 
-thread_local std::uintptr_t t_fresh = 0;
+thread_local sb::history::Noted t_noted;
 
 // rcx = the list, rdx = the entry; the block's own `mov rdi,rdx` and `mov rsi,rcx` are the code the jump leaves out.
 void AtWalk(anvil::Cpu& cpu) noexcept {
-    const std::uintptr_t fresh = t_fresh;
-    t_fresh = 0;
-    if (cpu.rdx != fresh || fresh == 0) return;
+    if (!t_noted.TakeWalk(cpu.rdx)) return;
+    const std::uintptr_t fresh = cpu.rdx;
     sb::Stats& s = EU4SB_HistoryAddStats;
     InterlockedIncrement64(&s.requests);
     if (s.cacheDisabled != 0) return;
@@ -102,9 +102,9 @@ bool InstallHistoryAdd(anvil::Host& host, Mode mode) {
     Undo undo;
     g_walk = host.mid_hook(sym::history_add_walk, &AtWalk);
     undo.add(g_walk);
-    g_addCall = host.mid_hook(sym::history_add_call, [](anvil::Cpu& cpu) { t_fresh = cpu.rdx; });
+    g_addCall = host.mid_hook(sym::history_add_call, [](anvil::Cpu& cpu) { t_noted.OwnerAdd(cpu.rdx); });
     undo.add(g_addCall);
-    g_globalCall = host.mid_hook(sym::history_add_global_call, [](anvil::Cpu& cpu) { t_fresh = cpu.rdx; });
+    g_globalCall = host.mid_hook(sym::history_add_global_call, [](anvil::Cpu& cpu) { t_noted.GlobalAdd(cpu.rdx); });
     undo.add(g_globalCall);
     undo.keep();
     InterlockedExchange(&EU4SB_HistoryAddStats.mode, g_verifyOnly ? 2 : 1);

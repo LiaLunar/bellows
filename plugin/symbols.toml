@@ -835,7 +835,7 @@ build."eu4-1.37.5.2-gog-win64" = { rva = 0xDA5195 }
 [symbol.history_add_global_call]
 bytes = "FF 90 A0 00 00 00"            # call [rax+0A0h], after mov rdx,[rdx]; mov rcx,[rax+38h]; mov rax,[rcx]
 memory = "code"
-note = "0xDA66A0: the same entry goes to the list of all such entries (0x7EC6C0 + 0x38) too, rdx = the entry"
+note = "0xDA66A0: the entry goes to the list of all such entries (0x7EC6C0 + 0x38) too, rdx = the entry; after a key that is no date, the owner's last entry, which can be in that list already"
 build."eu4-1.37.5-steam-win64" = { rva = 0xDA6A1D }
 build."eu4-1.37.5.2-gog-win64" = { rva = 0xDA51CD }
 
