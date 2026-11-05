@@ -38,6 +38,7 @@ DWORD WINAPI FinishAfterReady(void*) {
     sb::ReportModifierMerge();
     sb::ReportProvinceModifierView();
     sb::ReportArmySearchMemo();
+    sb::ReportDevelopSearchMemo();
     sb::ReportSaveCompress();
     sb::ReportTransferSkip();
     sb::ReportHistoryAdd();
@@ -112,6 +113,7 @@ struct Bellows : anvil::Plugin {
             {"province_modifier_view", cfg::province_modifier_view.id, sb::InstallProvinceModifierView},
             // redirects the call of 0x1022B0 in 0xEAB50; army_search_profile hooks its entry, so both chain.
             {"army_search_memo", cfg::army_search_memo.id, sb::InstallArmySearchMemo},
+            {"develop_search_memo", cfg::develop_search_memo.id, sb::InstallDevelopSearchMemo},
             {"save_compress", cfg::save_compress.id, sb::InstallSaveCompress},
             {"transfer_skip", cfg::transfer_skip.id, sb::InstallTransferSkip},
             {"history_add", cfg::history_add.id, sb::InstallHistoryAdd},

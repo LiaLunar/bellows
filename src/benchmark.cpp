@@ -44,9 +44,10 @@ constexpr Counter kCounters[] = {
     {"verifications", &Stats::verifications}, {"mismatches", &Stats::mismatches},
 };
 
-// The report's 128 fields are nearly gone: a diagnostic, off for every player, gets no mode field.
+// The report's 128 fields are gone: a diagnostic, off for every player, gets no mode field, and neither does a module
+// that came after the last free field (the log and its .tsv file say what it did).
 constexpr const char* kDiagnostics[] = {"zip_profile",  "token_dict_profile", "range_profile", "tick_profile",
-                                        "army_search_profile", "score_probe", "monthly_probe"};
+                                        "army_search_profile", "score_probe", "monthly_probe", "develop_search_memo"};
 
 bool IsDiagnostic(const char* module) {
     for (const char* name : kDiagnostics) {

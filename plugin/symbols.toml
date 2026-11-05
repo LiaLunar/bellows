@@ -933,6 +933,30 @@ bytes = "E8 03 9E B9 00"
 rva = 0x1A69B8
 bytes = "E8 83 85 B9 00"
 
+[symbol.develop_walk_call]
+memory = "code"
+note = "0x1B44B0 (AI of a country): the call of 0x1B5170, the walk over the country's provinces for one to develop"
+
+[symbol.develop_walk_call.build."eu4-1.37.5-steam-win64"]
+rva = 0x1B4995
+bytes = "E8 D6 07 00 00"
+
+[symbol.develop_walk_call.build."eu4-1.37.5.2-gog-win64"]
+rva = 0x1B4965
+bytes = "E8 D6 07 00 00"
+
+[symbol.develop_best_call]
+memory = "code"
+note = "0x1B5170: 0xBDE10(ai, &threshold, kind), the best province of the country and its subjects for one kind of development"
+
+[symbol.develop_best_call.build."eu4-1.37.5-steam-win64"]
+rva = 0x1B528B
+bytes = "E8 80 8B F0 FF"
+
+[symbol.develop_best_call.build."eu4-1.37.5.2-gog-win64"]
+rva = 0x1B525B
+bytes = "E8 E0 8B F0 FF"
+
 [symbol.zoc_flag_call]
 bytes = "E8 4A B8 FF FF"               # call 0xD40AE0, after mov edx,0E0h and xor r8d,r8d
 memory = "code"
