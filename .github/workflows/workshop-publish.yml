@@ -18,8 +18,7 @@ name: workshop-publish
 # (Settings → Secrets and variables → Actions → Variables). It also needs
 # remote_file_id in workshop/descriptor.mod (`pdx-ws init`), the organization
 # secrets STEAM_USERNAME and STEAM_SESSION with this repository selected, and
-# the `steam-workshop` environment that gates the job; see the README,
-# "Steam Workshop".
+# the `steam-workshop` environment that gates the job; see docs/workshop.md.
 on:
   release:
     types: [published]

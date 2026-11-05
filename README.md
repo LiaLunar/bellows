@@ -5,34 +5,34 @@
 [![Steam Workshop](https://img.shields.io/badge/Steam%20Workshop-Bellows-1b2838?logo=steam)](https://steamcommunity.com/sharedfiles/filedetails/?id=3823747170)
 [![License: MIT](https://img.shields.io/github/license/happy-dwarf-team/bellows)](LICENSE)
 
-**Faster Europa Universalis IV start-up, simulation and saves.** An
-[Anvil](https://github.com/happy-dwarf-team/anvil) plugin that makes the game
-start faster and the years pass sooner at speed 5, without changing game files
-or what the game computes: every module gives the game's own answers, only
-sooner (see [AI ties and multiplayer](#ai-ties-and-multiplayer) for the one
-thing that can still differ). Like a smith's bellows, it gets the forge hot
-sooner.
+**Faster Europa Universalis IV start-up, simulation and saves.** Bellows is an
+[Anvil](https://github.com/happy-dwarf-team/anvil) plugin. The game starts faster
+and years pass sooner at speed 5. It changes no game files and not what the game
+computes: every module gives the game's own answers, only sooner. One thing can
+still differ, see [AI ties and multiplayer](#ai-ties-and-multiplayer). Like a
+smith's bellows, it gets the forge hot sooner.
 
 **Install guide:
 [anvil.happydwarf.dev/plugins/bellows](https://anvil.happydwarf.dev/plugins/bellows/).**
 Players can also subscribe on the
-[Steam Workshop](https://steamcommunity.com/sharedfiles/filedetails/?id=3823747170);
-the rest of Happy Dwarf Team's tools for EU4 are on
-[happydwarf.dev](https://happydwarf.dev/).
+[Steam Workshop](https://steamcommunity.com/sharedfiles/filedetails/?id=3823747170).
+The team's other tools for EU4 are on [happydwarf.dev](https://happydwarf.dev/).
 
-Formerly **EU4 Startup Boost** (plugin id `eu4-startup-boost`, up to 0.5.0);
-see [Updating from EU4 Startup Boost](#updating-from-eu4-startup-boost).
+Bellows needs **Anvil 1.7 or newer** and EU4 1.37.5 (Steam, Windows 64-bit) or
+1.37.5.2 (GOG, Windows 64-bit). Anvil checks every game address against `eu4.exe`
+before it loads Bellows ([`plugin/symbols.toml`](plugin/symbols.toml),
+[design §6d](docs/design.md#6d-the-gog-build-13752-d)). On another build, or on
+any mismatch, it skips the plugin, gives the reason in `anvil/anvil.log`, and the
+game starts normally.
 
-> Status: 1.0 — the settings, their values and the Anvil requirement stay the
-> same in every 1.x release (see [Compatibility](#compatibility)); see
-> [Releases](https://github.com/happy-dwarf-team/bellows/releases) and
-> [CHANGELOG.md](CHANGELOG.md). What 1.0 was checked against is in
-> [#90](https://github.com/happy-dwarf-team/bellows/issues/90). Bellows 0.19.0 and newer
-> needs **Anvil 1.7 or newer** and also runs on the GOG build of EU4; 0.8.0 to
-> 0.18.0 need Anvil 1.0 (plugin API 2), 0.7.0 and earlier Anvil 0.2. From
-> 0.9.0 it is also published as a Steam Workshop mod (see
-> [Steam Workshop](#steam-workshop)).
-> Design: [docs/design.md](docs/design.md).
+Settings, their values and the Anvil requirement stay the same in every 1.x
+release (see [Compatibility](#compatibility)). What 1.0 was checked against is in
+[#90](https://github.com/happy-dwarf-team/bellows/issues/90). See also the
+[releases](https://github.com/happy-dwarf-team/bellows/releases),
+[CHANGELOG.md](CHANGELOG.md) and the design notes in [docs/design.md](docs/design.md).
+
+Formerly **EU4 Startup Boost** (plugin id `eu4-startup-boost`, up to 0.5.0): see
+[Updating from EU4 Startup Boost](#updating-from-eu4-startup-boost).
 
 ## Measured
 
@@ -104,8 +104,8 @@ So about a quarter less, and the two ranges do not overlap. All modules
 reported 0 differences from the game's own answers. Runs in which an event held the
 game paused were thrown out, as the method requires: 5 of the 16 in this series,
 none of them in these two setups. A late-game year has no such comparison yet: the runs
-of the 1821 save without Bellows were lost to a dialog. On one machine with one save,
-your years will differ with your processor and your campaign.
+of the 1821 save without Bellows were lost to a dialog. This is one machine and one
+save: your years will differ with your processor and your campaign.
 
 ### Loading a save
 
@@ -129,13 +129,13 @@ not timed.
 
 ### Measure your own
 
-Anvil Manager has a **Benchmark** tab (since Anvil 1.5)
-(`AnvilManager.exe` in the game folder). It starts the game again and again,
-without Bellows and with it in turn; each start quits by itself once the game
-is ready, and nothing in your saves, mods or `anvil.toml` changes. The tab
-shows the median and spread per setup, and the cold starts (after a reboot)
-the series happened to contain, separately. You can then send the report to
-the Anvil project, after seeing exactly what is sent, or copy it into a
+Anvil Manager (`AnvilManager.exe` in the game folder) has a **Benchmark** tab
+since Anvil 1.5. It starts the game again and again, without Bellows and with it
+in turn. Each start quits by itself once the game is ready, and nothing in your
+saves, mods or `anvil.toml` changes. The tab shows the median and spread per
+setup, and separately any cold starts (after a reboot) the series contained. You
+can send the report to the Anvil project, after seeing exactly what is sent, or
+copy it into a
 [performance report](https://github.com/happy-dwarf-team/bellows/issues/new?template=performance_report.yml).
 Bellows 0.10.0 and newer adds its module states and counters to the report.
 
@@ -175,14 +175,6 @@ the monthly tick's loops, modifier merges and random draws per context).
 They are tools for the lab: their names, counters and output files may
 change in any release (see [Compatibility](#compatibility)).
 
-Supported game builds: EU4 1.37.5 (Steam, Windows 64-bit) and EU4 1.37.5.2
-(GOG, Windows 64-bit), with Anvil 1.7 or newer. Every game address
-is declared in [`plugin/symbols.toml`](plugin/symbols.toml) for both builds
-([design §6d](docs/design.md#6d-the-gog-build-13752-d)); Anvil checks
-them against `eu4.exe` before it loads Bellows, and on another build (or any
-mismatch) skips the plugin with the reason in `anvil/anvil.log` and the game
-starts normally.
-
 ## AI ties and multiplayer
 
 Every module gives the game's own answers, so Bellows changes no rule and no
@@ -207,33 +199,37 @@ and the [design notes](docs/design.md#4-correctness-safeguards-d).
 
 ## Settings
 
-Each module is a setting `on`, `off` or (where the module has it) `verify`,
-plus `ram_prefetch_budget_mb` (64–8192), `frame_pacing_interval_ms`
-(0–1000; 0 keeps the game's own interval), `frame_pacing_input` (`draw`, the
-default, or `wait`, the 0.12.0 behaviour), `save_compress_parallel` (`off`,
-`on` or `verify`, used while `save_compress` is on) and `verifypath_session`
-(`off` or `on`, used while `verifypath_listing` is on); the defaults, labels and
-descriptions are in [`plugin/settings.toml`](plugin/settings.toml). Your
-values go into `anvil/data/bellows/settings.toml`, one line each, only those
-that differ from the default, for example:
+Each module is a setting: `on`, `off` or, where the module has it, `verify`.
+There are five more:
+
+| Setting | Values |
+| --- | --- |
+| `ram_prefetch_budget_mb` | 64–8192 |
+| `frame_pacing_interval_ms` | 0–1000; 0 keeps the game's own interval |
+| `frame_pacing_input` | `draw` (default) or `wait`, the 0.12.0 behaviour |
+| `save_compress_parallel` | `off`, `on` or `verify`, used while `save_compress` is on |
+| `verifypath_session` | `off` or `on`, used while `verifypath_listing` is on |
+
+The defaults, labels and descriptions are in
+[`plugin/settings.toml`](plugin/settings.toml). Your values go into
+`anvil/data/bellows/settings.toml`, one line each, only those that differ from the
+default, for example:
 
 ```toml
 attr_cache = "on"
 ram_prefetch_budget_mb = 2048
 ```
 
-Every setting applies at the next start. For one start, an environment
-variable overrides it: `ANVIL_BELLOWS_<NAME>`, e.g.
-`ANVIL_BELLOWS_EXISTS_INDEX=verify` (Anvil logs each override). The plugin
-writes its counters to `anvil/anvil.log` when the game is ready.
+Every setting applies at the next start. For one start, an environment variable
+overrides it: `ANVIL_BELLOWS_<NAME>`, for example
+`ANVIL_BELLOWS_EXISTS_INDEX=verify`. Anvil logs each override. The plugin writes
+its counters to `anvil/anvil.log` when the game is ready.
 
 **From 0.7.0 or earlier:** on its first start Bellows moves your
-`anvil/data/bellows/config.toml` to `settings.toml` (values that differ from
-the defaults; `[ram_prefetch] budget_mb` becomes `ram_prefetch_budget_mb`)
-and keeps the old file as `config.toml.migrated`; `anvil/anvil.log` says what
-was moved or left out. The `EU4SB_<NAME>` variables are no longer read: use
-`ANVIL_BELLOWS_<NAME>` (a set `EU4SB_` variable is named in the log). These
-migrations stay in every 1.x release and are removed only in 2.0.
+`anvil/data/bellows/config.toml` to `settings.toml` and keeps the old file as
+`config.toml.migrated`. `anvil/anvil.log` says what was moved or left out. The
+`EU4SB_<NAME>` variables are no longer read, so use `ANVIL_BELLOWS_<NAME>`. These
+migrations stay in every 1.x release.
 
 ### Compatibility
 
@@ -295,12 +291,12 @@ release.
   start-up, and `attr_cache` (off by default) remembers "not found". A file
   that a tool writes into the game or mod folders while the game is loading
   may be missed, and one it deletes may still be found, until the next start.
-  Edit your files between starts, or turn those modules off while you develop. Nothing of this applies
-  after the main menu is up: the start-up modules stop there. The exception is
-  `verifypath_session` (on by default since 1.2): a file added or deleted in the
-  game or mod folders during a session counts after at most 30 s. Turn it off
-  while you develop if you need new files to count at once. Mods in the game's
-  user folder (Documents) are not affected: that folder always goes to the game.
+  Edit your files between starts, or turn those modules off while you develop.
+- **After the main menu is up** the start-up modules stop, with one exception:
+  with `verifypath_session` (on by default since 1.2), a file added or deleted in
+  the game or mod folders counts after at most 30 s. Turn it off while you develop
+  if you need new files to count at once. Mods in the game's user folder
+  (Documents) are not affected.
 - Learned profiles are per mod set (the enabled mods in `dlc_load.json` and
   the game build), not per mod version. After an update of your mod the
   profile adds the new files on the next start and drops the ones no longer
@@ -311,23 +307,20 @@ release.
 
 ## Install / uninstall
 
-[Install Anvil](https://anvil.happydwarf.dev/docs/install/) 1.7 or newer first
-(it includes the `anvil-game` plugin Bellows needs). Then get Bellows in one of
+[Install Anvil](https://anvil.happydwarf.dev/docs/install/) 1.7 or newer first. It
+includes the `anvil-game` plugin Bellows needs. Then
+[install the plugin](https://anvil.happydwarf.dev/docs/install-plugins/) one of
 these ways:
 
-- **Anvil Manager:** click **Install** next to Bellows on the **Catalog** tab
-  (Anvil 1.9 or newer; Steam and GOG). To uninstall, click **Remove** on the
-  **Plugins** tab.
-- **Steam Workshop:** subscribe to
-  [Bellows](https://steamcommunity.com/sharedfiles/filedetails/?id=3823747170),
-  enable it in your playset, and approve it on the Manager's **Mods** tab or in
-  the Anvil panel in the game (`Ctrl+Shift+F12`). It loads from the next start.
-  To uninstall, unsubscribe.
-- **By hand:** download `bellows-windows-x64.zip` from the
+- click **Install** next to Bellows on the **Catalog** tab of Anvil Manager (Anvil
+  1.9 or newer). To uninstall, click **Remove** on the **Plugins** tab.
+- subscribe to the
+  [Steam Workshop mod](https://steamcommunity.com/sharedfiles/filedetails/?id=3823747170)
+  and approve it. To uninstall, unsubscribe.
+- extract `bellows-windows-x64.zip` from the
   [latest release](https://github.com/happy-dwarf-team/bellows/releases/latest)
-  and extract it into `<EU4>/anvil/plugins/`; it contains the `bellows` folder
-  (`SHA256SUMS.txt` next to the archive holds its checksum). Delete that folder
-  to uninstall.
+  into `<EU4>/anvil/plugins/`. `SHA256SUMS.txt` next to the archive holds its
+  checksum. To uninstall, delete the `bellows` folder.
 
 If something does not work, see
 [Troubleshooting](https://anvil.happydwarf.dev/docs/troubleshooting/).
@@ -356,7 +349,7 @@ cmake --install build --config Release --component plugin --prefix dist
 
 The plugin folder as Anvil loads it is `build/plugin/bellows/`. The Anvil SDK
 (the `AnvilPlugin` CMake package, its headers and `anvil.exe`) is the SDK
-archive of the Anvil release `SB_ANVIL_VERSION` in `CMakeLists.txt` (1.4.0),
+archive of the Anvil release `SB_ANVIL_VERSION` in `CMakeLists.txt` (1.7.0),
 downloaded by the first configure and checked against its SHA-256. Use an
 unpacked SDK archive, or one installed from a local Anvil checkout, with
 `-DAnvilPlugin_DIR=<sdk>/cmake`. After changing
@@ -367,87 +360,12 @@ Contributions, the commit convention and the release process: see
 
 ## Steam Workshop
 
-Bellows can also be published as a Steam Workshop mod; Anvil (since 1.3)
-loads plugins from enabled mods after the player approves each version.
-The mod is the `workshop/` folder ([`workshop.toml`](workshop.toml)):
-`descriptor.mod`, `thumbnail.png` and `anvil/bellows/`, the plugin folder of a
-release, which is not in Git. [`workshop/description.md`](workshop/description.md)
-is the item's description: every publish replaces the description on Steam with
-it. `checksum = "keep"` makes the publish fail if the mod would change the game's
-checksum.
-
-- Every pull request runs a dry run of
-  [paradox-workshop-publish](https://github.com/happy-dwarf-team/paradox-workshop-publish)
-  (`pdx-ws`) in `build.yml`: the job summary shows the files, the descriptor and
-  the rendered description. It needs no secrets.
-- [`workshop-publish.yml`](.github/workflows/workshop-publish.yml) runs when a
-  release is published. It downloads that release's `bellows-windows-x64.zip`,
-  checks its build attestation, unpacks `bellows/` into `workshop/anvil/bellows/`
-  and publishes the mod, with the release notes as the change note.
-- To update the Workshop page between releases, run it by hand on `main`
-  with the latest release:
-  `gh workflow run workshop-publish.yml --ref main -f tag=vX.Y.Z`. It publishes
-  that release's package again with `main`'s `workshop/` folder, and fails when
-  `main`'s descriptor version is not that release's (for example while a newer
-  release is still a draft). Steam keeps the mod's version when the files are
-  unchanged and records no change note, but takes the new description.
-
-Setting it up, once (maintainers):
-
-1. **Install `pdx-ws`** from its
-   [releases](https://github.com/happy-dwarf-team/paradox-workshop-publish/releases)
-   ([setup guide](https://github.com/happy-dwarf-team/paradox-workshop-publish/blob/main/docs/guide/setup.md)).
-2. **Create the Workshop item** on a computer with Steam running and logged in to
-   the account that owns EU4 and will own the item. Build the plugin package, put
-   its `bellows/` folder into the mod and check the plan first:
-
-   ```powershell
-   cmake -S . -B build -G "Visual Studio 17 2022" -A x64
-   cmake --build build --config Release
-   cmake --install build --config Release --component plugin --prefix dist/package
-   Remove-Item workshop/anvil -Recurse -Force -ErrorAction Ignore
-   New-Item -ItemType Directory workshop/anvil -Force | Out-Null
-   Copy-Item dist/package/bellows workshop/anvil/bellows -Recurse
-   pdx-ws plan
-   pdx-ws init
-   ```
-
-   `pdx-ws init` (client mode, through the Steam client) creates a **private**
-   item with the descriptor's name and tags, the preview and the description,
-   uploads the mod and writes `remote_file_id` into `workshop/descriptor.mod`.
-   Commit that line through a pull request. Make the item public on Steam when it
-   is ready: publishing never changes its visibility.
-3. **Share the Steam session** with this repository. The session is kept once,
-   as the organization secrets `STEAM_SESSION` and `STEAM_USERNAME`, for the
-   Happy Dwarf Team repositories that publish to the Workshop (read the
-   [security notes](https://github.com/happy-dwarf-team/paradox-workshop-publish/blob/main/docs/guide/security.md)
-   and the [organization setup](https://github.com/happy-dwarf-team/paradox-workshop-publish/blob/main/docs/guide/setup.md#several-repositories-in-one-organization)
-   first). Add this repository to both secrets, and create a `steam-workshop`
-   environment without secrets of its own:
-
-   ```sh
-   id=$(gh api repos/happy-dwarf-team/bellows --jq .id)
-   gh api --method PUT orgs/happy-dwarf-team/actions/secrets/STEAM_SESSION/repositories/$id
-   gh api --method PUT orgs/happy-dwarf-team/actions/secrets/STEAM_USERNAME/repositories/$id
-   gh api --method PUT repos/happy-dwarf-team/bellows/environments/steam-workshop
-   ```
-
-   In **Settings → Environments → steam-workshop**, add a required reviewer and
-   allow only the tags `v*` and the branch `main` (for the manual run): the
-   environment gates every publish job.
-4. **Turn publishing on:** `gh variable set WORKSHOP_PUBLISH --body true`.
-
-From then on, publishing a release's draft (see
-[CONTRIBUTING.md](CONTRIBUTING.md#versions-and-releases)) also publishes the
-Workshop mod. When the Steam session expires, the job fails with exit code 3:
-export a new one into the organization secret, for every repository that uses
-it (Git Bash or PowerShell 7.4+, so the pipe passes the session unchanged):
-
-```sh
-pdx-ws session export --user my_steam_name | gh secret set STEAM_SESSION --org happy-dwarf-team --visibility selected --repos bellows,tongs,eu4-anbennar-widescreen-loading-screens
-```
+Bellows is also a Steam Workshop mod. Anvil 1.3 and newer loads plugins from
+enabled mods after the player approves each version. The mod is the `workshop/`
+folder, and a published release publishes it. How that works, and how to set it
+up: [docs/workshop.md](docs/workshop.md).
 
 ## License
 
-MIT — see [LICENSE](LICENSE). Bundles mimalloc (MIT, Microsoft) and zlib (zlib License, Jean-loup Gailly and Mark Adler). Bellows is an
+MIT, see [LICENSE](LICENSE). Bundles mimalloc (MIT, Microsoft) and zlib (zlib License, Jean-loup Gailly and Mark Adler). Bellows is an
 unofficial community project, not affiliated with or endorsed by Paradox Interactive.

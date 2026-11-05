@@ -56,8 +56,7 @@ with a build provenance attestation to the draft. Once they are attached and
 the release has passed the checks in [docs/release-gate.md](docs/release-gate.md),
 publish the draft on GitHub: that makes the release public, rebuilds
 anvil.happydwarf.dev and happydwarf.dev (`website.yml`) and, when it is turned
-on, publishes the Steam Workshop mod (see the README,
-[Steam Workshop](README.md#steam-workshop)).
+on, publishes the Steam Workshop mod (see [docs/workshop.md](docs/workshop.md)).
 
 Do not edit `version.txt`, the manifest or descriptor `version` or `CHANGELOG.md` by hand;
 CMake refuses to configure when `version.txt` and `plugin/plugin.toml`
