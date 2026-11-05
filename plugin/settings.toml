@@ -199,15 +199,6 @@ description = "Simulation: in the AI's daily search for each army, works out onc
 group = "Simulation"
 restart = true
 
-[setting.develop_search_memo]
-type = "enum"
-values = [{ name = "off", label = "Off" }, { name = "on", label = "On" }, { name = "verify", label = "Verify" }]
-default = "off"
-label = "AI development search memo"
-description = "Simulation: when the AI goes through a country's provinces to pick one to develop, looks for the best province once per kind of development instead of once per province; the same answers, and most of the gain is in big countries late in the game."
-group = "Simulation"
-restart = true
-
 [setting.save_compress]
 type = "enum"
 values = [{ name = "off", label = "Off" }, { name = "on", label = "On" }, { name = "verify", label = "Verify" }]

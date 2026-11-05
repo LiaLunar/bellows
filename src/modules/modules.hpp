@@ -32,7 +32,6 @@ bool InstallFramePacing(anvil::Host& host, Mode mode);
 bool InstallModifierMerge(anvil::Host& host, Mode mode);
 bool InstallProvinceModifierView(anvil::Host& host, Mode mode);
 bool InstallArmySearchMemo(anvil::Host& host, Mode mode);
-bool InstallDevelopSearchMemo(anvil::Host& host, Mode mode);
 bool InstallPopsPacing(anvil::Host& host, Mode mode);
 void NotePopsSession(bool multiplayer) noexcept;  // from anvil-game's session event
 bool InstallSaveCompress(anvil::Host& host, Mode mode);
@@ -82,7 +81,6 @@ void ReportRangeWitness();
 void ReportModifierMerge();
 void ReportProvinceModifierView();
 void ReportArmySearchMemo();
-void ReportDevelopSearchMemo();
 void ReportPopsPacing();
 void ReportSaveCompress();
 void ReportTransferSkip();

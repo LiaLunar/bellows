@@ -534,30 +534,6 @@ on the move. The module keeps each answer for one scope on one thread: an AI arm
 entered inside another starts empty. Outside a scope every call goes to the game. `"verify"` runs the game's function for
 every call and compares; `"on"` does that for every 1024th answer and goes back to the game for good after a mismatch.
 
-### develop_search_memo (simulation)
-
-Off by default. In an AI country's update, `0x1B5170` walks the country's provinces. For each one that passes a check it draws
-a number, takes it modulo 3 as a kind of development and asks `0xBDE10` for the best province of that kind, among the
-provinces of the country and its subjects, and it keeps the province if it is that one. So a country of n provinces does up
-to n searches of n provinces for at most three different answers.
-
-The module redirects the only call of `0x1B5170` (`0x1B4995`) to mark a walk on the current thread and its call of
-`0xBDE10` (`0x1B528B`). Inside a walk the first search of a kind runs the game's function and later ones get its answer. A walk
-entered inside another starts empty, and other callers of `0xBDE10` run the game's function. The walk still draws its numbers,
-so the game's random sequence stays as it was. Why the answer cannot change during a walk: the AI task reads game state and
-leaves its decisions as commands, and no function that `0xBDE10` reaches through direct calls draws a random number (lab,
-`reach.py`; virtual calls, which are triggers, are not followed). That is a statement about the code, so `"verify"` runs the
-game's function for every call and compares, and `"on"` does that for every 1,024th answer and goes back to the game's function
-for good after a mismatch. `develop_search_memo.tsv` has the counters every 5 s. The module has no field in the benchmark
-report, which is at its limit of 128: the log has its counters.
-
-Measured on the lab's work bench (the game's serial AI, observer, no frames drawn, Steam build, Bellows defaults against the
-same with the module on, interleaved). The 1821 save, 55 days: 7,432 ms (7,180–7,479, n=3) against 6,247 ms (6,230–6,310,
-n=3), −15.9%, with `RandomCount` 262,614 in all six runs. In `"verify"` on the same days: 5,564 searches in 9 walks, 25 of them
-needed, 5,539 compared, 0 mismatches, and the game's function took 1,356 ms, which is the gain. The 1719 save, 56 days: 17,719
-ms against 17,952 ms (n=2), no gain: 1,216 searches in 10 walks, because no country there is that large. Not measured yet: a
-year at speed 5, `"verify"` on 1719.
-
 ### province_modifier_view (simulation)
 
 Off by default. `0x2FFC60` (country, out, province, culture) copies the
