@@ -177,9 +177,11 @@ change in any release (see [Compatibility](#compatibility)).
 
 ## AI ties and multiplayer
 
-Every module gives the game's own answers, so Bellows changes no rule and no
-result the game computes. One thing can still come out differently in single
-player: when the AI chooses between options with exactly the same score, for
+Bellows changes no rule, and `verify` found the modules' answers equal to the
+game's. A game can still come out differently in single player, and not all of
+it is explained yet.
+
+The known cause is a tie: when the AI chooses between options with exactly the same score, for
 example two leaders with the same pips for one army, or two countries its
 diplomacy rates the same, the game breaks the tie by where the two objects lie
 in memory. `mimalloc = "startup"` (the default) and Bellows' own memory use
@@ -189,7 +191,12 @@ the other of two equal options, and from then on that game takes its own
 course. Two computers without Bellows lay out memory differently too, so the
 same happens between them.
 
-In multiplayer this is safe. The host's AI makes these choices and sends them
+Ties do not explain everything. On a vanilla save of 1444, 8 of 22 runs with
+Bellows' default modules became a different game, against 0 of 8 without
+Bellows, and `verify` does not show it. Breaking the known ties the same way
+does not stop it. The cause is not found yet.
+
+In multiplayer the known ties are safe. The host's AI makes these choices and sends them
 to every player as commands, so all games stay the same whoever runs Bellows.
 In the lab the host ran Bellows 0.17.0 with default settings and the other
 computer ran no Bellows: 233 game days without an out-of-sync, with the game's

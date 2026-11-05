@@ -119,7 +119,8 @@ format change.
   between two leaders with the same pips (28 March 1640), repeatable per
   configuration. A separate arena for Bellows' allocations would not bring the
   vanilla choice back (mimalloc `startup` changes the heap on purpose), so the
-  behaviour is documented instead (README, "AI ties and multiplayer"). In MP
+  behaviour is documented instead (README, "AI ties and multiplayer", which
+  also has a divergence on a 1444 save that these ties do not explain). In MP
   the host's AI decides and its commands go to every player: in the lab's MP
   test (host with 0.17.0 defaults, client without Bellows, 233 days) the
   client received 21,011 commands from `server.cpp`, including 73
