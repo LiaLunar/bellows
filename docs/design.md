@@ -796,9 +796,9 @@ again at its next use, so a file added or removed during a session counts after 
 read during a load is fresh enough for that load. The write directory stays with the game as before, and every
 256th answer is still compared with the game's stat, which turns the module off on a difference.
 
-Lab ("verify" of `verifypath_listing`, every answer compared): 0 differences in the 648,000 answers of each
-session on the 1719 and 1821 saves (about 102,000 after the ready event), 92,000 on a vanilla save, and 653,000
-in a session that played on. Interleaved "Continue": 8.55 s without it, 6.79 s with it (README, "Loading a
+Lab ("verify" of `verifypath_listing`, every answer compared): 0 differences in 648,000 answers on the 1821
+save (about 102,000 after the ready event), 92,000 on a vanilla save, and 661,000 in a session that loaded the
+1719 save and played on. Interleaved "Continue": 8.55 s without it, 6.79 s with it (README, "Loading a
 save"), `setup.log`, `error.log`, `system.log` and `game.log` the same apart from times and counts.
 
 ### history_add (loading)
@@ -806,16 +806,16 @@ save"), `setup.log`, `error.log`, `system.log` and `game.log` the same apart fro
 `0x7E7CD0` adds an entry to a list ordered by date. It first walks the whole list from the head to see whether the
 entry is in it, then finds its place from the tail, usually at once. `0xDA66A0`, which reads one such entry,
 adds it to its owner's list and to one list of all such entries. So the walk over the second list is quadratic:
-with the lab's 10 mods 38,000 adds and 154 million node reads at each load, about 0.5 s on the main thread.
-On vanilla it is 4,300 adds and 2 million reads.
+with the lab's 10 mods 38,000 adds and 154 million node reads on the 1821 save, about 0.5 s on the main thread.
+On vanilla it is 4,300 adds and 2 million reads. So the gain depends on the mods, and less on the save.
 
 Mid hooks on the two adds note the entry on the thread, and a mid hook at the start of `0x7E7CD0` jumps past the
 walk when the call adds that entry. The entry was allocated while it was read, so it cannot be in a list yet;
 the place in the list and the links are the game's own. `"verify"` lets the game walk and walks as well; `"on"`
 does that for every 1024th entry and goes back to the game's walk for good after a mismatch.
 
-Lab: `"verify"` on the 1719, 1821 and vanilla saves and in a session that played on: 37,995 + 37,995 + 4,311 + 35,081
-entries, 0 differences. Interleaved "Continue" with `verifypath_session`: 6.79 s without it, 6.27 s with it.
+Lab: `"verify"` on the 1821 save (37,995 entries), on a vanilla save (4,311) and in a session that loaded the 1719
+save and played on (35,081): 0 differences. Interleaved "Continue" with `verifypath_session`: 6.79 s without it, 6.27 s with it.
 
 ### tick_profile (diagnostic, simulation)
 
