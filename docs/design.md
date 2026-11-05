@@ -525,6 +525,15 @@ late-game years vary by ±3 s between runs, so not conclusive). The module gives
 the game's own lists and checks itself against the game's merge in the running
 game, so it is on by default.
 
+### army_search_memo (simulation)
+
+`0xD45250` asks `0xD40AE0(army, 0xE0, 0)` for every move it checks, and `0x1A6800` asks `0xD40790(army, 0xFB)` for every
+province it prices. Both build a modifier list from the army's regiments each time, and neither answer depends
+on the move. The module keeps each answer for one scope on one thread: an AI army search (`0x1022B0`), a path search
+(`0x96C520`) or the listing of a unit's moves from a province (`0x195750`, on the main thread in the daily update). A scope
+entered inside another starts empty. Outside a scope every call goes to the game. `"verify"` runs the game's function for
+every call and compares; `"on"` does that for every 1024th answer and goes back to the game for good after a mismatch.
+
 ### province_modifier_view (simulation)
 
 Off by default. `0x2FFC60` (country, out, province, culture) copies the

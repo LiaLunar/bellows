@@ -5,7 +5,28 @@
 #include <cassert>
 #include <cstdio>
 
+void SpeedMemo() {
+    sb::SearchMemo memo;
+    int a = 0, b = 0;
+    assert(sb::LookupSpeed(memo, &a) == sb::MemoAnswer::Outside);
+    sb::StoreSpeed(memo, &a, 7);
+    assert(!memo.speedValid);
+    const sb::SearchMemo outer = sb::EnterSearch(memo);
+    assert(sb::LookupSpeed(memo, &a) == sb::MemoAnswer::Miss);
+    sb::StoreSpeed(memo, &a, -250);
+    assert(sb::LookupSpeed(memo, &a) == sb::MemoAnswer::Hit && memo.speed == -250);
+    assert(sb::LookupSpeed(memo, &b) == sb::MemoAnswer::Miss);
+    assert(sb::Lookup(memo, &a) == sb::MemoAnswer::Miss);  // the two memos do not share an answer
+    const sb::SearchMemo inner = sb::EnterSearch(memo);
+    assert(sb::LookupSpeed(memo, &a) == sb::MemoAnswer::Miss);  // a nested search starts empty
+    sb::LeaveSearch(memo, inner);
+    assert(sb::LookupSpeed(memo, &a) == sb::MemoAnswer::Hit);
+    sb::LeaveSearch(memo, outer);
+    assert(sb::LookupSpeed(memo, &a) == sb::MemoAnswer::Outside);
+}
+
 int main() {
+    SpeedMemo();
     int armyA = 0, armyB = 0;
     sb::SearchMemo memo;
 

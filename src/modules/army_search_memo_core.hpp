@@ -17,12 +17,17 @@ struct SearchMemo {
     const void* army = nullptr;
     std::uint8_t value = 0;
     bool valid = false;
+    // The army's speed modifier 0xFB from 0xD40790, the same way.
+    const void* speedArmy = nullptr;
+    int speed = 0;
+    bool speedValid = false;
 };
 
 // Entering a search: a fresh memo; the returned state is restored on leaving.
 inline SearchMemo EnterSearch(SearchMemo& memo) {
     const SearchMemo saved = memo;
-    memo = SearchMemo{saved.depth + 1, nullptr, 0, false};
+    memo = SearchMemo{};
+    memo.depth = saved.depth + 1;
     return saved;
 }
 
@@ -33,6 +38,18 @@ enum class MemoAnswer { Outside, Hit, Miss };
 inline MemoAnswer Lookup(const SearchMemo& memo, const void* army) {
     if (memo.depth == 0) return MemoAnswer::Outside;
     return memo.valid && memo.army == army ? MemoAnswer::Hit : MemoAnswer::Miss;
+}
+
+inline MemoAnswer LookupSpeed(const SearchMemo& memo, const void* army) {
+    if (memo.depth == 0) return MemoAnswer::Outside;
+    return memo.speedValid && memo.speedArmy == army ? MemoAnswer::Hit : MemoAnswer::Miss;
+}
+
+inline void StoreSpeed(SearchMemo& memo, const void* army, int speed) {
+    if (memo.depth == 0) return;
+    memo.speedArmy = army;
+    memo.speed = speed;
+    memo.speedValid = true;
 }
 
 inline void Store(SearchMemo& memo, const void* army, std::uint8_t value) {

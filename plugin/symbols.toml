@@ -905,6 +905,34 @@ note = "0xEAB50 (ai_army.cpp): the only call of the AI army search 0x1022B0"
 build."eu4-1.37.5-steam-win64" = { rva = 0xEBB5F }
 build."eu4-1.37.5.2-gog-win64" = { rva = 0xEBB8F }
 
+[symbol.unit_path_search]
+bytes = "4C 89 4C 24 20 48 89 54 24 10 48 89 4C 24 08 55 56 57 41 54 41 55 41 56 41 57 48 81 EC 00 02 00 00"
+memory = "code"
+signature = "uint8_t (void* a1, void* a2, void* a3, void* a4, void* a5, void* a6, void* a7, void* a8)"
+note = "the path search for one unit: it asks 0xD45250 for every move it considers"
+build."eu4-1.37.5-steam-win64" = { rva = 0x96C520 }
+build."eu4-1.37.5.2-gog-win64" = { rva = 0x96B750 }
+
+[symbol.unit_neighbour_moves]
+bytes = "44 88 4C 24 20 48 89 54 24 10 55 53 41 54 41 55 41 57 48 8D 6C 24 D9 48 81 EC C0 00 00 00"
+memory = "code"
+signature = "void (void* a1, void* unit, int province, uint8_t a4, void* a5, void* a6)"
+note = "the moves of a unit from one province, in its daily update: it asks 0xD45250 for each neighbour"
+build."eu4-1.37.5-steam-win64" = { rva = 0x195750 }
+build."eu4-1.37.5.2-gog-win64" = { rva = 0x195780 }
+
+[symbol.army_speed_modifier_call]
+memory = "code"
+note = "0x1A6800 (an army's speed through a province): 0xD40790(army, &out, 0xFB, 0, 0), the speed modifier of the army"
+
+[symbol.army_speed_modifier_call.build."eu4-1.37.5-steam-win64"]
+rva = 0x1A6988
+bytes = "E8 03 9E B9 00"
+
+[symbol.army_speed_modifier_call.build."eu4-1.37.5.2-gog-win64"]
+rva = 0x1A69B8
+bytes = "E8 83 85 B9 00"
+
 [symbol.zoc_flag_call]
 bytes = "E8 4A B8 FF FF"               # call 0xD40AE0, after mov edx,0E0h and xor r8d,r8d
 memory = "code"
