@@ -180,14 +180,19 @@ bool InstallTransferSkip(anvil::Host& host, Mode mode) {
     }
     g_sessionIsServer = static_cast<std::size_t>(host.value(sym::session_kind_check, "session_is_server"));
     g_sessionIsDummy = static_cast<std::size_t>(host.value(sym::session_kind_check, "session_is_dummy"));
+    Undo undo;
     host.hook(g_addHook, sym::file_transfer_add, &AddFileDetour);
+    undo.add(g_addHook);
     g_addNext = g_addHook.next_pointer();
     if (g_verify) {
         host.hook(g_sendHook, sym::file_transfer_send, &SendFileDetour);
+        undo.add(g_sendHook);
         g_sendNext = g_sendHook.next_pointer();
         host.hook(g_loadHook, sym::game_setup_load_file, &LoadFileDetour);
+        undo.add(g_loadHook);
         g_loadNext = g_loadHook.next_pointer();
     }
+    undo.keep();
     InterlockedExchange(&EU4SB_TransferSkipStats.mode, g_verify ? 2 : 1);
     InterlockedExchange(&EU4SB_TransferSkipStats.initialized, 1);
     Log(ANVIL_LOG_INFO, "transfer_skip: %s", g_verify ? "verifying, the game keeps its copy" : "on");

@@ -175,16 +175,23 @@ bool InstallArmySearchMemo(anvil::Host& host, Mode mode) {
     } catch (...) {
         return false;
     }
+    Undo undo;
     host.redirect(g_searchSite, sym::army_search_call, &SearchDetour);
+    undo.add(g_searchSite);
     g_search = g_searchSite.next_pointer();
     host.redirect(g_flagSite, sym::zoc_flag_call, &FlagDetour);
+    undo.add(g_flagSite);
     g_flag = g_flagSite.next_pointer();
     host.redirect(g_speedSite, sym::army_speed_modifier_call, &SpeedDetour);
+    undo.add(g_speedSite);
     g_speed = g_speedSite.next_pointer();
     host.hook(g_pathHook, sym::unit_path_search, &PathDetour);
+    undo.add(g_pathHook);
     g_path = g_pathHook.next_pointer();
     host.hook(g_movesHook, sym::unit_neighbour_moves, &MovesDetour);
+    undo.add(g_movesHook);
     g_moves = g_movesHook.next_pointer();
+    undo.keep();
     InterlockedExchange(&EU4SB_ArmySearchMemoStats.mode, g_verifyOnly ? 2 : 1);
     InterlockedExchange(&EU4SB_ArmySearchMemoStats.initialized, 1);
     HANDLE thread = CreateThread(nullptr, 0, WriterThread, nullptr, 0, nullptr);
