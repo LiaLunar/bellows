@@ -85,6 +85,28 @@ for Anbennar's large scripted effects and makes no difference on the 10-mod set
 above. The game's logs were the same in all five pairs of starts. The first
 start after a reboot was not measured on this mod set.
 
+### A year at speed 5
+
+Every default setting together, against the same game without Bellows: EU4 1.37.5
+(Steam), original `eu4.exe`, the save of Russia on 17 March 1719, warmed up to
+1 January 1720, then the year 1720 at speed 5 with the game's main thread on one
+processor and 8 workers in both of its pools. Anvil 1.9.0, anvil-game and Tongs (which
+drives the run) were in both setups, and Bellows was a build of the code that
+became 1.2. One game per run, interleaved, each after a check that the processor
+was idle, 5 November 2026:
+
+| Setup | Year 1720 | Median |
+| --- | --- | ---: |
+| Without Bellows | 26.50 / 27.11 / 24.70 / 28.95 s | 26.80 s |
+| With Bellows, default settings | 18.72 / 21.63 / 20.92 / 20.07 s | **20.49 s** |
+
+So about a quarter less, and the two ranges do not overlap. All modules
+reported 0 differences from the game's own answers. Runs in which an event held the
+game paused were thrown out, as the method requires: 5 of the 16 in this series,
+none of them in these two setups. A late-game year has no such comparison yet: the runs
+of the 1821 save without Bellows were lost to a dialog. On one machine with one save,
+your years will differ with your processor and your campaign.
+
 ### Loading a save
 
 "Continue" on the main menu until the game is ready, EU4 1.37.5 (Steam), original
