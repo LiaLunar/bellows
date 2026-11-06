@@ -54,6 +54,7 @@ DWORD WINAPI FinishAfterReady(void*) {
         {"frame_pacing report", sb::ReportFramePacing},
         {"pops_pacing report", sb::ReportPopsPacing},
         {"modifier_merge report", sb::ReportModifierMerge},
+        {"port_table report", sb::ReportPortTable},
         {"province_modifier_view report", sb::ReportProvinceModifierView},
         {"army_search_memo report", sb::ReportArmySearchMemo},
         {"save_compress report", sb::ReportSaveCompress},
@@ -132,6 +133,8 @@ struct Bellows : anvil::Plugin {
             {"frame_pacing", cfg::frame_pacing.id, sb::InstallFramePacing},
             {"pops_pacing", cfg::pops_pacing.id, sb::InstallPopsPacing},
             {"modifier_merge", cfg::modifier_merge.id, sb::InstallModifierMerge},
+            // hooks the entry of 0x350B80; monthly_probe's hook on it chains.
+            {"port_table", cfg::port_table.id, sb::InstallPortTable},
             {"province_modifier_view", cfg::province_modifier_view.id, sb::InstallProvinceModifierView},
             // redirects the call of 0x1022B0 in 0xEAB50; army_search_profile hooks its entry, so both chain.
             {"army_search_memo", cfg::army_search_memo.id, sb::InstallArmySearchMemo},

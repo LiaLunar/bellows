@@ -559,6 +559,19 @@ build."eu4-1.37.5-steam-win64" = { rva = 0x350B80 }
 build."eu4-1.37.5.2-gog-win64" = { rva = 0x350A50 }
 
 
+[symbol.port_range]
+memory = "code"
+signature = "int* (void* country, int* out)"
+note = "how far a province may lie from a port before the country's table marks it as out of range"
+
+[symbol.port_range.build."eu4-1.37.5-steam-win64"]
+rva = 0x350A20
+bytes = "40 53 48 83 EC 20 48 8B DA"
+
+[symbol.port_range.build."eu4-1.37.5.2-gog-win64"]
+rva = 0x3508F0
+bytes = "40 53 48 83 EC 20 48 8B DA"
+
 [symbol.modifier_merge]
 bytes = "40 55 41 55 48 83 EC 48 4C 63 4A 64 45 33 C0 4C 89 7C 24 20"
 memory = "code"

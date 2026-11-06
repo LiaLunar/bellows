@@ -190,6 +190,15 @@ description = "Simulation: reads one value from a province's modifiers in place 
 group = "Simulation"
 restart = true
 
+[setting.port_table]
+type = "enum"
+values = [{ name = "off", label = "Off" }, { name = "on", label = "On" }, { name = "verify", label = "Verify" }]
+default = "off"
+label = "Port table"
+description = "Simulation: rebuilds a country's table of the nearest port from one list of its ports instead of walking its provinces and relations again for every province of the map. Off by default until it has its timed series."
+group = "Simulation"
+restart = true
+
 [setting.army_search_memo]
 type = "enum"
 values = [{ name = "off", label = "Off" }, { name = "on", label = "On" }, { name = "verify", label = "Verify" }]

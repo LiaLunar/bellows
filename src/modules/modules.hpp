@@ -30,6 +30,7 @@ bool InstallRangeProfile(anvil::Host& host, Mode mode);  // diagnostic
 bool InstallRangeWitness(anvil::Host& host, Mode mode);
 bool InstallFramePacing(anvil::Host& host, Mode mode);
 bool InstallModifierMerge(anvil::Host& host, Mode mode);
+bool InstallPortTable(anvil::Host& host, Mode mode);
 bool InstallProvinceModifierView(anvil::Host& host, Mode mode);
 bool InstallArmySearchMemo(anvil::Host& host, Mode mode);
 bool InstallPopsPacing(anvil::Host& host, Mode mode);
@@ -79,6 +80,7 @@ void ReportTokenDictCache();
 void ReportRangeProfile();
 void ReportRangeWitness();
 void ReportModifierMerge();
+void ReportPortTable();
 void ReportProvinceModifierView();
 void ReportArmySearchMemo();
 void ReportPopsPacing();

@@ -36,6 +36,7 @@ code only.
 | `token_dict_cache` | Caches the script tokenizer's keyword lookups during start-up | −0.4 s |
 | `range_witness` | Simulation: answers the country range check from the province that was in range last time (§6a) | year 1720: 27.6 → 20.6 s |
 | `modifier_merge` | Simulation: adds large modifier lists with an index instead of a scan per entry (§6a) | year 1720: 20.64 → 19.45 s |
+| `port_table` | Simulation, off: the country's nearest-port table from one list of its ports (§6a) | not measured yet |
 | `province_modifier_view` | Simulation, off: reads one value of a province's modifiers without copying the list (§6a) | exact, no gain shown |
 | `save_compress` | Saving: the game's own zlib with a faster CRC-32 (the game's bytes); optionally in parallel (§6a) | autosave 0.873 → 0.831 s; parallel 0.612 s |
 | `transfer_skip` | Loading in single player: no level 9 copy of a text save for a transfer nobody receives (§6a) | "Continue" of a 64.5 MB save 10.91 → 8.95 s |
@@ -485,6 +486,25 @@ the library's work behind the callbacks (HTTP transfers), which only comes later
 The simulation is the same because only the moment the callbacks run changes, and nothing in the
 daily tick waits for them. `"verify"` calls the game's function every time and counts what `"on"` would
 leave out; `pops_pacing.tsv` has the calls, what was left out and the time in the pump.
+
+### port_table (simulation)
+
+Off by default. `0x350B80` rebuilds a country's table of the nearest port when
+the country's flag `+0x2887` is set: for each province of the map it walks the
+country's provinces, then its row of relations and the provinces of each friend,
+and calls the distance function for the ports it finds. On the 1821 save the
+months with these rebuilds cost 575-651 ms against 235-305 ms for the others, and
+the table takes 295-362 ms of that, half of it for one large country.
+
+None of the walks depends on the province being filled in, so `port_table`
+collects the ports once and goes over only that list. The ports keep the game's
+order and the comparison stays strict, so a tie ends on the same port. The
+distance (`0x2D2520`) and the range (`0x350A20`) are the game's own functions;
+the distance calls stay, so what is saved is the walks. A first build of the
+table and a country that has nothing to fill in go to the game's function.
+`"verify"` runs the game's function on the real table and `Fill` on a copy and
+compares every cell; `"on"` does that for every 256th rebuild and goes back to
+the game's function for good after a mismatch. `port_table.tsv` has the counters.
 
 ### modifier_merge (simulation)
 
@@ -939,7 +959,8 @@ parallel and give the same game; the province updates draw rarely but do
 (0.2% of calls); the unit update draws nothing and spends 89% of its time in
 one merge site (each country's dense list of about 700 modifiers added to
 every unit's list with a linear scan per entry, 44,000 compared entries a
-call), which `modifier_merge` targets. The port table is 0.5% of the run.
+call), which `modifier_merge` targets. The port table was put at 0.5% of the run
+from averages; month by month it is far more on the 1821 save (see `port_table`).
 
 ### attr_cache
 
