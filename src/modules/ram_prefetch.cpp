@@ -49,7 +49,7 @@ namespace profile = sb::profile;
 namespace prefetch = sb::prefetch;
 
 std::uint64_t g_budgetBytes = 1024ULL << 20;  // set from config before install
-constexpr unsigned kWorkers = 8;
+unsigned g_workers = sb::profile::kWorkers;  // set when the workers start
 constexpr std::size_t kTinflStateBytes = 64 * 1024;  // miniz tinfl_decompressor is ~11 KB
 constexpr std::size_t kMaxProfileEntries = 20000;
 constexpr unsigned kTinflNonWrappingOutput = 4;  // TINFL_FLAG_USING_NON_WRAPPING_OUTPUT_BUF
@@ -529,8 +529,17 @@ DWORD WINAPI Starter(LPVOID) {
         Backend* published = backend.release();
         g_backend.store(published);
         g_startTicks = sb::Ticks();
-        g_workersRunning = static_cast<LONG>(kWorkers);
-        for (unsigned index = 0; index < kWorkers; ++index) {
+        g_workers = profile::WorkersFor(*g_gameDir);
+        MEMORYSTATUSEX memory{sizeof(memory)};
+        const std::uint64_t setting = g_budgetBytes;
+        g_budgetBytes = prefetch::EffectiveBudget(setting, GlobalMemoryStatusEx(&memory) ? memory.ullAvailPhys : 0);
+        if (g_budgetBytes != setting) {
+            sb::Log(ANVIL_LOG_INFO, "ram_prefetch: budget %llu MB with %llu MB free",
+                    static_cast<unsigned long long>(g_budgetBytes >> 20),
+                    static_cast<unsigned long long>(memory.ullAvailPhys >> 20));
+        }
+        g_workersRunning = static_cast<LONG>(g_workers);
+        for (unsigned index = 0; index < g_workers; ++index) {
             HANDLE thread = CreateThread(nullptr, 0, &Worker, nullptr, 0, nullptr);
             if (thread == nullptr) {
                 InterlockedDecrement(&g_workersRunning);
@@ -621,7 +630,7 @@ void ReportRamPrefetch() {
         "ram_prefetch: %s, %ld members in %ld archives; prefetched %.1f MB, served %.1f MB, failed %lld; decode %.0f ms "
         "(sum over %u workers), workers %s %.0f ms; peak not yet taken %.0f of %llu MB; learned %zu members",
         kSources[source], g_profileEntries, g_profileArchives, g_bytesPrefetched / 1048576.0, g_bytesServed / 1048576.0,
-        g_failed, TicksToMs(g_ticksDecode), kWorkers, finish ? "finished after" : "still running at stop,",
+        g_failed, TicksToMs(g_ticksDecode), g_workers, finish ? "finished after" : "still running at stop,",
         finish ? TicksToMs(finish - g_startTicks) : 0.0, g_committedPeak / 1048576.0,
         static_cast<unsigned long long>(g_budgetBytes >> 20), g_learned->size());
 

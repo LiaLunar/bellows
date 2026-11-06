@@ -96,7 +96,7 @@ min = 64
 max = 8192
 step = 64
 label = "RAM prefetch budget (MB)"
-description = "RAM for unpacked archive members the game has not taken yet."
+description = "RAM for unpacked archive members the game has not taken yet. A start uses at most a quarter of the memory free at that moment."
 group = "Start-up"
 restart = true
 

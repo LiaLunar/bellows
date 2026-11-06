@@ -2,6 +2,7 @@
 
 #include <windows.h>
 #include <shlobj.h>
+#include <winioctl.h>
 
 #include <algorithm>
 #include <cwchar>
@@ -370,5 +371,25 @@ std::wstring UserDirectory() {
     if (documents != nullptr) CoTaskMemFree(documents);
     return UserDirectoryFor(GetCommandLineW(), gameDir, folder);
 }
+
+bool OnRotatingDisk(const std::wstring& path) {
+    wchar_t volume[MAX_PATH] = {};
+    if (!GetVolumePathNameW(path.c_str(), volume, MAX_PATH) || volume[0] == L'\0' || volume[1] != L':') return false;
+    const wchar_t device[] = {L'\\', L'\\', L'.', L'\\', volume[0], L':', L'\0'};
+    // No access rights: the property needs none, and a player has no rights on the volume.
+    HANDLE disk = CreateFileW(device, 0, FILE_SHARE_READ | FILE_SHARE_WRITE, nullptr, OPEN_EXISTING, 0, nullptr);
+    if (disk == INVALID_HANDLE_VALUE) return false;
+    STORAGE_PROPERTY_QUERY query{};
+    query.PropertyId = StorageDeviceSeekPenaltyProperty;
+    query.QueryType = PropertyStandardQuery;
+    DEVICE_SEEK_PENALTY_DESCRIPTOR answer{};
+    DWORD bytes = 0;
+    const BOOL ok = DeviceIoControl(disk, IOCTL_STORAGE_QUERY_PROPERTY, &query, sizeof(query), &answer, sizeof(answer),
+                                    &bytes, nullptr);
+    CloseHandle(disk);
+    return ok && bytes >= sizeof(answer) && answer.IncursSeekPenalty;
+}
+
+unsigned WorkersFor(const std::wstring& gameDir) { return OnRotatingDisk(gameDir) ? kWorkersRotating : kWorkers; }
 
 }  // namespace sb::profile

@@ -24,6 +24,13 @@ inline bool SplitLine(const std::wstring& line, std::wstring& archive, std::wstr
     return true;
 }
 
+// The budget for this start: at most a quarter of the memory free now, so a small machine does not
+// page the game out to hold what it would read anyway. 0 means free memory is unknown.
+inline std::uint64_t EffectiveBudget(std::uint64_t setting, std::uint64_t freeBytes) {
+    if (freeBytes == 0) return setting;
+    return setting < freeBytes / 4 ? setting : freeBytes / 4;
+}
+
 // Unpacked bytes the game has not taken yet. The mutex also guards the members' buffers.
 struct Budget {
     std::mutex mutex;

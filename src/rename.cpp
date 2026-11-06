@@ -6,6 +6,11 @@ namespace sb {
 
 namespace fs = std::filesystem;
 
+std::string Utf8Name(const fs::path& name) {
+    const std::u8string text = name.u8string();
+    return std::string(reinterpret_cast<const char*>(text.data()), text.size());
+}
+
 bool FormerPluginInstalled(const fs::path& plugin_dir) {
     std::error_code ec;
     return fs::exists(plugin_dir.parent_path() / kFormerId / "plugin.toml", ec);
@@ -26,7 +31,7 @@ std::string MigrateFormerData(const fs::path& data_dir) {
         fs::rename(from, data_dir / from.filename(), ec);
         if (ec) {
             return "moved " + std::to_string(moved) + " of " + std::to_string(entries.size()) +
-                   " entries from anvil/data/eu4-startup-boost; stopped at " + from.filename().string() + ": " +
+                   " entries from anvil/data/eu4-startup-boost; stopped at " + Utf8Name(from.filename()) + ": " +
                    ec.message();
         }
         ++moved;

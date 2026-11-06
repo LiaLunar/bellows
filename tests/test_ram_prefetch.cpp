@@ -289,7 +289,16 @@ void TestDeflateMembers() {
 
 }  // namespace
 
+static void TestEffectiveBudget() {
+    constexpr std::uint64_t GiB = 1ULL << 30;
+    assert(sb::prefetch::EffectiveBudget(GiB, 32 * GiB) == GiB);
+    assert(sb::prefetch::EffectiveBudget(GiB, 4 * GiB) == GiB);
+    assert(sb::prefetch::EffectiveBudget(GiB, 2 * GiB) == GiB / 2);
+    assert(sb::prefetch::EffectiveBudget(GiB, 0) == GiB);
+}
+
 int main() {
+    TestEffectiveBudget();
     TestSplitLine();
     TestBudget();
     TestStatus();

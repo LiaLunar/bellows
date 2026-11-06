@@ -27,6 +27,9 @@ int main() {
     const fs::path plugins = root / "plugins";
     const fs::path data = root / "data";
 
+    // A name outside the ANSI code page: the log line must not throw.
+    assert(sb::Utf8Name(fs::path(L"中文.txt")) == "\xE4\xB8\xAD\xE6\x96\x87.txt");
+
     // Former plugin folder still installed.
     fs::create_directories(plugins / "bellows");
     assert(!sb::FormerPluginInstalled(plugins / "bellows"));

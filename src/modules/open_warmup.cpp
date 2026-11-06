@@ -41,7 +41,7 @@ volatile LONG g_next = 0;
 volatile LONG g_running = 0;
 std::int64_t g_startQpc = 0;
 std::int64_t g_frequency = 1;
-unsigned g_threads = 8;
+unsigned g_threads = sb::profile::kWorkers;  // set when the workers start
 
 CreateFileWFn g_realCreateFileW = nullptr;  // the rest of the import's chain
 anvil::FunctionHook<HANDLE(LPCWSTR, DWORD, DWORD, LPSECURITY_ATTRIBUTES, DWORD, DWORD, HANDLE)> g_createFileHook;
@@ -119,6 +119,7 @@ void StartWorkers() {
     QueryPerformanceCounter(&now);
     g_frequency = frequency.QuadPart ? frequency.QuadPart : 1;
     g_startQpc = now.QuadPart;
+    g_threads = profile::WorkersFor(*g_gameDir);
     g_running = static_cast<LONG>(g_threads);
     unsigned started = 0;
     for (unsigned index = 0; index < g_threads; ++index) {

@@ -16,32 +16,52 @@
 
 namespace {
 
+// A step that fails only stops that step. Nothing above FinishAfterReady catches, and an exception
+// out of a thread ends the game; in load() it would cost the whole plugin for a note in the log.
+template <class Step>
+void Guarded(const char* name, Step&& step) noexcept {
+    try {
+        step();
+    } catch (const std::exception& e) {
+        sb::Log(ANVIL_LOG_WARNING, "%s: %s", name, e.what());
+    } catch (...) {
+        sb::Log(ANVIL_LOG_WARNING, "%s: failed", name);
+    }
+}
+
 DWORD WINAPI FinishAfterReady(void*) {
-    sb::FinishOpenWarmup();
-    sb::FinishRamPrefetch();
-    sb::ReportMimalloc();
-    sb::ReportVerifyPathListing();
-    sb::ReportExistsIndex();
-    sb::ReportTriggerIntern();
-    sb::ReportMetascriptSubst();
-    sb::ReportMetascriptBlocks();
-    sb::ReportOpenWarmup();
-    sb::ReportAttrCache();
-    sb::ReportRamPrefetch();
-    sb::ReportZipProfile();
-    sb::ReportTokenDictProfile();
-    sb::ReportTokenDictCache();
-    sb::ReportRangeProfile();
-    sb::ReportRangeWitness();
-    sb::ReportFramePacing();
-    sb::ReportPopsPacing();
-    sb::ReportModifierMerge();
-    sb::ReportProvinceModifierView();
-    sb::ReportArmySearchMemo();
-    sb::ReportSaveCompress();
-    sb::ReportTransferSkip();
-    sb::ReportHistoryAdd();
-    sb::bench::Done();  // the profiles are saved and the reports made
+    struct Step {
+        const char* name;
+        void (*run)();
+    };
+    static constexpr Step steps[] = {
+        {"open_warmup finish", sb::FinishOpenWarmup},
+        {"ram_prefetch finish", sb::FinishRamPrefetch},
+        {"mimalloc report", sb::ReportMimalloc},
+        {"verifypath_listing report", sb::ReportVerifyPathListing},
+        {"exists_index report", sb::ReportExistsIndex},
+        {"trigger_intern report", sb::ReportTriggerIntern},
+        {"metascript_subst report", sb::ReportMetascriptSubst},
+        {"metascript_blocks report", sb::ReportMetascriptBlocks},
+        {"open_warmup report", sb::ReportOpenWarmup},
+        {"attr_cache report", sb::ReportAttrCache},
+        {"ram_prefetch report", sb::ReportRamPrefetch},
+        {"zip_profile report", sb::ReportZipProfile},
+        {"token_dict_profile report", sb::ReportTokenDictProfile},
+        {"token_dict_cache report", sb::ReportTokenDictCache},
+        {"range_profile report", sb::ReportRangeProfile},
+        {"range_witness report", sb::ReportRangeWitness},
+        {"frame_pacing report", sb::ReportFramePacing},
+        {"pops_pacing report", sb::ReportPopsPacing},
+        {"modifier_merge report", sb::ReportModifierMerge},
+        {"province_modifier_view report", sb::ReportProvinceModifierView},
+        {"army_search_memo report", sb::ReportArmySearchMemo},
+        {"save_compress report", sb::ReportSaveCompress},
+        {"transfer_skip report", sb::ReportTransferSkip},
+        {"history_add report", sb::ReportHistoryAdd},
+        {"benchmark report", sb::bench::Done},  // the profiles are saved and the reports made
+    };
+    for (const Step& step : steps) Guarded(step.name, step.run);
     return 0;
 }
 
@@ -79,14 +99,17 @@ struct Bellows : anvil::Plugin {
     void load(anvil::Host& host) override {
         const std::filesystem::path plugin_dir = host.plugin_dir();
         const std::filesystem::path data_dir = host.data_dir();
-        if (sb::FormerPluginInstalled(plugin_dir)) {
-            sb::Log(ANVIL_LOG_INFO, "anvil/plugins/eu4-startup-boost (the former name of Bellows, plugin API 1) is "
-                                    "still installed; Anvil does not load it, so the folder can be deleted");
-        }
-        if (const std::string note = sb::MigrateFormerData(data_dir); !note.empty()) {
-            sb::Log(ANVIL_LOG_INFO, "%s", note.c_str());
-        }
-        for (const auto& note : sb::FormerEnvironmentNotes()) sb::Log(ANVIL_LOG_WARNING, "%s", note.c_str());
+        // The old names are a note in the log: nothing here may stop the modules.
+        Guarded("former data", [&] {
+            if (sb::FormerPluginInstalled(plugin_dir)) {
+                sb::Log(ANVIL_LOG_INFO, "anvil/plugins/eu4-startup-boost (the former name of Bellows, plugin API 1) is "
+                                        "still installed; Anvil does not load it, so the folder can be deleted");
+            }
+            if (const std::string note = sb::MigrateFormerData(data_dir); !note.empty()) {
+                sb::Log(ANVIL_LOG_INFO, "%s", note.c_str());
+            }
+            for (const auto& note : sb::FormerEnvironmentNotes()) sb::Log(ANVIL_LOG_WARNING, "%s", note.c_str());
+        });
 
         Module modules[] = {
             {"mimalloc", cfg::mimalloc.id, sb::InstallMimalloc},  // first: before the game's runtime allocates
@@ -123,7 +146,7 @@ struct Bellows : anvil::Plugin {
         };
         std::vector<const char*> names;
         for (const auto& m : modules) names.push_back(m.name);
-        sb::bench::Join(host, names);
+        Guarded("benchmark", [&] { sb::bench::Join(host, names); });  // the Benchmark tab, not the modules
 
         // The values Anvil validated (defaults, the player's file, ANVIL_BELLOWS_* overrides).
         for (auto& m : modules) {
@@ -133,20 +156,22 @@ struct Bellows : anvil::Plugin {
         std::int64_t budget = cfg::ram_prefetch_budget_mb.get();
 
         // First start after the update from config.toml: its values apply now too.
-        const sb::Migration migration = sb::MigrateConfigFile(data_dir, plugin_dir / "settings.toml");
-        for (const auto& note : migration.notes) sb::Log(ANVIL_LOG_WARNING, "%s", note.c_str());
-        for (const auto& value : migration.values) {
-            if (Overridden(value.name)) continue;
-            if (value.name == "ram_prefetch_budget_mb") {
-                budget = std::stoll(value.literal);
-                continue;
+        Guarded("config.toml", [&] {
+            const sb::Migration migration = sb::MigrateConfigFile(data_dir, plugin_dir / "settings.toml");
+            for (const auto& note : migration.notes) sb::Log(ANVIL_LOG_WARNING, "%s", note.c_str());
+            for (const auto& value : migration.values) {
+                if (Overridden(value.name)) continue;
+                if (value.name == "ram_prefetch_budget_mb") {
+                    budget = std::stoll(value.literal);
+                    continue;
+                }
+                for (auto& m : modules) {
+                    if (value.name != m.name) continue;
+                    // The literal is a quoted option name.
+                    m.mode = sb::ParseMode(value.literal.substr(1, value.literal.size() - 2)).value_or(m.mode);
+                }
             }
-            for (auto& m : modules) {
-                if (value.name != m.name) continue;
-                // The literal is a quoted option name.
-                m.mode = sb::ParseMode(value.literal.substr(1, value.literal.size() - 2)).value_or(m.mode);
-            }
-        }
+        });
         sb::SetRamPrefetchBudget(static_cast<std::uint64_t>(budget));
         sb::SetFramePacingInterval(cfg::frame_pacing_interval_ms.get(),
                                    cfg::frame_pacing_input.get() == cfg::frame_pacing_input.draw);

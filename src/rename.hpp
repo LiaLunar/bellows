@@ -10,6 +10,9 @@ namespace sb {
 
 inline constexpr wchar_t kFormerId[] = L"eu4-startup-boost";
 
+// A name as UTF-8. path::string() throws for a character outside the ANSI code page.
+std::string Utf8Name(const std::filesystem::path& name);
+
 // True when anvil/plugins/eu4-startup-boost/plugin.toml still sits next to
 // this plugin's folder. Both would patch the same game code.
 bool FormerPluginInstalled(const std::filesystem::path& plugin_dir);

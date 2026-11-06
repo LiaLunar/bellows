@@ -70,4 +70,13 @@ std::wstring UserDirectoryFor(const std::wstring& commandLine, const std::wstrin
 // That folder for the running game (empty when unknown).
 std::wstring UserDirectory();
 
+// Threads that read or open ahead of the game. A rotating disk has one head: more threads only make
+// it seek, and they take it from the game (not measured, the lab has no rotating disk).
+inline constexpr unsigned kWorkers = 8;
+inline constexpr unsigned kWorkersRotating = 2;
+
+// False too when the disk cannot be asked (a network drive, a folder mounted without a letter).
+bool OnRotatingDisk(const std::wstring& path);
+unsigned WorkersFor(const std::wstring& gameDir);
+
 }  // namespace sb::profile

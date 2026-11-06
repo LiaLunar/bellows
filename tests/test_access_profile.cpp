@@ -54,7 +54,18 @@ std::wstring UserDirectoryWith(const std::wstring& arguments, const std::wstring
 
 }  // namespace
 
+static void TestRotatingDisk() {
+    // Whatever disk this runs on, the answers agree and an odd path is "no".
+    wchar_t self[MAX_PATH] = {};
+    GetModuleFileNameW(nullptr, self, MAX_PATH);
+    const bool rotating = sb::profile::OnRotatingDisk(self);
+    assert(sb::profile::WorkersFor(self) == (rotating ? sb::profile::kWorkersRotating : sb::profile::kWorkers));
+    assert(!sb::profile::OnRotatingDisk(L""));
+    assert(!sb::profile::OnRotatingDisk(L"\\\\server\\share\\eu4"));
+}
+
 int main() {
+    TestRotatingDisk();
     wchar_t childOut[MAX_PATH] = {};
     if (GetEnvironmentVariableW(L"SB_PROFILE_TEST_OUT", childOut, MAX_PATH) > 0) {
         return WriteList(childOut, {UserDirectory()}) ? 0 : 1;
