@@ -194,8 +194,13 @@ same happens between them.
 
 Ties do not explain everything. In the lab, runs of one vanilla save of 1444
 sometimes became a different game with the same seed, also with no Bellows at
-all. The cause is not found yet, and neither is whether Bellows changes how
-often it happens.
+all. In every case we traced, one AI command landed on the other side of the
+game's daily tick, so the order depends on timing. Bellows makes that happen
+more often: in a planned series at speed 2, 11 of 30 runs with default settings
+went the other way, against 1 of 30 without Bellows (sign test over paired
+blocks, p = 0.002), each time at the same point of that save. That is one save,
+one speed and one computer, and we don't know how often it happens over a whole
+campaign. Both orders are normal games.
 
 In multiplayer the known ties are safe. The host's AI makes these choices and sends them
 to every player as commands, so all games stay the same whoever runs Bellows.

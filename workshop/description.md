@@ -29,7 +29,7 @@ Yes. It doesn't care what your mods contain, it only helps the game read them fa
 It hasn't in our tests. It changes how fast the game starts and runs, not its rules. A new ironman game with Bellows still says achievements can be earned, but we haven't earned one in a full campaign yet. When the game compresses a save, Bellows writes exactly the file the game would write, byte for byte (unless you turn on parallel save compression, which packs the same save a little differently).
 
 ### Will the AI play differently?
-Your AI can occasionally play out differently; we're looking into why. The rules stay the same. In multiplayer the host's AI decides for everyone (our only test: Bellows 0.17.0 on the host alone, one save, 233 days, no out-of-sync).
+Your AI can occasionally play out differently. In a planned test on one save, that happened in 11 of 30 runs with Bellows and 1 of 30 without it. The rules stay the same, and both are normal games. In multiplayer the host's AI decides for everyone (our only test: Bellows 0.17.0 on the host alone, one save, 233 days, no out-of-sync).
 
 ### I play on GOG. Can I use it?
 Yes, the GOG build 1.37.5.2. GOG has no Workshop: install Bellows from the **Catalog** tab in Anvil Manager (Anvil 1.9 or newer) or from [GitHub](https://github.com/happy-dwarf-team/bellows/releases). Same plugin, same forge, different road.
