@@ -77,6 +77,7 @@ jobs:
       # Pinned to a release tag, not a commit: the action installs the pdx-ws
       # release named by its own tag and verifies that release's attestation.
       - name: Workshop preview
-        uses: happy-dwarf-team/paradox-workshop-publish@v1.0.0
+        uses: happy-dwarf-team/paradox-workshop-publish@7366a4306b3c81157837bcdce7f138bc86e5d50b # v1.0.0
         with:
+          pdx-ws-version: v1.0.0
           dry-run: true
