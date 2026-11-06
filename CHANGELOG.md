@@ -1,5 +1,28 @@
 # Changelog
 
+## [1.3.0](https://github.com/happy-dwarf-team/bellows/compare/v1.2.0...v1.3.0) (2026-11-06)
+
+
+### Features
+
+* **army_search_memo:** more scopes, and the army's speed modifier ([#128](https://github.com/happy-dwarf-team/bellows/issues/128)) ([2468a59](https://github.com/happy-dwarf-team/bellows/commit/2468a59b52df2df191eabb28506bb3b3feedc8a6))
+* **develop_search_memo:** one search per kind in the AI's walk over its provinces ([#132](https://github.com/happy-dwarf-team/bellows/issues/132)) ([7e7ab19](https://github.com/happy-dwarf-team/bellows/commit/7e7ab199453edbc82af09d22b53829daeca33ec0))
+* **monthly_probe:** one row per monthly tick in monthly_probe_ticks.tsv ([#140](https://github.com/happy-dwarf-team/bellows/issues/140)) ([6bd5883](https://github.com/happy-dwarf-team/bellows/commit/6bd588349eac5c5cf28d2838aebf83ef8a770fea))
+* **port_table:** the nearest-port table from one list of ports ([#139](https://github.com/happy-dwarf-team/bellows/issues/139)) ([9635e12](https://github.com/happy-dwarf-team/bellows/commit/9635e123cfc304e80a073f89bb285a69060f0585))
+
+
+### Bug Fixes
+
+* **army_search_memo:** take back the first change when the second is refused ([#127](https://github.com/happy-dwarf-team/bellows/issues/127)) ([6561395](https://github.com/happy-dwarf-team/bellows/commit/6561395a440f1bf46639937d45736f7d63f5263d))
+* **history_add:** keep the game's walk for an older entry after a key that is no date ([#126](https://github.com/happy-dwarf-team/bellows/issues/126)) ([720c86d](https://github.com/happy-dwarf-team/bellows/commit/720c86d01ececb0ec9019c16de868c2538103c8d))
+* **plugin:** a failed migration or report no longer costs the plugin or the game ([#138](https://github.com/happy-dwarf-team/bellows/issues/138)) ([dd5e874](https://github.com/happy-dwarf-team/bellows/commit/dd5e874dce9fb17581bfa8d3dff99c8294c9d7f3))
+* read a -userdir whose path alone is in quotes ([#130](https://github.com/happy-dwarf-team/bellows/issues/130)) ([a196bd2](https://github.com/happy-dwarf-team/bellows/commit/a196bd2388ec10fa0d355c58b41df404e9cac2d2))
+
+
+### Reverts
+
+* **develop_search_memo:** the search's answer can change during a walk ([#133](https://github.com/happy-dwarf-team/bellows/issues/133)) ([b72ee5f](https://github.com/happy-dwarf-team/bellows/commit/b72ee5f839ffd53a0b64244b3f9a280a7309ff60))
+
 ## [1.2.0](https://github.com/happy-dwarf-team/bellows/compare/v1.1.0...v1.2.0) (2026-11-05)
 
 
