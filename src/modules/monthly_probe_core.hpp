@@ -10,6 +10,7 @@
 // appended when missing. Id 0x286 is skipped.
 
 #include <cstdint>
+#include <cstdio>
 #include <cstring>
 
 namespace sb {
@@ -45,6 +46,27 @@ inline MergeShape ShapeOfMerge(bool dest_dense, std::int32_t dest_count, bool sr
 inline std::int64_t ScanSteps(const MergeShape& s) noexcept {
     const std::int64_t n = s.dest_count, k = s.scanned;
     return k * n + k * (k - 1) / 2;
+}
+
+// One monthly tick, in timer ticks. The parts are serial on the main thread, so their sum and the
+// total differ only by what the tick does around them.
+struct MonthRow {
+    std::int32_t date = 0;  // the game's raw date on entry
+    std::int64_t total = 0, country = 0, province = 0, units = 0, port = 0, merge = 0;
+    std::int64_t mergeSteps = 0;
+    std::int32_t countries = 0;
+    std::int32_t topCountry = -1;  // tag index of the slowest country update
+    std::int64_t topCountryTicks = 0;
+};
+
+// The month row's date: the game's date is hours since year -5000, in years of 365 days.
+inline void DateText(std::int32_t raw, char* out, std::size_t size) noexcept {
+    static constexpr int kMonths[12] = {31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};
+    const std::int64_t day = (static_cast<std::int64_t>(raw) - 43'800'000) / 24;
+    int rest = static_cast<int>(((day % 365) + 365) % 365), month = 0;
+    const std::int64_t year = (day - rest) / 365;
+    while (month < 11 && rest >= kMonths[month]) rest -= kMonths[month++];
+    std::snprintf(out, size, "%lld.%d.%d", static_cast<long long>(year), month + 1, rest + 1);
 }
 
 // log2 bucket 0..15 of a count (0 and 1 in bucket 0).

@@ -5,7 +5,16 @@
 #include <cassert>
 #include <cstdio>
 
+static void TestDateText() {
+    char text[32];
+    sb::DateText(43'800'000 + (1821 * 365 + 31 + 27) * 24, text, sizeof text);  // 28 February 1821
+    assert(std::strcmp(text, "1821.2.28") == 0);
+    sb::DateText(43'800'000 + 1444 * 365 * 24 + 24, text, sizeof text);
+    assert(std::strcmp(text, "1444.1.2") == 0);
+}
+
 int main() {
+    TestDateText();
     // Sparse destination: every id but 0x286 is scanned for.
     const std::int32_t src[] = {5, 10, 0x286, 0, 0x300, 7};
     sb::MergeShape s = sb::ShapeOfMerge(false, 40, false, src, 3);

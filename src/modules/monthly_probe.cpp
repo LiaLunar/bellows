@@ -9,6 +9,9 @@
 // country, province or unit update tie the result to the order of the updates, so they decide
 // whether such a loop could run in parallel and still give the same game.
 //
+// monthly_probe_ticks.tsv holds one row per monthly tick, because the totals hide months that cost
+// twice as much as the rest.
+//
 // The day after the monthly tick is about 40 ms slower, almost all in the daily country loop: the daily
 // country update 0x2EE280 and its largest parts are timed apart on days dated the 1st of a month.
 //
@@ -229,6 +232,12 @@ volatile LONG g_siteRva[kSites];
 MergeCell g_mergeBySite[kSites];
 volatile LONG64 g_siteOverflow = 0;
 
+// One row per monthly tick. The tick runs on the main thread and only that thread writes `g_row`.
+constexpr LONG kTickRows = 4096;
+sb::MonthRow g_rows[kTickRows];
+volatile LONG g_rowCount = 0;
+sb::MonthRow g_row;
+
 int CountryIndex(const void* country) noexcept {
     const auto raw = sb::Read<std::uint64_t>(country, kCountryId);
     const auto index = static_cast<std::int16_t>(raw >> 32);
@@ -245,9 +254,18 @@ template <class F> void InContext(int context, F&& call) {
 }
 
 void MonthlyDetour(void* state, std::uint8_t a2) {
+    g_row = sb::MonthRow{};
+    const unsigned char* root = *g_rootGlobal;
+    if (root != nullptr) g_row.date = sb::Read<std::int32_t>(root, g_rootDate);
     const LONG64 start = sb::Ticks();
     InContext(kMonthly, [&] { g_monthly(state, a2); });
-    g_monthSpan.Add(sb::Ticks() - start);
+    const LONG64 ticks = sb::Ticks() - start;
+    g_monthSpan.Add(ticks);
+    g_row.total = ticks;
+    if (const LONG row = g_rowCount; row < kTickRows) {
+        g_rows[row] = g_row;
+        InterlockedIncrement(&g_rowCount);
+    }
     InterlockedIncrement64(&EU4SB_MonthlyProbeStats.requests);
     Mark();
 }
@@ -260,6 +278,12 @@ void CountryDetour(void* country, std::uint8_t a2, std::uint8_t a3) {
     const LONG64 draws = t_draws - drawsBefore;
     g_countrySpan.Add(ticks);
     const int c = CountryIndex(country);
+    g_row.country += ticks;
+    ++g_row.countries;
+    if (ticks > g_row.topCountryTicks) {
+        g_row.topCountryTicks = ticks;
+        g_row.topCountry = c;
+    }
     InterlockedIncrement64(&g_cCalls[c]);
     InterlockedExchangeAdd64(&g_cTicks[c], ticks);
     InterlockedExchangeAdd64(&g_cDraws[c], draws);
@@ -270,14 +294,18 @@ void ProvinceDetour(void* province) {
     const LONG64 drawsBefore = t_draws;
     const LONG64 start = sb::Ticks();
     InContext(kProvince, [&] { g_province(province); });
-    g_provinceSpan.Add(sb::Ticks() - start);
+    const LONG64 ticks = sb::Ticks() - start;
+    g_provinceSpan.Add(ticks);
+    g_row.province += ticks;
     if (t_draws != drawsBefore) InterlockedIncrement64(&g_provincesWithDraws);
 }
 
 void UnitsDetour(void* state, std::uint8_t a2) {
     const LONG64 start = sb::Ticks();
     InContext(kUnits, [&] { g_units(state, a2); });
-    g_unitsSpan.Add(sb::Ticks() - start);
+    const LONG64 ticks = sb::Ticks() - start;
+    g_unitsSpan.Add(ticks);
+    g_row.units += ticks;
 }
 
 void PortDetour(void* country) {
@@ -285,6 +313,7 @@ void PortDetour(void* country) {
     g_port(country);
     const LONG64 ticks = sb::Ticks() - start;
     g_portSpan.Add(ticks);
+    if (t_context != kElsewhere) g_row.port += ticks;
     const int c = CountryIndex(country);
     InterlockedExchangeAdd64(&g_cPortTicks[c], ticks);
     InterlockedExchange64(&g_cProvinces[c], sb::Read<std::int32_t>(country, kCountryProvinces));
@@ -316,6 +345,10 @@ void* MergeDetour(void* dest, void* src) {
     const LONG64 ticks = sb::Ticks() - start;
     g_mergeByKind[t_context][(shape.dest_dense ? 2 : 0) + (shape.src_dense ? 1 : 0)].Add(shape, ticks);
     g_mergeBySteps[sb::Bucket(sb::ScanSteps(shape))].Add(shape, ticks);
+    if (t_context != kElsewhere) {  // only the main thread is ever in a context
+        g_row.merge += ticks;
+        g_row.mergeSteps += sb::ScanSteps(shape);
+    }
     if (MergeCell* cell = SiteCell(site)) {
         cell->Add(shape, ticks);
     } else {
@@ -382,6 +415,19 @@ void WriteFiles() {
                                   kContextNames[c]);
                     out << key << "\t" << g_twisterDraws[i][c] << "\t\t\n";
                 }
+            }
+        });
+        Replace(L"monthly_probe_ticks.tsv", [](std::ostream& out, double ms) {
+            out << "date\ttotal_ms\tcountry_ms\tprovince_ms\tunits_ms\tport_ms\tmerge_ms\tmerge_steps\tcountries\t"
+                   "top_country\ttop_country_ms\n";
+            const LONG rows = g_rowCount;
+            for (LONG i = 0; i < rows; ++i) {
+                const sb::MonthRow& r = g_rows[i];
+                char date[32];
+                sb::DateText(r.date, date, sizeof date);
+                out << date << "\t" << r.total * ms << "\t" << r.country * ms << "\t" << r.province * ms << "\t"
+                    << r.units * ms << "\t" << r.port * ms << "\t" << r.merge * ms << "\t" << r.mergeSteps << "\t"
+                    << r.countries << "\t" << r.topCountry << "\t" << r.topCountryTicks * ms << "\n";
             }
         });
         Replace(L"monthly_probe_countries.tsv", [](std::ostream& out, double ms) {
