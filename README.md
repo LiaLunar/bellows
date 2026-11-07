@@ -216,7 +216,7 @@ to every player as commands, so all games stay the same whoever runs Bellows.
 In the lab the host ran Bellows 0.17.0 with default settings and the other
 computer ran no Bellows: 233 game days without an out-of-sync, with the game's
 own out-of-sync check shown to catch a single extra random draw on the host.
-Later defaults have not been through that test.
+The modules that became default in 1.4 have not been through that test.
 Details in [bellows#79](https://github.com/happy-dwarf-team/bellows/issues/79)
 and the [design notes](docs/design.md#4-correctness-safeguards-d).
 
