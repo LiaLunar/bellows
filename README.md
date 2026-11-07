@@ -235,7 +235,10 @@ attr_cache = "on"
 ram_prefetch_budget_mb = 2048
 ```
 
-Every setting applies at the next start. For one start, an environment variable
+`frame_pacing_interval_ms` and `frame_pacing_input` apply at once when you change
+them in the Anvil panel (Ctrl+Shift+F12) while `frame_pacing` is on; 0 ms turns
+its effect off until you set another value. Every other setting applies at the
+next start. For one start, an environment variable
 overrides it: `ANVIL_BELLOWS_<NAME>`, for example
 `ANVIL_BELLOWS_EXISTS_INDEX=verify`. Anvil logs each override. The plugin writes
 its counters to `anvil/anvil.log` when the game is ready.

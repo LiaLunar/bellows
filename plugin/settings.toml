@@ -260,18 +260,18 @@ min = 0
 max = 1000
 step = 10
 label = "Frame pacing interval (ms)"
-description = "Shortest time between frames drawn inside the daily tick at the fastest speed (the game's own is 50 ms; a shorter value keeps the game's). 0 keeps the game's interval and only counts frames."
+description = "Shortest time between frames drawn inside the daily tick at the fastest speed (the game's own is 50 ms; a shorter value keeps the game's). 0 keeps the game's interval and only counts frames. Applies at once while frame pacing is on."
 group = "Simulation"
-restart = true
+restart = false
 
 [setting.frame_pacing_input]
 type = "enum"
 values = [{ name = "draw", label = "React at once" }, { name = "wait", label = "Wait for the interval" }]
 default = "draw"
 label = "Frame pacing while you play"
-description = "What frame pacing does when you press a key, click or turn the wheel at speed 5: draw a frame at once, so the game reacts at least as fast as without frame pacing (frames are skipped only while you do nothing), or wait for the longer interval (0.12.0)."
+description = "What frame pacing does when you press a key, click or turn the wheel at speed 5: draw a frame at once, so the game reacts at least as fast as without frame pacing (frames are skipped only while you do nothing), or wait for the longer interval (0.12.0). Applies at once while frame pacing is on."
 group = "Simulation"
-restart = true
+restart = false
 
 [setting.zip_profile]
 type = "enum"

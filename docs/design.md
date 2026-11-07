@@ -391,6 +391,14 @@ drawing branch (`0x769F9A`) counts the frames per speed into
 and only counts. The simulation does not read these frames; what changes is how
 often the screen and input are handled inside long days.
 
+The interval and `frame_pacing_input` are `restart = false`: a change in the
+overlay reaches the module through `Host::subscribe_setting`, on the thread
+that made it, which stores them in atomics the hook reads at every check; the
+next check uses them. The log says so, and `frame_pacing.tsv` counts the
+changes (`changes`). `frame_pacing` itself stays `restart = true`, so
+`off` still means no hooks at all; an interval of 0 turns the effect off for
+the rest of the session.
+
 With `frame_pacing_input = "draw"` (the default since 0.13) frames are skipped
 only while no input waits. A waiting key press, click or wheel turn gets a
 frame at the next check, whatever the game's threshold (at most one every
@@ -1141,7 +1149,8 @@ needs Anvil 1.0 (`api = 2`, `anvil = ">=1.0.0"`, `affects_gameplay = false`).
   runs on the game's main thread.
 - **Settings.** `plugin/settings.toml`: one enum per module (`on`/`off`, plus
   `verify` where the module has it) and `ram_prefetch_budget_mb` (int,
-  64–8192), all `restart = true`. Overrides are `ANVIL_BELLOWS_<NAME>`; a set
+  64–8192), all `restart = true` except `frame_pacing_interval_ms` and
+  `frame_pacing_input`, which change while the game runs (see frame_pacing). Overrides are `ANVIL_BELLOWS_<NAME>`; a set
   `EU4SB_<NAME>` is reported in the log with its replacement.
 - **Migration of `config.toml`.** Anvil reads the player's settings before the
   plugin loads, so on the first start after the update the plugin itself

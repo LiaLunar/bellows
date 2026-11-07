@@ -44,6 +44,8 @@ bool InstallScoreProbe(anvil::Host& host, Mode mode);  // diagnostic
 bool InstallMonthlyProbe(anvil::Host& host, Mode mode);  // diagnostic
 // Before InstallFramePacing; 0 ms = count only. draw_on_input: the game's interval while input waits.
 void SetFramePacingInterval(std::int64_t milliseconds, bool draw_on_input);
+// The same while the game runs (the overlay, any thread): the next check uses the values.
+void ChangeFramePacing(std::int64_t milliseconds, bool draw_on_input);
 // Before InstallVerifyPathListing: verifypath_session.
 void SetVerifyPathSession(bool on) noexcept;
 // Before InstallSaveCompress: save_compress_parallel, 0 off, 1 on, 2 verify.
