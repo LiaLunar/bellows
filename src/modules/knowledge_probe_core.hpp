@@ -39,6 +39,11 @@ template <typename T> T Load(const unsigned char* p, std::size_t at) noexcept {
     return v;
 }
 
+// An owning pointer: the bytes of the object it owns (a rebuilt list owns new objects with the same bytes).
+inline std::uint64_t HashOwned(const unsigned char* object, std::size_t size, std::uint64_t h) noexcept {
+    return object != nullptr ? HashBytes(object, size, h) : Mix(h, 0);
+}
+
 // Hash of the elements of one container of the object at obj (not of its pointers, so a buffer the game
 // moves keeps its hash). False when the container's fields do not look like a container.
 inline bool HashContainer(const unsigned char* obj, const Container& c, std::uint64_t& out) noexcept {
@@ -58,7 +63,12 @@ inline bool HashContainer(const unsigned char* obj, const Container& c, std::uin
         const auto* data = Load<const unsigned char*>(at, 8);
         const auto size = Load<std::int32_t>(at, 20);
         if (size < 0 || static_cast<std::size_t>(size) * c.a > kMaxContainerBytes || (data == nullptr && size != 0)) return false;
-        h = size != 0 ? HashBytes(data, static_cast<std::size_t>(size) * c.a, h) : Mix(h, 0);
+        if (c.owned != 0) {
+            for (std::int32_t i = 0; i < size; ++i) h = HashOwned(Load<const unsigned char*>(data, static_cast<std::size_t>(i) * 8), c.owned, h);
+            h = Mix(h, static_cast<std::uint64_t>(size));
+        } else {
+            h = size != 0 ? HashBytes(data, static_cast<std::size_t>(size) * c.a, h) : Mix(h, 0);
+        }
         break;
     }
     case kList: {
@@ -67,7 +77,7 @@ inline bool HashContainer(const unsigned char* obj, const Container& c, std::uin
         const unsigned char* node = Load<const unsigned char*>(at, 0);
         std::int32_t n = 0;
         for (; node != nullptr && n <= size; ++n) {
-            h = HashBytes(node + c.b, c.c, h);
+            h = c.owned != 0 ? HashOwned(Load<const unsigned char*>(node, c.b), c.owned, h) : HashBytes(node + c.b, c.c, h);
             node = Load<const unsigned char*>(node, c.a);
         }
         if (n != size) return false;
@@ -103,10 +113,45 @@ struct Change {
     bool None() const noexcept { return words == 0 && containers == 0; }
 };
 
-// Compares the object's bytes before (copy) and after (live) a call, word by word.
-inline void DiffWords(const unsigned char* before, const unsigned char* after, Change& change) noexcept {
+// The words of the object that hold a container's buffer pointers and capacity. A refresh that rebuilds a
+// list or a vector with the same elements gets new nodes or a new buffer; the container's hash covers its
+// elements, so these words are left out of the word diff.
+struct HeaderMask {
+    bool word[kWords] = {};
+    HeaderMask() noexcept {
+        for (const Container& c : kContainers) {
+            const std::size_t w = c.offset / 8;
+            switch (c.shape) {
+            case kVector:
+            case kBitset:  // begin, end, capacity end
+                Set(w), Set(w + 1), Set(w + 2);
+                break;
+            case kPdxArray:  // data, then capacity and count (the count is in the hash)
+                Set(w + 1), Set(w + 2);
+                break;
+            case kList:  // head, tail (the count is in the hash)
+                Set(w), Set(w + 1);
+                break;
+            }
+        }
+    }
+    void Set(std::size_t w) noexcept {
+        if (w < kWords) word[w] = true;
+    }
+};
+
+// Compares the object's bytes before (copy) and after (live) a call, word by word, without the masked
+// words; masked is set when one of those changed.
+inline void DiffWords(const unsigned char* before, const unsigned char* after, const HeaderMask& mask, Change& change,
+                      bool& masked) noexcept {
+    masked = false;
     for (std::size_t i = 0; i < kWords; ++i) {
-        if (std::memcmp(before + i * 8, after + i * 8, 8) != 0) change.AddWord(static_cast<std::uint32_t>(i));
+        if (std::memcmp(before + i * 8, after + i * 8, 8) == 0) continue;
+        if (mask.word[i]) {
+            masked = true;
+        } else {
+            change.AddWord(static_cast<std::uint32_t>(i));
+        }
     }
 }
 

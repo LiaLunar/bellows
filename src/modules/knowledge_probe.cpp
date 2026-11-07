@@ -8,7 +8,8 @@
 // the inputs have not changed (as range_witness does for the trade range). This probe measures the upper
 // bound of that: around each call it copies the country object (0x9B78 bytes) and hashes the elements of
 // its containers (offsets in knowledge_probe_layout.hpp), and after the call it compares. A call that
-// changes neither is "unchanged". Writes outside the country object and its containers (other countries,
+// changes neither is "unchanged"; the words that hold a container's buffer pointers are left out of the
+// compare, since a rebuilt list with the same elements has new nodes. Writes outside the country object and its containers (other countries,
 // provinces, maps and sets of the country) are not seen, so "unchanged" is an upper bound.
 //
 // The hook only observes (inline, through Anvil): it calls the original and counts. Nothing the game
@@ -52,7 +53,7 @@ std::wstring* g_dir = nullptr;
 SRWLOCK g_lock = SRWLOCK_INIT;
 
 struct Totals {
-    LONG64 calls = 0, unchanged = 0, unreadable = 0, ticks = 0, unchanged_ticks = 0, same_containers = 0;
+    LONG64 calls = 0, unchanged = 0, unreadable = 0, ticks = 0, unchanged_ticks = 0, same_containers = 0, new_buffers = 0;
 } g_total;
 
 struct Site {
@@ -74,6 +75,7 @@ Pattern g_patterns[kPatterns];
 int g_patternCount = 0;
 
 LONG64 g_wordChanged[kn::kWords] = {};
+const kn::HeaderMask g_mask;
 LONG64 g_containerChanged[kn::kContainerCount] = {};
 std::uint64_t g_lastContainers[kTags] = {};
 bool g_hasLast[kTags] = {};
@@ -104,9 +106,9 @@ bool Before(const unsigned char* country, Scratch* s) noexcept {
     }
 }
 
-bool After(const unsigned char* country, const Scratch* s, kn::Change* change, std::uint64_t* containers) noexcept {
+bool After(const unsigned char* country, const Scratch* s, kn::Change* change, std::uint64_t* containers, bool* masked) noexcept {
     __try {
-        kn::DiffWords(s->before, country, *change);
+        kn::DiffWords(s->before, country, g_mask, *change, *masked);
         std::uint64_t all = 0;
         for (std::size_t i = 0; i < kn::kContainerCount; ++i) {
             std::uint64_t h = 0;
@@ -147,7 +149,7 @@ Site* FindSite(std::uint32_t rva, const char* reason) noexcept {
 }
 
 void Record(std::uint32_t rva, const char* reason, LONG64 ticks, bool read, const kn::Change& change, int tag,
-            std::uint64_t containers) noexcept {
+            std::uint64_t containers, bool masked) noexcept {
     AcquireSRWLockExclusive(&g_lock);
     Site* site = FindSite(rva, reason);
     if (site == nullptr) ++g_otherSites;
@@ -164,6 +166,7 @@ void Record(std::uint32_t rva, const char* reason, LONG64 ticks, bool read, cons
         const bool unchanged = change.None();
         if (unchanged) {
             ++g_total.unchanged;
+            if (masked) ++g_total.new_buffers;
             g_total.unchanged_ticks += ticks;
             InterlockedIncrement64(&EU4SB_KnowledgeProbeStats.hits);
             if (site != nullptr) {
@@ -211,15 +214,16 @@ void Detour(void* country, char* reason) {
     const LONG64 ticks = sb::Ticks() - start;
     kn::Change change;
     std::uint64_t containers = 0;
-    const bool read = before && After(self, s, &change, &containers);
+    bool masked = false;
+    const bool read = before && After(self, s, &change, &containers, &masked);
     if (read) {
         // Per word, with atomic adds outside the lock (containers: in After); the writer thread reads them as they are.
         for (std::size_t i = 0; i < kn::kWords; ++i) {
-            if (std::memcmp(s->before + i * 8, self + i * 8, 8) != 0) InterlockedIncrement64(&g_wordChanged[i]);
+            if (!g_mask.word[i] && std::memcmp(s->before + i * 8, self + i * 8, 8) != 0) InterlockedIncrement64(&g_wordChanged[i]);
         }
     }
     const int tag = read ? static_cast<std::int16_t>(sb::Read<std::uint64_t>(s->before, kCountryId) >> 32) : -1;
-    Record(rva, reason, ticks, read, change, tag, containers);
+    Record(rva, reason, ticks, read, change, tag, containers, masked);
 }
 
 std::string List(const kn::Change& c) {
@@ -261,7 +265,8 @@ void WriteFile() {
         std::snprintf(line, sizeof line, "all\t\t%lld\t%lld\t%.3f\t%.3f\t%lld\n", g_total.calls, g_total.unchanged,
                       g_total.ticks * msPerTick, g_total.unchanged_ticks * msPerTick, g_total.same_containers);
         main += line;
-        std::snprintf(line, sizeof line, "unreadable\t\t%lld\t\t\t\t\nother_sites\t\t%lld\t\t\t\t\n", g_total.unreadable, g_otherSites);
+        std::snprintf(line, sizeof line, "unreadable\t\t%lld\t\t\t\t\nother_sites\t\t%lld\t\t\t\t\nunchanged_with_new_buffers\t\t%lld\t\t\t\t\n",
+                      g_total.unreadable, g_otherSites, g_total.new_buffers);
         main += line;
         for (int i = 0; i < g_siteCount; ++i) {
             const Site& s = g_sites[i];

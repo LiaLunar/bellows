@@ -28,7 +28,7 @@ int main() {
     std::vector<unsigned char> obj(256, 0);
     // A vector at +0: two copies of the same elements in other buffers hash the same.
     std::vector<int> a{1, 2, 3}, b{1, 2, 3}, c{1, 2, 4};
-    const kn::Container vec{0, kn::kVector, 0, 0, 0};
+    const kn::Container vec{0, kn::kVector, 0, 0, 0, 0};
     std::uint64_t ha = 0, hb = 0, hc = 0;
     Put(obj.data(), 0, a.data());
     Put(obj.data(), 8, a.data() + a.size());
@@ -50,7 +50,7 @@ int main() {
     CHECK(kn::HashContainer(obj.data(), vec, hc));
 
     // A pdx array at +32: data +8, count +20, element size 4.
-    const kn::Container pdx{32, kn::kPdxArray, 4, 0, 0};
+    const kn::Container pdx{32, kn::kPdxArray, 4, 0, 0, 0};
     Put(obj.data(), 32 + 8, a.data());
     Put<std::int32_t>(obj.data(), 32 + 20, 3);
     std::uint64_t hp = 0, hp2 = 0;
@@ -62,7 +62,7 @@ int main() {
 
     // A list at +64: head +0, count +16; node: value at 0 (8 bytes), next at 8.
     Node n2{7, nullptr}, n1{5, &n2};
-    const kn::Container list{64, kn::kList, 8, 0, 8};
+    const kn::Container list{64, kn::kList, 8, 0, 8, 0};
     Put(obj.data(), 64, &n1);
     Put<std::int32_t>(obj.data(), 64 + 16, 2);
     std::uint64_t hl = 0, hl2 = 0;
@@ -73,19 +73,38 @@ int main() {
     Put<std::int32_t>(obj.data(), 64 + 16, 3);
     CHECK(!kn::HashContainer(obj.data(), list, hl2));
 
-    // The word diff of a whole country-sized object.
+    // A list of owning pointers: two lists that own equal objects at other addresses hash the same.
+    std::uint64_t o1 = 42, o2 = 42, o3 = 43;
+    Node m1{reinterpret_cast<std::uint64_t>(&o1), nullptr}, m2{reinterpret_cast<std::uint64_t>(&o2), nullptr},
+        m3{reinterpret_cast<std::uint64_t>(&o3), nullptr};
+    const kn::Container owning{64, kn::kList, 8, 0, 8, 8};
+    std::uint64_t h1 = 0, h2 = 0, h3 = 0;
+    Put<std::int32_t>(obj.data(), 64 + 16, 1);
+    Put(obj.data(), 64, &m1);
+    CHECK(kn::HashContainer(obj.data(), owning, h1));
+    Put(obj.data(), 64, &m2);
+    CHECK(kn::HashContainer(obj.data(), owning, h2));
+    Put(obj.data(), 64, &m3);
+    CHECK(kn::HashContainer(obj.data(), owning, h3));
+    CHECK(h1 == h2 && h1 != h3);
+
+    // The word diff of a whole country-sized object, without the containers' pointer words.
+    const kn::HeaderMask mask;
     std::vector<unsigned char> before(kn::kCountrySize, 0), after(kn::kCountrySize, 0);
     kn::Change none;
-    kn::DiffWords(before.data(), after.data(), none);
-    CHECK(none.None());
-    after[0x1510 + 3] = 1;
-    after[0x9B70] = 2;
-    kn::Change two;
-    kn::DiffWords(before.data(), after.data(), two);
-    CHECK(two.words == 2 && two.word[0] == 0x1510 / 8 && two.word[1] == 0x9B70 / 8);
+    bool masked = true;
+    kn::DiffWords(before.data(), after.data(), mask, none, masked);
+    CHECK(none.None() && !masked);
+    const std::size_t plain = 0x9B70;  // the last word: no container header there
+    CHECK(!mask.word[plain / 8] && mask.word[0x1510 / 8]);
+    after[0x1510 + 3] = 1;  // a vector's begin pointer
+    after[plain] = 2;
+    kn::Change one;
+    kn::DiffWords(before.data(), after.data(), mask, one, masked);
+    CHECK(one.words == 1 && one.word[0] == plain / 8 && masked);
     kn::Change same;
-    kn::DiffWords(before.data(), after.data(), same);
-    CHECK(same.key == two.key);
+    kn::DiffWords(before.data(), after.data(), mask, same, masked);
+    CHECK(same.key == one.key);
     // The table covers the object and is sorted.
     for (std::size_t i = 0; i < kn::kContainerCount; ++i) {
         CHECK(kn::kContainers[i].offset + 24 <= kn::kCountrySize);
