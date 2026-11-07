@@ -46,7 +46,7 @@ results per module and release.
 
 Diagnostics, off by default and meant for the lab (`zip_profile`,
 `token_dict_profile`, `range_profile`, `tick_profile`, `army_search_profile`,
-`score_probe`, `monthly_probe`), are shipped as settings; their output files
+`score_probe`, `monthly_probe`, `knowledge_probe`), are shipped as settings; their output files
 and counters may change in any release. The lab's deeper tools (`file_trace`,
 deep API counters, heap sampling) are not shipped.
 
@@ -971,6 +971,33 @@ one merge site (each country's dense list of about 700 modifiers added to
 every unit's list with a linear scan per entry, 44,000 compared entries a
 call), which `modifier_merge` targets. The port table was put at 0.5% of the run
 from averages; month by month it is far more on the 1821 save (see `port_table`).
+
+### knowledge_probe (diagnostic, simulation)
+
+Off by default. Whether a memo with a witness, as `range_witness` keeps for the
+trade range, could skip calls of a country's knowledge refresh `0x93FE30`. The
+refresh rebuilds a country's view of the world (lists of other countries, a flag
+byte per country in its diplomatic rows, caches of its provinces, its manpower
+and more). It runs from the daily country update when the country's dirty byte
+`+0x2882` is set, and from commands and effects. The probe hooks it only to
+observe. Around each call it copies the country object (0x9B78 bytes in 1.37.5)
+and hashes the elements of the object's containers (vectors, arrays, linked
+lists and bitsets; 534 of them, as offsets and shapes in
+`knowledge_probe_layout.hpp`, taken from the game's type layout), and after the
+call it compares both. A call that changed neither counts as unchanged.
+
+Unchanged calls and their time are the upper bound of what such a memo could
+save: the witness then has to show, more cheaply than the call, that the inputs
+are the same, and the probe does not see writes outside the country object and
+its containers (other countries, provinces, and the object's maps, sets and
+owned objects, 20 fields). Counters per call site (the return address) and per
+reason, the string the caller passes, in `knowledge_probe.tsv`; the words and
+containers calls changed, and the sets of changes with the most calls, in
+`knowledge_probe_words.tsv`, `knowledge_probe_containers.tsv` and
+`knowledge_probe_patterns.tsv`, every 5 s. `same_containers_as_last` counts calls
+after which the containers hash as after the previous call for the same country.
+Copying and hashing add tens of microseconds to each call; the time columns
+measure the game's function only.
 
 ### attr_cache
 

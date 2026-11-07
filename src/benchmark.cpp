@@ -46,7 +46,7 @@ constexpr Counter kCounters[] = {
 
 // The report's 128 fields are nearly gone: a diagnostic, off for every player, gets no mode field.
 constexpr const char* kDiagnostics[] = {"zip_profile",  "token_dict_profile", "range_profile", "tick_profile",
-                                        "army_search_profile", "score_probe", "monthly_probe"};
+                                        "army_search_profile", "score_probe", "monthly_probe", "knowledge_probe"};
 
 bool IsDiagnostic(const char* module) {
     for (const char* name : kDiagnostics) {

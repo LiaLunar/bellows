@@ -164,6 +164,15 @@ description = "Diagnostic: time of the monthly tick's country, province and unit
 group = "Diagnostics"
 restart = true
 
+[setting.knowledge_probe]
+type = "enum"
+values = [{ name = "off", label = "Off" }, { name = "on", label = "On" }]
+default = "off"
+label = "Knowledge refresh probe"
+description = "Diagnostic: how often a country's knowledge refresh leaves the country as it was, by call site, in knowledge_probe*.tsv."
+group = "Diagnostics"
+restart = true
+
 [setting.modifier_merge]
 type = "enum"
 values = [{ name = "off", label = "Off" }, { name = "on", label = "On" }, { name = "verify", label = "Verify" }]

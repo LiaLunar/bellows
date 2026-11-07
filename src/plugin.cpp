@@ -146,6 +146,7 @@ struct Bellows : anvil::Plugin {
             {"army_search_profile", cfg::army_search_profile.id, sb::InstallArmySearchProfile},  // diagnostic
             {"score_probe", cfg::score_probe.id, sb::InstallScoreProbe},  // diagnostic
             {"monthly_probe", cfg::monthly_probe.id, sb::InstallMonthlyProbe},  // diagnostic
+            {"knowledge_probe", cfg::knowledge_probe.id, sb::InstallKnowledgeProbe},  // diagnostic; chains with monthly_probe on 0x93FE30
         };
         std::vector<const char*> names;
         for (const auto& m : modules) names.push_back(m.name);

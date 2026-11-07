@@ -172,7 +172,9 @@ Diagnostics, off by default: `zip_profile`, `token_dict_profile`,
 yearly tick per game day), `army_search_profile` (calls, time and repeated
 answers of the AI army search), `score_probe` (how often the inputs of the AI
 search's scoring functions repeat within a game day), `monthly_probe` (time of
-the monthly tick's loops, modifier merges and random draws per context).
+the monthly tick's loops, modifier merges and random draws per context),
+`knowledge_probe` (how often a country's knowledge refresh leaves the country
+as it was, per call site).
 They are tools for the lab: their names, counters and output files may
 change in any release (see [Compatibility](#compatibility)).
 
@@ -266,7 +268,7 @@ meaning or needs a newer Anvil is 2.0. A module's default may still change in
 a minor release, after the checks in [docs/release-gate.md](docs/release-gate.md);
 the changelog says so. Not covered: the diagnostics (`zip_profile`,
 `token_dict_profile`, `range_profile`, `tick_profile`, `army_search_profile`,
-`score_probe`, `monthly_probe`), which are lab tools, and the wording of the
+`score_probe`, `monthly_probe`, `knowledge_probe`), which are lab tools, and the wording of the
 lines and counters Bellows writes to `anvil/anvil.log`, the fields it adds to
 the Benchmark report and the modules' `.tsv` files, which may change in any
 release.
