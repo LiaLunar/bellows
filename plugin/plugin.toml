@@ -2,7 +2,7 @@ id = "bellows"
 name = "Bellows"
 version = "1.3.0"
 authors = ["Happy Dwarf Team"]
-description = "Faster Europa Universalis IV start-up, simulation and saves, with the game's own results and no change to game files."
+description = "Faster Europa Universalis IV start-up, simulation and saves, with no change to game files or rules."
 api = 2
 anvil = ">=1.7.0"
 entry = "bellows.dll"

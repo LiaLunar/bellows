@@ -7,9 +7,9 @@
 
 **Faster Europa Universalis IV start-up, simulation and saves.** Bellows is an
 [Anvil](https://github.com/happy-dwarf-team/anvil) plugin. The game starts faster
-and years pass sooner at speed 5. It changes no game files and not what the game
-computes: every module gives the game's own answers, only sooner. One thing can
-still differ, see [AI ties and multiplayer](#ai-ties-and-multiplayer). Like a
+and years pass sooner at speed 5. It changes no game files and no rule, and in
+`verify` the modules' answers match the game's own. A game can still come out
+differently, see [AI ties and multiplayer](#ai-ties-and-multiplayer). Like a
 smith's bellows, it gets the forge hot sooner.
 
 **Install guide:
@@ -203,7 +203,7 @@ one speed and one computer, and we don't know how often it happens over a whole
 campaign. Both orders are normal games.
 
 In multiplayer the known ties are safe. The host's AI makes these choices and sends them
-to every player as commands, so all games stay the same whoever runs Bellows.
+to every player as commands, so every game gets the same choices whoever runs Bellows.
 In the lab the host ran Bellows with default settings and the other computer ran
 no Bellows: 233 game days on 0.17.0, with the game's own out-of-sync check shown
 to catch a single extra random draw on the host, and 231 on the code of 1.3.0, at
