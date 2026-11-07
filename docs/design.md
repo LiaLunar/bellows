@@ -984,7 +984,12 @@ observe. Around each call it copies the country object (0x9B78 bytes in 1.37.5)
 and hashes the elements of the object's containers (vectors, arrays, linked
 lists and bitsets; 534 of them, as offsets and shapes in
 `knowledge_probe_layout.hpp`, taken from the game's type layout), and after the
-call it compares both. A call that changed neither counts as unchanged.
+call it compares both. A call that changed neither counts as unchanged. The words
+holding a container's buffer pointers and capacity are left out of the compare (a
+rebuilt list with the same elements has new nodes; the hash covers the elements),
+and lists and arrays of owning pointers hash the objects they own. The refresh
+clears `+0x2882`, so a call from the daily update always changes that word; the
+patterns file shows the calls that changed nothing else.
 
 Unchanged calls and their time are the upper bound of what such a memo could
 save: the witness then has to show, more cheaply than the call, that the inputs
@@ -996,8 +1001,15 @@ containers calls changed, and the sets of changes with the most calls, in
 `knowledge_probe_words.tsv`, `knowledge_probe_containers.tsv` and
 `knowledge_probe_patterns.tsv`, every 5 s. `same_containers_as_last` counts calls
 after which the containers hash as after the previous call for the same country.
-Copying and hashing add tens of microseconds to each call; the time columns
-measure the game's function only.
+Copying and hashing add time to each call; the time columns measure the game's
+function only.
+
+Lab (lab `docs/simulation-hotspots-after-142.md`): in play, without the
+refreshes of all countries while a save loads, the refresh is 4.7% of a year of
+1719 and 10% of an Anbennar stretch. No call from the daily update came out
+unchanged; with the calls that changed only `+0x2882`, a memo could skip at most
+18% of the refresh's time on 1719 and 30% on Anbennar, mostly calls from event
+options and other commands, before the cost of a witness.
 
 ### attr_cache
 
