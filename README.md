@@ -153,7 +153,7 @@ about 1.5 s longer than the times above, which stop at `Running application`.
 | `metascript_subst` | Single-pass `$parameter$` substitution in scripted effects |
 | `metascript_blocks` | Single-pass resolution of the `[[parameter] ...]` blocks of scripted effects and triggers (matters for mods with large scripted effects, e.g. Anbennar) |
 | `open_warmup` | Opens the files the game will need ahead of it on parallel threads, from a profile learned per mod set (meant for the first start after a reboot, when every first open of a file is slow: 61 → 15 s in the lab's build before the plugin; the first start after a reboot with the plugin has not been measured, so Bellows makes no claim for it) |
-| `ram_prefetch` | Reads and unpacks the DLC archive members the game will need into RAM on worker threads (learned per mod set; uses up to 1 GB of extra RAM during start-up, setting `ram_prefetch_budget_mb`) |
+| `ram_prefetch` | Reads and unpacks the DLC archive members the game will need into RAM on worker threads (learned per mod set; uses up to 1 GB of extra RAM during start-up and at most a quarter of the memory free at that moment, setting `ram_prefetch_budget_mb`) |
 | `attr_cache` | Remembers "file not found" answers for game and mod files during start-up (off by default: ~0.1 s left next to the other modules) |
 | `token_dict_cache` | Caches the script tokenizer's keyword lookups (~0.4 s) |
 | `range_witness` | **Simulation, not start-up.** Answers the country range check from the province that was in range last time instead of walking all of the country's provinces again; same answers as the game's code (lab: a year at speed 5 in 20.6 s instead of 27.6 s). `"verify"` compares every answer with the game's and writes the first mismatches to `range_witness_mismatches.tsv` |
@@ -204,9 +204,11 @@ campaign. Both orders are normal games.
 
 In multiplayer the known ties are safe. The host's AI makes these choices and sends them
 to every player as commands, so all games stay the same whoever runs Bellows.
-In the lab the host ran Bellows 0.17.0 with default settings and the other
-computer ran no Bellows: 233 game days without an out-of-sync, with the game's
-own out-of-sync check shown to catch a single extra random draw on the host.
+In the lab the host ran Bellows with default settings and the other computer ran
+no Bellows: 233 game days on 0.17.0, with the game's own out-of-sync check shown
+to catch a single extra random draw on the host, and 231 on the code of 1.3.0, at
+speed 3 because the other computer could not keep up at 5. Neither run went out
+of sync. Both used one save of 1444, and neither had Bellows on the other computer.
 Details in [bellows#79](https://github.com/happy-dwarf-team/bellows/issues/79)
 and the [design notes](docs/design.md#4-correctness-safeguards-d).
 
