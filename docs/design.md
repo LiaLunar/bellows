@@ -38,6 +38,7 @@ code only.
 | `modifier_merge` | Simulation: adds large modifier lists with an index instead of a scan per entry (§6a) | year 1720: 20.64 → 19.45 s |
 | `port_table` | Simulation, on by default since 1.4: the country's nearest-port table from one list of its ports (§6a) | measured with the three below, README |
 | `province_modifier_view` | Simulation, on by default since 1.4: reads one value of a province's modifiers without copying the list (§6a) | measured with `port_table`, `army_search_memo` and `pops_pacing`, README |
+| `army_strength_memo` | Simulation, off by default: the army's strength against a province once per province in an AI army search (§6a) | not measured yet |
 | `save_compress` | Saving: the game's own zlib with a faster CRC-32 (the game's bytes); optionally in parallel (§6a) | autosave 0.873 → 0.831 s; parallel 0.612 s |
 | `transfer_skip` | Loading in single player: no level 9 copy of a text save for a transfer nobody receives (§6a) | "Continue" of a 64.5 MB save 10.91 → 8.95 s |
 
@@ -621,6 +622,32 @@ all 67 days it compared. That save shows no address tie in that window, and late
 found the AI's order differing between runs of one setup anyway (README, "AI ties and
 multiplayer"), so the pair says less about this than was asked of it when the condition
 was written here.
+
+### army_strength_memo (simulation)
+
+Off by default. The AI's search for one army (`0x1022B0`) walks outwards from the
+army: it closes one province at a time and, for each neighbour still open, asks
+`0x102140` for the army's strength against that province (the call at `0x10303A`).
+A province is closed once but reached from several neighbours, so the same
+question comes several times in one search. The answer depends on the army, the
+province, two flag bytes and the game date, read from state the AI task does not
+write.
+
+The module redirects two calls. The first call of `0x102140` in the search
+(`0x10249E`, once per search; no jump in the function passes it) starts a new memo
+on the thread, and the call in the loop is answered from it. The memo has one slot
+per province id, off the game's heap (`VirtualAlloc`, 512 KB per thread that runs
+searches). A slot's stamp holds the search number and the flags, so a new search
+needs no clearing. Anything else, such as another army or a flag that is not a
+plain bool, runs the game's function.
+
+The claim about state is a statement about the code, and a memo of this kind has
+failed once with parallel AI (lab `docs/simulation-profile.md`, "develop_search_memo"),
+so the module needs `"verify"` with the AI on the pool threads: it runs the game's
+function for every repeated call and compares the bits. `"on"` does that for every
+1,024th repeated call and goes back to the game's function for good after a
+mismatch. Counters and the time of the repeated calls: `army_strength_memo.tsv`
+every 5 s.
 
 ### army_search_memo (simulation)
 

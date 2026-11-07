@@ -946,6 +946,22 @@ bytes = "E8 03 9E B9 00"
 rva = 0x1A69B8
 bytes = "E8 83 85 B9 00"
 
+# --- army_strength_memo ----------------------------------------------------------------
+
+[symbol.army_strength_first_call]
+bytes = "E8 9D FC FF FF"               # call 0x102140
+memory = "code"
+note = "0x1022B0, the AI army search: its first call of 0x102140, once per search; no jump in the function passes it"
+build."eu4-1.37.5-steam-win64" = { rva = 0x10249E }
+build."eu4-1.37.5.2-gog-win64" = { rva = 0x1024CE }
+
+[symbol.army_strength_loop_call]
+bytes = "E8 01 F1 FF FF"               # call 0x102140
+memory = "code"
+note = "0x1022B0, the AI army search: the call of 0x102140 in the loop over a closed province's open neighbours"
+build."eu4-1.37.5-steam-win64" = { rva = 0x10303A }
+build."eu4-1.37.5.2-gog-win64" = { rva = 0x10306A }
+
 [symbol.zoc_flag_call]
 bytes = "E8 4A B8 FF FF"               # call 0xD40AE0, after mov edx,0E0h and xor r8d,r8d
 memory = "code"

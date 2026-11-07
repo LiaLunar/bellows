@@ -57,6 +57,7 @@ DWORD WINAPI FinishAfterReady(void*) {
         {"port_table report", sb::ReportPortTable},
         {"province_modifier_view report", sb::ReportProvinceModifierView},
         {"army_search_memo report", sb::ReportArmySearchMemo},
+        {"army_strength_memo report", sb::ReportArmyStrengthMemo},
         {"save_compress report", sb::ReportSaveCompress},
         {"transfer_skip report", sb::ReportTransferSkip},
         {"history_add report", sb::ReportHistoryAdd},
@@ -138,6 +139,8 @@ struct Bellows : anvil::Plugin {
             {"province_modifier_view", cfg::province_modifier_view.id, sb::InstallProvinceModifierView},
             // redirects the call of 0x1022B0 in 0xEAB50; army_search_profile hooks its entry, so both chain.
             {"army_search_memo", cfg::army_search_memo.id, sb::InstallArmySearchMemo},
+            // redirects two calls of 0x102140 in 0x1022B0; score_probe hooks the entry of 0x102140, so both chain.
+            {"army_strength_memo", cfg::army_strength_memo.id, sb::InstallArmyStrengthMemo},
             {"save_compress", cfg::save_compress.id, sb::InstallSaveCompress},
             {"transfer_skip", cfg::transfer_skip.id, sb::InstallTransferSkip},
             {"history_add", cfg::history_add.id, sb::InstallHistoryAdd},
