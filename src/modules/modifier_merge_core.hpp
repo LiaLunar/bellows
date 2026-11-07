@@ -10,7 +10,8 @@
 //   - otherwise scans the whole destination for the first entry with that id and adds to it, or
 //     appends the entry, doubling the capacity when it is full,
 // and at the end records the source in a vector at +0x38. The scan makes one call O(n * m): the
-// monthly unit update adds each country's dense list (about 700 entries) to every unit's sparse list.
+// monthly ranking of the countries counts every fleet's cannons, which adds the country's dense list
+// (about 700 entries) to the fleet's sparse list.
 //
 // MergeFast does the same with an index of the destination's ids, so each lookup is O(1), and gives the
 // same entries in the same order, the same values, count and capacity, and the same sequence of

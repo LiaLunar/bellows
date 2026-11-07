@@ -1,10 +1,10 @@
 // modifier_merge (on by default): the game's modifier-list merge 0x8EA420 with an index instead of a linear scan per
 // entry (lab docs: docs/simulation-profile.md, "Tick miesięczny"; the loop in modifier_merge_core.hpp).
 //
-// The hook takes calls whose scans would compare many entries (the monthly unit update adds each
-// country's dense list of about 700 modifiers to every unit's list) and runs MergeFast on the game's
-// list, growing it with the game's operator new and the list's own release call exactly where the game
-// would, then records the source in the list's vector of sources the way 0x8EA420 ends. Every other call,
+// The hook takes calls whose scans would compare many entries (the monthly ranking of the countries counts
+// every fleet's cannons, which adds the country's dense list of about 700 modifiers to the fleet's list)
+// and runs MergeFast on the game's list, growing it with the game's operator new and the list's own release
+// call exactly where the game would, then records the source in the list's vector of sources the way 0x8EA420 ends. Every other call,
 // and any input outside what the index covers, goes to the game's function.
 //
 // "verify" never changes a list: the game's function runs, and MergeFast runs on a copy, which must end
