@@ -107,6 +107,36 @@ none of them in these two setups. A late-game year has no such comparison yet: t
 of the 1821 save without Bellows were lost to a dialog. This is one machine and one
 save: your years will differ with your processor and your campaign.
 
+### A year of Anbennar at speed 5
+
+`frame_pacing` alone, on and off, on the Anbennar mod set above (the same three
+Workshop items): a save of Verne on 11 November 1444, warmed up to 1 January 1445,
+then the year 1445 at speed 5. EU4 1.37.5 (Steam), original `eu4.exe`, Anvil 1.13.0,
+anvil-game and Tongs 0.26.1 (which drives the run), and a build of Bellows with the
+defaults proposed for 1.4 (`port_table`, `province_modifier_view`, `army_search_memo`
+and `pops_pacing` on as well) plus `tick_profile`, the same in both setups except
+`frame_pacing`. One game per run, interleaved (on, off, off, on, on, off, off, on),
+each after a check that the processor was idle, 7 November 2026:
+
+| Setup | Year 1445 | Median |
+| --- | --- | ---: |
+| `frame_pacing = "off"` | 54.15 / 53.42 / 57.90 / 56.69 s | 55.42 s |
+| `frame_pacing` on (default) | 46.52 / 46.98 / 49.87 / 54.60 s | **48.42 s** |
+
+So about 7 s (13%) less, about as much as on the base game. The ranges overlap by one
+run (the slowest with `frame_pacing`, 54.60 s, against the fastest without, 53.42 s),
+and with four runs each a permutation test of the medians gives p = 0.09: the
+direction is clear, the size is not pinned down. In `tick_profile`, frames drawn
+inside the daily tick took 7.9 s of the year without `frame_pacing` and 1.8 s with
+it (medians). No run was paused during the year; in one run `tick_profile` missed
+11 of 364 days, the year's time is complete.
+
+What differs from the 1720 series: the game ran on processors 1–7 with its main
+thread on one of them and 6 workers in each pool, not 8, and the year was not
+compared with the game without Bellows. This is one machine, one graphics card and
+resolution, and one save: how much a frame costs decides how much `frame_pacing`
+saves, so your years will differ.
+
 ### Loading a save
 
 "Continue" on the main menu until the game is ready, EU4 1.37.5 (Steam), original
@@ -165,7 +195,7 @@ about 1.5 s longer than the times above, which stop at `Running application`.
 | `save_compress` | **Saving, on by default since 0.18.** For compressed saves (`compress_autosave = yes` and the like): compresses each member of the save with the game's own zlib, call for call as the game does, but computes its CRC-32 eight bytes at a time instead of one; the file is byte for byte the game's. `"verify"` runs the game's own compression as well, writes its result and compares the two members byte for byte. Lab, the 1719 save with `compress_autosave = yes`, 6 autosaves per setting in interleaved games: an autosave took 0.831 s (0.823–0.842) instead of 0.873 s (0.871–0.900); `"verify"` found 0 differences in 10 members. `save_compress_parallel = "on"` (off by default) compresses large members (the gamestate) in 1 MiB chunks on several threads instead: a valid archive with the same members, which the game loads and other tools read, but with other compressed bytes than the game's (`"verify"` decodes each member again before writing it). An autosave then took 0.612 s (0.575–0.637), the gamestate 80–95 ms on 7 threads instead of about 300 ms |
 | `transfer_skip` | **Loading, on by default since 1.1.** In single player, "Continue" of a text save no longer compresses the whole file at level 9 for a multiplayer transfer nobody receives; the game loads the same file as before. Hosted multiplayer is left as it is. `"verify"` keeps the game's copy and checks that it is the save, that the load does not use it and that nothing is sent. Lab, interleaved runs, 5 per setting, click on "Continue" to the game ready: the 64.5 MB save of 1821 8.95 s (8.55–9.23) instead of 10.91 s (10.78–11.06), a 40 MB vanilla save of 1450 4.47 s (4.35–4.99) instead of 5.84 s (5.70–6.14). Compressed saves have no such copy and do not change |
 | `history_add` | **Loading, on by default since 1.2.** Adds an entry the game just read to a dated list without first walking the whole list to see whether that new entry is in it; the list comes out the same. The gain grows with the square of the list, so it depends on the mods: about 0.5 s of "Continue" with the lab's 10 mods (38,000 entries, 154 million list steps), almost nothing on vanilla (4,300 entries, 2 million steps). `"verify"` lets the game walk and compares: 0 differences. See [Loading a save](#loading-a-save) |
-| `frame_pacing` | **Simulation, on by default since 0.15.** At the fastest speed, draws frames from inside the daily tick less often while you do nothing (setting `frame_pacing_interval_ms`, 100 ms; the game's own is 50 ms), and at once when a key press, click or wheel turn waits (`frame_pacing_input = "draw"`). The simulation is the same; the map updates about 16 instead of 22 times a second at speed 5 while you do nothing (lab: a year at speed 5 in 20.8 s instead of 23.4 s; a key press at speed 5 handled after 21 ms instead of 51.5 ms in the median, a real key press after 21.6 ms instead of 56.8 ms) |
+| `frame_pacing` | **Simulation, on by default since 0.15.** At the fastest speed, draws frames from inside the daily tick less often while you do nothing (setting `frame_pacing_interval_ms`, 100 ms; the game's own is 50 ms), and at once when a key press, click or wheel turn waits (`frame_pacing_input = "draw"`). The simulation is the same; the map updates about 16 instead of 22 times a second at speed 5 while you do nothing (lab: a year at speed 5 in 20.8 s instead of 23.4 s, on Anbennar 48.4 s instead of 55.4 s, see [A year of Anbennar at speed 5](#a-year-of-anbennar-at-speed-5); a key press at speed 5 handled after 21 ms instead of 51.5 ms in the median, a real key press after 21.6 ms instead of 56.8 ms) |
 
 Diagnostics, off by default: `zip_profile`, `token_dict_profile`,
 `range_profile`, `tick_profile` (time of each stage of the daily, monthly and
