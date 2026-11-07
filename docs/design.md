@@ -952,6 +952,18 @@ the date on entering the daily tick as in `tick_profile`'s rows: dated the 1st
 of a month, dated a month's last day (the call that runs the monthly tick) and
 the others.
 
+Two mid hooks time an inline double loop of the monthly tick (`0x75DD79` to
+`0x75DE0F` on Steam): for every pair of countries (A, B) it takes A's list for
+B's tag index from a per-tag array of lists at `country+0x1800` and copies the
+byte at `+0x24` of every entry to `+0x25`. That is countries² look-ups, most of
+them on empty lists. After the loop, with the clock stopped, the end hook walks
+the same lists once per tag index that some country has, reading only, and
+counts the entries whose `+0x25` differs from `+0x24`. It looks at the same
+lists as the loop (the loop's repeats aside), so its time is about what a
+single-pass module would cost, and it is what such a module's `"verify"` mode
+would check (`tag_lists_*` rows in `monthly_probe.tsv`, four columns
+in `monthly_probe_ticks.tsv`; the tick's `total_ms` leaves the pass out).
+
 Lab (Russia 1719, 360 s): on the day dated the 1st the daily country update
 takes 48.8 ms instead of 7.8 ms. About 90 countries have their modifier flag
 `+0x2882` set after the monthly tick, and the daily update then runs

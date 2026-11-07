@@ -526,6 +526,29 @@ note = "gamestate.cpp: the monthly tick (countries 0x2F36C0, provinces 0x9F35C0,
 build."eu4-1.37.5-steam-win64" = { rva = 0x75D690 }
 build."eu4-1.37.5.2-gog-win64" = { rva = 0x75C850 }
 
+[symbol.monthly_tag_lists_start]
+bytes = "4D 8B B7 F0 1C 00 00 49 8B 9F E8 1C 00 00"  # mov r14,[r15+1CF0h]; mov rbx,[r15+1CE8h]
+memory = "code"
+values.countries_end = { at = 3, size = 4 }
+values.countries_begin = { at = 10, size = 4 }
+note = "monthly tick: start of the inline double loop over countries (r15 = the state, its country array at +0x1CE8/+0x1CF0) that copies +0x24 to +0x25 in each country's per-tag lists at +0x1800"
+build."eu4-1.37.5-steam-win64" = { rva = 0x75DD79 }
+build."eu4-1.37.5.2-gog-win64" = { rva = 0x75CF39 }
+
+[symbol.monthly_tag_lists_body]
+bytes = "41 3B 8A 0C 18 00 00 7D 3C 48 8D 0C 49 49 8B 82 00 18 00 00 48 63 54 C8 14 85 D2 74 28 48 8B 44 C8 08 4C 8D 04 D0 49 3B C0 74 1A 0F 1F 80 00 00 00 00 48 8B 10 0F B6 4A 24 88 4A 25 48 83 C0 08 49 3B C0 75 ED"
+memory = "code"
+note = "the double loop's body, not hooked: these bytes hold the offsets monthly_probe_core.hpp names (list count +0x180C, lists +0x1800, 0x18 a list with data +0x8 and count +0x14, the copy +0x24 to +0x25)"
+build."eu4-1.37.5-steam-win64" = { rva = 0x75DDBE }
+build."eu4-1.37.5.2-gog-win64" = { rva = 0x75CF7E }
+
+[symbol.monthly_tag_lists_end]
+bytes = "49 63 9F 14 1D 00 00 49 3B DC"  # movsxd rbx,[r15+1D14h]; cmp rbx,r12
+memory = "code"
+note = "monthly tick: the first instruction after that double loop (also where it goes with no countries)"
+build."eu4-1.37.5-steam-win64" = { rva = 0x75DE0F }
+build."eu4-1.37.5.2-gog-win64" = { rva = 0x75CFCF }
+
 [symbol.country_month]
 bytes = "48 8B C4 48 89 58 10 44 88 40 18 48 89 48 08 55 56 57 41 54"
 memory = "code"

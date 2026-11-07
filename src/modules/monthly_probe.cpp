@@ -15,6 +15,11 @@
 // monthly_probe_ticks.tsv holds one row per monthly tick, because the totals hide months that cost
 // twice as much as the rest.
 //
+// Two mid hooks time the tick's inline double loop over countries (0x75DD79..0x75DE0F, see
+// WalkPerTagLists in monthly_probe_core.hpp). After the loop, with the clock stopped, the end hook walks
+// the same lists once per tag index, only reading: the time of that pass and whether every entry it
+// reaches already holds the loop's copy (0 mismatches means a single pass would leave the same bytes).
+//
 // The day after the monthly tick is about 40 ms slower, almost all in the daily country loop: the daily
 // country update 0x2EE280 and its largest parts are timed apart on days dated the 1st of a month.
 //
@@ -28,6 +33,7 @@
 #include <intrin.h>
 
 #include <fstream>
+#include <new>
 #include <string>
 
 extern "C" {
@@ -91,6 +97,15 @@ struct Span {
 };
 
 Span g_monthSpan, g_countrySpan, g_provinceSpan, g_unitsSpan, g_portSpan;
+
+// The tick's double loop over countries: the game's loop and the read-only single pass after it.
+Span g_tagListSpan, g_tagWalkSpan;
+volatile LONG64 g_tagPairs = 0, g_tagLists = 0, g_tagEntries = 0, g_tagMismatches = 0, g_tagCountries = 0;
+anvil::Change g_tagStartHook, g_tagEndHook;
+// The state's country array as the start site reads it (values of its symbol): r15 is the state.
+std::size_t g_countriesBegin = 0, g_countriesEnd = 0;
+LONG64 g_tagStart = 0;  // main thread only
+unsigned char* g_tagPresent = nullptr;  // kTagIndices bytes
 volatile LONG64 g_provincesWithDraws = 0, g_countriesWithDraws = 0;
 
 // Per country (tag index): monthly update, port table, random draws inside the update.
@@ -262,7 +277,7 @@ void MonthlyDetour(void* state, std::uint8_t a2) {
     if (root != nullptr) g_row.date = sb::Read<std::int32_t>(root, g_rootDate);
     const LONG64 start = sb::Ticks();
     InContext(kMonthly, [&] { g_monthly(state, a2); });
-    const LONG64 ticks = sb::Ticks() - start;
+    const LONG64 ticks = sb::Ticks() - start - g_row.tagListsWalk;  // without the probe's own pass
     g_monthSpan.Add(ticks);
     g_row.total = ticks;
     if (const LONG row = g_rowCount; row < kTickRows) {
@@ -320,6 +335,29 @@ void PortDetour(void* country) {
     const int c = CountryIndex(country);
     InterlockedExchangeAdd64(&g_cPortTicks[c], ticks);
     InterlockedExchange64(&g_cProvinces[c], sb::Read<std::int32_t>(country, kCountryProvinces));
+}
+
+void AtTagListsStart() noexcept { g_tagStart = sb::Ticks(); }
+
+void AtTagListsEnd(anvil::Cpu& cpu) noexcept {
+    const LONG64 loop = sb::Ticks() - g_tagStart;
+    const auto* state = reinterpret_cast<const unsigned char*>(cpu.r15);
+    const auto* begin = sb::Read<const unsigned char* const*>(state, g_countriesBegin);
+    const auto* end = sb::Read<const unsigned char* const*>(state, g_countriesEnd);
+    const LONG64 walkStart = sb::Ticks();
+    const sb::TagListWalk w = sb::WalkPerTagLists(begin, end - begin, g_tagPresent);
+    const LONG64 walk = sb::Ticks() - walkStart;
+    g_tagListSpan.Add(loop);
+    g_tagWalkSpan.Add(walk);
+    InterlockedExchangeAdd64(&g_tagPairs, w.pairs);
+    InterlockedExchangeAdd64(&g_tagLists, w.lists);
+    InterlockedExchangeAdd64(&g_tagEntries, w.entries);
+    InterlockedExchangeAdd64(&g_tagMismatches, w.mismatches);
+    InterlockedExchange64(&g_tagCountries, w.countries);
+    g_row.tagLists += loop;
+    g_row.tagListsWalk += walk;
+    g_row.tagListEntries += w.entries;
+    g_row.tagListMismatches += w.mismatches;
 }
 
 MergeCell* SiteCell(std::uint32_t rva) noexcept {
@@ -407,6 +445,13 @@ void WriteFiles() {
             WriteSpan(out, "province_month", g_provinceSpan, ms);
             WriteSpan(out, "units_month", g_unitsSpan, ms);
             WriteSpan(out, "port_table", g_portSpan, ms);
+            WriteSpan(out, "tag_lists_loop", g_tagListSpan, ms);
+            WriteSpan(out, "tag_lists_single_pass", g_tagWalkSpan, ms);
+            out << "tag_lists_countries\t" << g_tagCountries << "\t\t\n";
+            out << "tag_lists_pairs\t" << g_tagPairs << "\t\t\n";
+            out << "tag_lists_lists\t" << g_tagLists << "\t\t\n";
+            out << "tag_lists_entries\t" << g_tagEntries << "\t\t\n";
+            out << "tag_lists_mismatches\t" << g_tagMismatches << "\t\t\n";
             out << "countries_with_draws\t" << g_countriesWithDraws << "\t\t\n";
             out << "provinces_with_draws\t" << g_provincesWithDraws << "\t\t\n";
             for (int c = 0; c < kContexts; ++c) out << "draws_" << kContextNames[c] << "\t" << g_draws[c] << "\t\t\n";
@@ -422,7 +467,8 @@ void WriteFiles() {
         });
         Replace(L"monthly_probe_ticks.tsv", [](std::ostream& out, double ms) {
             out << "date\ttotal_ms\tcountry_ms\tprovince_ms\tunits_ms\tport_ms\tmerge_ms\tmerge_steps\tcountries\t"
-                   "top_country\ttop_country_ms\n";
+                   "top_country\ttop_country_ms\ttag_lists_ms\ttag_lists_single_pass_ms\ttag_list_entries\t"
+                   "tag_list_mismatches\n";
             const LONG rows = g_rowCount;
             for (LONG i = 0; i < rows; ++i) {
                 const sb::MonthRow& r = g_rows[i];
@@ -430,7 +476,9 @@ void WriteFiles() {
                 sb::DateText(r.date, date, sizeof date);
                 out << date << "\t" << r.total * ms << "\t" << r.country * ms << "\t" << r.province * ms << "\t"
                     << r.units * ms << "\t" << r.port * ms << "\t" << r.merge * ms << "\t" << r.mergeSteps << "\t"
-                    << r.countries << "\t" << r.topCountry << "\t" << r.topCountryTicks * ms << "\n";
+                    << r.countries << "\t" << r.topCountry << "\t" << r.topCountryTicks * ms << "\t"
+                    << r.tagLists * ms << "\t" << r.tagListsWalk * ms << "\t" << r.tagListEntries << "\t"
+                    << r.tagListMismatches << "\n";
             }
         });
         Replace(L"monthly_probe_countries.tsv", [](std::ostream& out, double ms) {
@@ -515,6 +563,15 @@ bool InstallMonthlyProbe(anvil::Host& host, Mode mode) {
     undo.add(g_portHook);
     host.hook(g_mergeHook, sym::modifier_merge, &MergeDetour);
     undo.add(g_mergeHook);
+    g_tagPresent = new (std::nothrow) unsigned char[sb::kTagIndices];
+    if (g_tagPresent != nullptr) {
+        g_countriesBegin = static_cast<std::size_t>(host.value(sym::monthly_tag_lists_start, "countries_begin"));
+        g_countriesEnd = static_cast<std::size_t>(host.value(sym::monthly_tag_lists_start, "countries_end"));
+        g_tagStartHook = host.mid_hook(sym::monthly_tag_lists_start, [] { AtTagListsStart(); });
+        undo.add(g_tagStartHook);
+        g_tagEndHook = host.mid_hook(sym::monthly_tag_lists_end, [](anvil::Cpu& cpu) { AtTagListsEnd(cpu); });
+        undo.add(g_tagEndHook);
+    }
     host.hook(g_randomHook, sym::game_random, &RandomDetour);
     host.hook(g_dayHook, sym::daily_tick, &DayDetour);
     undo.add(g_dayHook);
