@@ -1,4 +1,4 @@
-// port_table (off by default): the game's table of the nearest port without its repeated walks
+// port_table (on by default since 1.4): the game's table of the nearest port without its repeated walks
 // (lab docs: docs/simulation-profile.md, "Tabela portów"; the loop in port_table_core.hpp).
 //
 // "verify" never changes the table: the game's function runs, and Fill runs on a copy that must end with

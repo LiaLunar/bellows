@@ -1,4 +1,4 @@
-// army_search_memo (off by default): within one AI army search (0x1022B0), one path search (0x96C520) or one look at
+// army_search_memo (on by default since 1.4): within one AI army search (0x1022B0), one path search (0x96C520) or one look at
 // a unit's moves from a province (0x195750), the zone-of-control flag of the army from 0xD40AE0 once instead of for
 // every move (lab docs: docs/simulation-profile.md; the reasoning in army_search_memo_core.hpp).
 //

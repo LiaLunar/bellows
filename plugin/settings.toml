@@ -175,7 +175,7 @@ restart = true
 [setting.pops_pacing]
 type = "enum"
 values = [{ name = "off", label = "Off" }, { name = "on", label = "On" }, { name = "verify", label = "Verify" }]
-default = "off"
+default = "on"
 label = "Online service pacing"
 description = "Simulation: at the fastest speed, runs the game's Paradox online-service callbacks every 500 ms instead of twice a frame. With nothing to deliver, each run makes the main thread sleep 1 ms. Multiplayer keeps the game's rate. Verify runs them as the game does and counts what would be left out."
 group = "Simulation"
@@ -184,7 +184,7 @@ restart = true
 [setting.province_modifier_view]
 type = "enum"
 values = [{ name = "off", label = "Off" }, { name = "on", label = "On" }, { name = "verify", label = "Verify" }]
-default = "off"
+default = "on"
 label = "Province modifier view"
 description = "Simulation: reads one value from a province's modifiers in place instead of copying the whole list first (in the daily country update and the AI); the same value. Verify runs the game's copy and compares."
 group = "Simulation"
@@ -193,16 +193,16 @@ restart = true
 [setting.port_table]
 type = "enum"
 values = [{ name = "off", label = "Off" }, { name = "on", label = "On" }, { name = "verify", label = "Verify" }]
-default = "off"
+default = "on"
 label = "Port table"
-description = "Simulation: rebuilds a country's table of the nearest port from one list of its ports instead of walking its provinces and relations again for every province of the map. Off by default until it has its timed series."
+description = "Simulation: rebuilds a country's table of the nearest port from one list of its ports instead of walking its provinces and relations again for every province of the map; the same table. Verify runs the game's function and compares."
 group = "Simulation"
 restart = true
 
 [setting.army_search_memo]
 type = "enum"
 values = [{ name = "off", label = "Off" }, { name = "on", label = "On" }, { name = "verify", label = "Verify" }]
-default = "off"
+default = "on"
 label = "AI army search memo"
 description = "Simulation: in the AI's daily search for each army, works out once per search whether the army ignores forts' zones of control, instead of for every move it checks; the same answer. Verify runs the game's check every time and compares."
 group = "Simulation"

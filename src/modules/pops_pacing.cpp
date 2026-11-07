@@ -1,4 +1,4 @@
-// pops_pacing (off by default): at the fastest speed the game's online-service pump POPS_RunCallbacks runs every
+// pops_pacing (on by default since 1.4): at the fastest speed the game's online-service pump POPS_RunCallbacks runs every
 // 500 ms instead of twice a frame (the reasoning in pops_pacing_core.hpp).
 //
 // The import of POPS_RunCallbacks in eu4.exe is replaced. A hook on the daily tick notes the time of the last game
