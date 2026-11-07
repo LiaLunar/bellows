@@ -34,6 +34,9 @@ Your AI can occasionally play out differently. In a planned test on one save, th
 ### I play on GOG. Can I use it?
 Yes, the GOG build 1.37.5.2. GOG has no Workshop: install Bellows from the **Catalog** tab in Anvil Manager (Anvil 1.9 or newer) or from [GitHub](https://github.com/happy-dwarf-team/bellows/releases). Same plugin, same forge, different road.
 
+### Something's wrong. Where do I ask?
+In **#help-and-bugs** on our [Discord server](https://discord.happydwarf.dev/) (pick the Bellows tag), or in a [GitHub issue](https://github.com/happy-dwarf-team/bellows/issues/new/choose). What we confirm on Discord goes to GitHub too.
+
 ### What is that little dwarf head on the thumbnail?
 If you check the mod's GitHub page, you will notice the repository belongs to Happy Dwarf Team.
 

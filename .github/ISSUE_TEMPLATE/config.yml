@@ -3,6 +3,9 @@ contact_links:
   - name: Report a security vulnerability
     url: https://github.com/happy-dwarf-team/bellows/security/advisories/new
     about: Report privately; see SECURITY.md.
+  - name: Questions and help on Discord
+    url: https://discord.happydwarf.dev/
+    about: "Ask in #help-and-bugs on the team's Discord server (English). What the team confirms there is tracked in issues."
   - name: Anvil (loader) issues
     url: https://github.com/happy-dwarf-team/anvil/issues/new/choose
     about: Problems that also happen without this plugin belong to Anvil.

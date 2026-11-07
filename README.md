@@ -296,7 +296,10 @@ release.
 - **Reporting a problem:** a
   [bug report](https://github.com/happy-dwarf-team/bellows/issues/new?template=bug_report.yml)
   with `anvil/anvil.log` of that start, `anvil/data/bellows/settings.toml`, the
-  mods of the playset, and whether it happens with Bellows removed.
+  mods of the playset, and whether it happens with Bellows removed. To ask
+  first, post in `#help-and-bugs` on the team's
+  [Discord server](https://discord.happydwarf.dev/) with the Bellows tag; what
+  the team confirms there is tracked in an issue.
 
 ## For mod authors
 
