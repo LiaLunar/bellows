@@ -84,14 +84,14 @@ static void TestTagLists() {
     SetLists(dead, nullptr, 0);
     const unsigned char* countries[] = {a.bytes, b.bytes, c.bytes, dead.bytes};
 
-    sb::TagListWalk before = sb::WalkPerTagLists(countries, 4, present);
+    sb::TagListWalk before = sb::WalkPerTagLists(countries, 4, countries, 4, present);
     assert(before.countries == 4 && before.pairs == 16);
     assert(before.lists == 3 + 2);  // A: tags 0..2, B: tags 0..1; C has no lists; tag -1 and tag 3 skipped
     assert(before.entries == 4);    // entry[3] counted once, through B (A's list for tag 3 is not read)
     assert(before.mismatches == 3);
 
     assert(GameLoop(countries, 4) == 4);
-    sb::TagListWalk after = sb::WalkPerTagLists(countries, 4, present);
+    sb::TagListWalk after = sb::WalkPerTagLists(countries, 4, countries, 4, present);
     assert(after.entries == before.entries && after.mismatches == 0);
 }
 

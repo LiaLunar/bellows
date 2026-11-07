@@ -103,17 +103,20 @@ inline T ReadAt(const unsigned char* base, std::size_t offset) noexcept {
     return v;
 }
 
-// `countries` is the game's array of country pointers, `count` long. `present` is scratch space of
+// `countries` (`count` long) is the outer loop's array of country pointers and `inner` (`innerCount`
+// long) the inner one's: the game reads the outer from the state it was given (r15) and the inner from
+// the global state (rdi), the same object in every game seen so far. `present` is scratch space of
 // kTagIndices bytes.
 inline TagListWalk WalkPerTagLists(const unsigned char* const* countries, std::int64_t count,
+                                   const unsigned char* const* inner, std::int64_t innerCount,
                                    unsigned char* present) noexcept {
     TagListWalk w;
     w.countries = count;
-    w.pairs = count * count;
+    w.pairs = count * innerCount;
     std::memset(present, 0, kTagIndices);
     int top = 0;
-    for (std::int64_t i = 0; i < count; ++i) {
-        const auto index = static_cast<std::int16_t>(ReadAt<std::uint64_t>(countries[i], kCountryTagIndex) >> 32);
+    for (std::int64_t i = 0; i < innerCount; ++i) {
+        const auto index = static_cast<std::int16_t>(ReadAt<std::uint64_t>(inner[i], kCountryTagIndex) >> 32);
         if (index < 0) continue;
         present[index] = 1;
         if (index + 1 > top) top = index + 1;

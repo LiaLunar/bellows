@@ -101,6 +101,7 @@ Span g_monthSpan, g_countrySpan, g_provinceSpan, g_unitsSpan, g_portSpan;
 // The tick's double loop over countries: the game's loop and the read-only single pass after it.
 Span g_tagListSpan, g_tagWalkSpan;
 volatile LONG64 g_tagPairs = 0, g_tagLists = 0, g_tagEntries = 0, g_tagMismatches = 0, g_tagCountries = 0;
+volatile LONG64 g_tagOtherState = 0;  // ticks where the inner loop's state was not r15
 anvil::Change g_tagStartHook, g_tagEndHook;
 // The state's country array as the start site reads it (values of its symbol): r15 is the state.
 std::size_t g_countriesBegin = 0, g_countriesEnd = 0;
@@ -344,8 +345,13 @@ void AtTagListsEnd(anvil::Cpu& cpu) noexcept {
     const auto* state = reinterpret_cast<const unsigned char*>(cpu.r15);
     const auto* begin = sb::Read<const unsigned char* const*>(state, g_countriesBegin);
     const auto* end = sb::Read<const unsigned char* const*>(state, g_countriesEnd);
+    const auto* global = reinterpret_cast<const unsigned char*>(cpu.rdi);  // the inner loop's state
+    const auto* innerBegin = sb::Read<const unsigned char* const*>(global, g_countriesBegin);
+    const auto* innerEnd = sb::Read<const unsigned char* const*>(global, g_countriesEnd);
+    if (global != state) InterlockedIncrement64(&g_tagOtherState);
     const LONG64 walkStart = sb::Ticks();
-    const sb::TagListWalk w = sb::WalkPerTagLists(begin, end - begin, g_tagPresent);
+    const sb::TagListWalk w =
+        sb::WalkPerTagLists(begin, end - begin, innerBegin, innerEnd - innerBegin, g_tagPresent);
     const LONG64 walk = sb::Ticks() - walkStart;
     g_tagListSpan.Add(loop);
     g_tagWalkSpan.Add(walk);
@@ -452,6 +458,7 @@ void WriteFiles() {
             out << "tag_lists_lists\t" << g_tagLists << "\t\t\n";
             out << "tag_lists_entries\t" << g_tagEntries << "\t\t\n";
             out << "tag_lists_mismatches\t" << g_tagMismatches << "\t\t\n";
+            out << "tag_lists_other_state\t" << g_tagOtherState << "\t\t\n";
             out << "countries_with_draws\t" << g_countriesWithDraws << "\t\t\n";
             out << "provinces_with_draws\t" << g_provincesWithDraws << "\t\t\n";
             for (int c = 0; c < kContexts; ++c) out << "draws_" << kContextNames[c] << "\t" << g_draws[c] << "\t\t\n";
