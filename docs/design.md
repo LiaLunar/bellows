@@ -28,7 +28,7 @@ code only.
 | `exists_index` | Answers the modifier-picture verifier's "file exists" queries from directory listings | 24.6 → 19.6 s |
 | `verifypath_listing` | Answers PhysFS `verifyPath` stats from directory listings | → 13.3 s |
 | `mimalloc` | Replaces the game's CRT heap with mimalloc for the whole process (`on`) or until the game-ready event (`startup`) | 13.8 → 11.8 s |
-| `trigger_intern` | Skips redundant trigger-interning work at the end of loading (empty map), linear algorithm otherwise | tail −0.8 s |
+| `trigger_intern` | Looks each trigger up in the game's trigger profile at the end of loading: at once for an empty profile map, through a linear index otherwise | tail −0.8 s |
 | `metascript_subst` | Single-pass `$param$` substitution in scripted effects/triggers | −0.75 s |
 | `metascript_blocks` | Single-pass resolution of the `[[param] ...]` blocks of scripted effects/triggers | Anbennar: 34.4 → 24.0 s; lab playset: no change |
 | `frame_pacing` | Simulation, on by default since 0.15: at speed 5, frames drawn from inside the daily tick at most every 100 ms instead of 50 ms while no input waits, at once for a waiting press | year 1720: 23.4 → 20.8 s; key press 51.5 → 21 ms |
@@ -137,7 +137,7 @@ format change.
 
 - Native unit tests in `tests/` (one program per test, run by `ctest`): the
   cores of the modules that compute something (access profiles, path rules,
-  the ZIP reader, mimalloc heap, trigger interning, metascript substitution and
+  the ZIP reader, mimalloc heap, trigger profile lookup, metascript substitution and
   blocks, token dictionary cache, range witness and its statistics, frame
   pacing, modifier merge, province modifier view, save compression, the
   diagnostics' cores), settings and their migration, the rename from EU4
@@ -177,8 +177,8 @@ point.
 Findings while porting (both also apply to the lab build):
 
 - **`trigger_profile.txt`**: the game ships it in its root folder (332 KB);
-  at start-up `0xB9B5A0` reads it and fills the trigger-interning map (6870
-  entries). The lab's junction copies listed root files explicitly and missed
+  at start-up `0xB9B5A0` reads it and fills the trigger profile map (6870
+  entries, each a trigger shape and a number). The lab's junction copies listed root files explicitly and missed
   it, so every lab measurement ran with an empty map. With the real file the
   module takes its hash-consing path for all 2.35 M calls; verify run: 0
   differences.
@@ -231,7 +231,7 @@ Hook overhead: timing every call (two QPC reads and a locked add) and the
 interlocked hot-path counters cost ~0.1–0.2 s offline. A locked instruction
 waits for the walk's outstanding cache misses, and a timed call cannot overlap
 its misses with its neighbours', so per-call timing also inflated the result.
-The hook now counts with plain updates (the game interns from one thread
+The hook now counts with plain updates (the game looks the triggers up from one thread
 under its own mutex) and logs the span from the first to the last call
 (QPC at every 16th entry; the game's loop overhead included). Offline 474 →
 360 ms; in the game the span is 381–395 ms (verify: 0 mismatches). The index

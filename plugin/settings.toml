@@ -48,8 +48,8 @@ restart = true
 type = "enum"
 values = [{ name = "on", label = "On" }, { name = "off", label = "Off" }, { name = "verify", label = "Verify" }]
 default = "on"
-label = "Trigger interning"
-description = "Faster trigger interning at the end of loading."
+label = "Trigger profile lookup"
+description = "Faster lookup of each trigger in the game's trigger profile at the end of loading."
 group = "Start-up"
 restart = true
 
