@@ -1,8 +1,9 @@
 # What the player can change (Anvil design §5.3, §11). Anvil keeps the values
 # that differ from these defaults in anvil/data/bellows/settings.toml, and the
 # environment variables ANVIL_BELLOWS_<NAME> override them for one start.
-# Every module is installed while the game starts, so every setting applies at
-# the next start (restart = true). "verify" also runs the game's own code and
+# Every module is installed while the game starts, so a setting applies at the
+# next start (restart = true), except frame_pacing_interval_ms and
+# frame_pacing_input, which change while the game runs. "verify" also runs the game's own code and
 # keeps its result: slower, for checking correctness.
 # From 1.0 the names and values of these settings keep their meaning in every
 # 1.x release (README, "Compatibility"), except the group "Diagnostics": lab

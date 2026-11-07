@@ -396,8 +396,8 @@ overlay reaches the module through `Host::subscribe_setting`, on the thread
 that made it, which stores them in atomics the hook reads at every check; the
 next check uses them. The log says so, and `frame_pacing.tsv` counts the
 changes (`changes`). `frame_pacing` itself stays `restart = true`, so
-`off` still means no hooks at all; an interval of 0 turns the effect off for
-the rest of the session.
+`off` still means no hooks at all; an interval of 0 turns the effect off until
+another value is set, since the hook reads the interval at every check.
 
 With `frame_pacing_input = "draw"` (the default since 0.13) frames are skipped
 only while no input waits. A waiting key press, click or wheel turn gets a
