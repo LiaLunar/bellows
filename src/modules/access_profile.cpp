@@ -261,6 +261,12 @@ std::vector<std::wstring> ModFolders(const std::wstring& userDir, const std::vec
     return folders;
 }
 
+bool FileGone(const std::wstring& path) {
+    if (GetFileAttributesW(path.c_str()) != INVALID_FILE_ATTRIBUTES) return false;
+    const DWORD error = GetLastError();
+    return error == ERROR_FILE_NOT_FOUND || error == ERROR_PATH_NOT_FOUND;
+}
+
 std::vector<std::wstring> UniqueStored(const std::vector<std::wstring>& paths, const std::wstring& gameDir,
                                        const std::vector<std::wstring>& previous) {
     constexpr std::size_t kMaxEntries = 60000;
@@ -272,7 +278,8 @@ std::vector<std::wstring> UniqueStored(const std::vector<std::wstring>& paths, c
     }
     for (const auto& stored : previous) {
         if (out.size() >= kMaxEntries) break;
-        if (!stored.empty() && seen.insert(Lower(stored)).second) out.push_back(stored);
+        if (stored.empty() || !seen.insert(Lower(stored)).second) continue;
+        if (!FileGone(FromStored(stored, gameDir))) out.push_back(stored);
     }
     return out;
 }

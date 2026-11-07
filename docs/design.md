@@ -83,10 +83,12 @@ mod.
 2. **Per-mod-set profile, learned**: key = enabled mods (from `dlc_load.json`
    in the game's user folder: `-userdir`, then `userdir.txt`, then Documents)
    + game build. Every start records what the game actually opened/read and
-   merges it into the profile (new entries appended in first-use order;
-   entries unused for N consecutive starts are dropped). First start of a new
-   mod set: base layer + definitions-only "all" list of the mods' folders
-   (filtered as in the lab warm-up), then refined by learning.
+   merges it into the profile: this start's entries in first-use order, then
+   the earlier entries it did not open, since a later start may open them,
+   unless the file or ZIP member is gone. A file that exists and is no longer
+   opened stays. First start of a new mod set: base layer + definitions-only
+   "all" list of the mods' folders (filtered as in the lab warm-up), then
+   refined by learning.
 3. **Per-mod layers (later, same format)**: because each entry records its
    source, layers per mod (key: mod id + version/update time) can be extracted
    and composed for a new mod set made of known mods — base layer minus files

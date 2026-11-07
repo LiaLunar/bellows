@@ -314,8 +314,8 @@ release.
   (Documents) are not affected.
 - Learned profiles are per mod set (the enabled mods in `dlc_load.json` and
   the game build), not per mod version. After an update of your mod the
-  profile adds the new files on the next start and drops the ones no longer
-  used, so the first start after an update may gain a little less.
+  profile adds the new files on the next start and drops the ones that are
+  gone, so the first start after an update may gain a little less.
 - Large scripted effects and triggers with `$parameter$` and `[[parameter]]`
   blocks are where `metascript_subst` and `metascript_blocks` save the most
   (about 10 s of Anbennar's start-up); the text they produce is the game's.

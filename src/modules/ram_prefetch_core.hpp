@@ -123,14 +123,21 @@ inline bool SameRead(std::int64_t gameCount, const void* gameBytes, const std::u
            (count == 0 || std::memcmp(gameBytes, buffer + position, static_cast<std::size_t>(count)) == 0);
 }
 
+// A member of the previous profile is gone when its archive is, or when the archive's central
+// directory was read and does not list it. An archive that could not be read says nothing.
+inline bool MemberGone(bool archiveGone, bool directoryRead, bool listed) {
+    return archiveGone || (directoryRead && !listed);
+}
+
 // The saved profile: this start's members in first-use order, then the previous profile's members
-// not seen this time while the profile has fewer than maxEntries.
+// not seen this time and not gone(line), while the profile has fewer than maxEntries.
+template <class Gone>
 inline std::vector<std::wstring> MergeProfile(std::vector<std::wstring> learned, std::vector<std::wstring> previous,
-                                              std::size_t maxEntries) {
+                                              std::size_t maxEntries, Gone&& gone) {
     std::unordered_set<std::wstring> seen(learned.begin(), learned.end());
     for (auto& line : previous) {
         if (learned.size() >= maxEntries) break;
-        if (seen.insert(line).second) learned.push_back(std::move(line));
+        if (seen.insert(line).second && !gone(line)) learned.push_back(std::move(line));
     }
     return learned;
 }

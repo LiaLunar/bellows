@@ -42,7 +42,12 @@ std::wstring ProfileKey(const char* buildId, const std::string& dlcLoadJson);
 // Folders of the enabled mods (descriptor "path", or the folder holding "archive").
 std::vector<std::wstring> ModFolders(const std::wstring& userDir, const std::vector<std::string>& enabledMods);
 
-// Unique stored paths in first-use order, then previous entries not seen this time (max 60000).
+// True when Windows answers that the file or a folder on its path does not exist. Any other failure
+// (no access, a name it refuses) says nothing about the file.
+bool FileGone(const std::wstring& path);
+
+// Unique stored paths in first-use order, then previous entries not seen this time whose file is
+// not gone (max 60000): a file this start did not open may be one the next start opens.
 std::vector<std::wstring> UniqueStored(const std::vector<std::wstring>& paths, const std::wstring& gameDir,
                                        const std::vector<std::wstring>& previous = {});
 
