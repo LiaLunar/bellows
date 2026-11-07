@@ -192,6 +192,23 @@ void Scan(Archive& a) {
     }
 }
 
+// Whether the member of a line of the profile this start read is gone. The workers may have stopped
+// before its archive, so the scan runs here when it has not run yet. A line the backend does not
+// know stays.
+bool LineGone(const std::wstring& line) {
+    Backend* b = g_backend.load();
+    std::wstring storedArchive, storedMember;
+    if (b == nullptr || !prefetch::SplitLine(line, storedArchive, storedMember)) return false;
+    const std::wstring key = LowerFull(profile::FromStored(storedArchive, profile::Lower(*g_gameDir)));
+    const std::string member = profile::Narrow(storedMember);
+    const auto found = b->index.find(profile::Narrow(key) + "\n" + member);
+    if (found == b->index.end()) return false;
+    Archive& a = *b->archives[b->members[found->second]->archive];
+    std::call_once(a.scanOnce, [&a] { Scan(a); });
+    return prefetch::MemberGone(a.file == INVALID_HANDLE_VALUE && profile::FileGone(a.path), a.valid,
+                                a.entries.count(member) != 0);
+}
+
 void Prefetch(Backend& b, Member& m) {
     Archive& a = *b.archives[m.archive];
     std::call_once(a.scanOnce, [&a] { Scan(a); });
@@ -613,7 +630,7 @@ void FinishRamPrefetch() {
         std::string previousText;
         std::vector<std::wstring> previous;
         if (profile::ReadWhole(*g_profileTarget, previousText)) previous = profile::ParseList(previousText);
-        const auto merged = prefetch::MergeProfile(std::move(learned), std::move(previous), kMaxProfileEntries);
+        const auto merged = prefetch::MergeProfile(std::move(learned), std::move(previous), kMaxProfileEntries, &LineGone);
         if (!profile::WriteList(*g_profileTarget, merged)) Log(ANVIL_LOG_WARNING, "ram_prefetch: profile NOT saved");
     } catch (...) {
         Log(ANVIL_LOG_WARNING, "ram_prefetch: profile NOT saved");

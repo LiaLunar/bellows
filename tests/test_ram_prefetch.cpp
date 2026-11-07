@@ -150,11 +150,24 @@ void TestReads() {
 void TestMergeProfile() {
     const std::vector<std::wstring> learned = {L"a\tx", L"a\ty", L"b\tz"};
     const std::vector<std::wstring> previous = {L"a\ty", L"c\told", L"b\tz", L"c\told2"};
-    assert(prefetch::MergeProfile(learned, previous, 100) ==
+    const auto none = [](const std::wstring&) { return false; };
+    assert(prefetch::MergeProfile(learned, previous, 100, none) ==
            std::vector<std::wstring>({L"a\tx", L"a\ty", L"b\tz", L"c\told", L"c\told2"}));
-    assert(prefetch::MergeProfile(learned, previous, 4).size() == 4);
-    assert(prefetch::MergeProfile(learned, previous, 2) == learned);  // this start's members are all kept
-    assert(prefetch::MergeProfile({}, {L"a\tx", L"a\tx", L"b\tz"}, 100).size() == 2);  // duplicates once
+    assert(prefetch::MergeProfile(learned, previous, 4, none).size() == 4);
+    assert(prefetch::MergeProfile(learned, previous, 2, none) == learned);  // this start's members are all kept
+    assert(prefetch::MergeProfile({}, {L"a\tx", L"a\tx", L"b\tz"}, 100, none).size() == 2);  // duplicates once
+
+    // A previous member that is gone leaves; a member this start read stays without being asked about.
+    const auto gone = [](const std::wstring& line) { return line == L"c\told" || line == L"a\ty"; };
+    assert(prefetch::MergeProfile(learned, previous, 100, gone) ==
+           std::vector<std::wstring>({L"a\tx", L"a\ty", L"b\tz", L"c\told2"}));
+}
+
+void TestMemberGone() {
+    assert(prefetch::MemberGone(true, false, false));    // the archive is gone
+    assert(prefetch::MemberGone(false, true, false));    // the archive no longer lists it
+    assert(!prefetch::MemberGone(false, true, true));    // still there
+    assert(!prefetch::MemberGone(false, false, false));  // an archive that could not be read says nothing
 }
 
 // ---- DEFLATE members through the ZIP reader -----------------------------------------------------
@@ -305,6 +318,7 @@ int main() {
     TestSameEntry();
     TestReads();
     TestMergeProfile();
+    TestMemberGone();
     TestDeflateMembers();
     std::printf("ram_prefetch ok\n");
     return 0;

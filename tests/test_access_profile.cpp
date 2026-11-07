@@ -205,10 +205,21 @@ int main() {
     assert(FromStored(unique[0], copy) == copy + L"\\common\\a.txt");
     assert(FromStored(unique[1], copy) == unique[1]);
 
-    // Merge with the previous learned list: this run's order first, then unseen previous entries.
-    const std::vector<std::wstring> previous = {L"@\\gfx\\loadingscreens\\load_7.dds", L"@\\COMMON\\a.txt", L""};
+    // A file or folder that is not there is gone; a name Windows refuses says nothing.
+    assert(!FileGone(copy + L"\\common\\a.txt") && !FileGone(copy + L"\\common"));
+    assert(FileGone(copy + L"\\common\\gone.txt") && FileGone(copy + L"\\no-folder\\a.txt"));
+    assert(!FileGone(copy + L"\\common\\bad?name.txt"));
+
+    // Merge with the previous learned list: this run's order first, then unseen previous entries
+    // whose file is still there, in the game folder or a mod's.
+    Dir(copy + L"\\gfx\\loadingscreens");
+    Touch(copy + L"\\gfx\\loadingscreens\\load_7.dds");
+    const std::vector<std::wstring> previous = {L"@\\gfx\\loadingscreens\\load_7.dds", L"@\\gfx\\loadingscreens\\load_8.dds",
+                                                L"@\\COMMON\\a.txt", L"", modAbs + L"\\removed\\old.txt",
+                                                modAbs + L"\\gfx\\interface\\modicon.tga"};
     const auto merged = UniqueStored(opened, copy, previous);
-    assert(merged.size() == 5 && merged[3] == unique[3] && merged[4] == L"@\\gfx\\loadingscreens\\load_7.dds");
+    assert(merged.size() == 6 && merged[3] == unique[3] && merged[4] == L"@\\gfx\\loadingscreens\\load_7.dds" &&
+           merged[5] == modAbs + L"\\gfx\\interface\\modicon.tga");
 
     // Round trip through the file format (UTF-8, replace existing).
     const std::wstring listFile = root + L"\\list-test.txt";

@@ -2,11 +2,14 @@
 // run on several threads (lab docs: docs/simulation-profile.md, "Tick miesięczny").
 //
 // The monthly tick 0x75D690 runs, among other stages, the monthly update of every country (0x2F36C0,
-// one call per country in a serial loop), of every province (0x9F35C0) and of the units (0x763470).
+// one call per country in a serial loop), of every province (0x9F35C0) and the ranking of the countries
+// (0x763470: it scores every country and sorts them, and the diplomatic score counts every fleet's cannons
+// through 0xD54600). The ranking keeps its old name units_month here (the symbol, the units_ms column): it
+// is not the units' monthly update, which is a part of the country update.
 // Inside the country update, 0x350B80 rebuilds the country's table of the nearest own port for every
 // province of the map. Across the whole game, 0x8EA420 adds one modifier list to another (shapes in
 // monthly_probe_core.hpp). The game's Mersenne Twister 0x14C71B0 is hooked too: random draws inside a
-// country, province or unit update tie the result to the order of the updates, so they decide
+// country or province update or in the ranking tie the result to the order of the updates, so they decide
 // whether such a loop could run in parallel and still give the same game.
 //
 // monthly_probe_ticks.tsv holds one row per monthly tick, because the totals hide months that cost
