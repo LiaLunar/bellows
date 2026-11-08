@@ -36,8 +36,8 @@ code only.
 | `token_dict_cache` | Caches the script tokenizer's keyword lookups during start-up | −0.4 s |
 | `range_witness` | Simulation: answers the country range check from the province that was in range last time (§6a) | year 1720: 27.6 → 20.6 s |
 | `modifier_merge` | Simulation: adds large modifier lists with an index instead of a scan per entry (§6a) | year 1720: 20.64 → 19.45 s |
-| `port_table` | Simulation, off: the country's nearest-port table from one list of its ports (§6a) | not measured yet |
-| `province_modifier_view` | Simulation, off: reads one value of a province's modifiers without copying the list (§6a) | exact, no gain shown |
+| `port_table` | Simulation, on by default since 1.4: the country's nearest-port table from one list of its ports (§6a) | measured with the three below, README |
+| `province_modifier_view` | Simulation, on by default since 1.4: reads one value of a province's modifiers without copying the list (§6a) | measured with `port_table`, `army_search_memo` and `pops_pacing`, README |
 | `save_compress` | Saving: the game's own zlib with a faster CRC-32 (the game's bytes); optionally in parallel (§6a) | autosave 0.873 → 0.831 s; parallel 0.612 s |
 | `transfer_skip` | Loading in single player: no level 9 copy of a text save for a transfer nobody receives (§6a) | "Continue" of a 64.5 MB save 10.91 → 8.95 s |
 
@@ -497,9 +497,20 @@ The simulation is the same because only the moment the callbacks run changes, an
 daily tick waits for them. `"verify"` calls the game's function every time and counts what `"on"` would
 leave out; `pops_pacing.tsv` has the calls, what was left out and the time in the pump.
 
+On by default since 1.4. What can come later is what the pump delivers: `eu4.exe` imports 49 of the
+library's functions (48 on GOG, without the Steam ticket), for the Paradox account, the social part (friends, chat, presence), file storage,
+the news feed and telemetry, and none of `POPS_Mods*` or `POPS_Achievements*`, in either build.
+Achievements go through Steam or GOG Galaxy, and `SteamAPI_RunCallbacks` is another import and
+keeps its rate. A callback waits at most
+500 ms longer than the game's own frame would have made it wait, and only while game days run at the
+fastest speed in single player. The library's HTTP transfers run inside the pump, so one that is in
+progress at that speed moves on at two pumps a second until the game pauses or slows down; a
+multiplayer session is noticed in the next frame (anvil-game's session event) and goes back to the
+game's rate. Not tried: a live chat message or a file transfer at speed 5, which needs a second account.
+
 ### port_table (simulation)
 
-Off by default. `0x350B80` rebuilds a country's table of the nearest port when
+On by default since 1.4. `0x350B80` rebuilds a country's table of the nearest port when
 the country's flag `+0x2887` is set: for each province of the map it walks the
 country's provinces, then its row of relations and the provinces of each friend,
 and calls the distance function for the ports it finds. On the 1821 save the
@@ -513,7 +524,7 @@ distance (`0x2D2520`) and the range (`0x350A20`) are the game's own functions;
 the distance calls stay, so what is saved is the walks. A first build of the
 table and a country that has nothing to fill in go to the game's function.
 `"verify"` runs the game's function on the real table and `Fill` on a copy and
-compares every cell; `"on"` does that for every 256th rebuild and goes back to
+compares every cell; `"on"` does that for every 32nd rebuild and goes back to
 the game's function for good after a mismatch. `port_table.tsv` has the counters.
 
 ### modifier_merge (simulation)
@@ -567,7 +578,7 @@ every call and compares; `"on"` does that for every 1024th answer and goes back 
 
 ### province_modifier_view (simulation)
 
-Off by default. `0x2FFC60` (country, out, province, culture) copies the
+On by default since 1.4. `0x2FFC60` (country, out, province, culture) copies the
 province's modifier list (`+0x998`) into a sparse list: every entry in order
 except the placeholders with id `0x286`, growing the buffer from 8 entries by
 doubling, plus the list's vector of sources with its reference counts. It then
@@ -605,19 +616,23 @@ were unset in every call. The game's function took 0.83 µs a call on the 1719
 save and 0.80 µs on the 1821 autosave, the view 0.11 µs and 0.07 µs. With about
 0.59 million calls a game year in 1720 and 1.37 million in 1821 that is about
 0.4 s and 1.0 s less a game year (by the module's clocks, over all threads;
-some calls may run on the AI pool's threads). No SIMULATION series yet.
+some calls may run on the AI pool's threads). The SIMULATION series of 7 November
+2026 measured it only together with `port_table`, `army_search_memo` and
+`pops_pacing` (README, "A year at speed 5").
 
-It stays off by default for now: without the copy the hot path allocates less,
-which changes the heap layout the way mimalloc and `range_witness` do, and AI
-ties broken by address (#79, section 4) could then go another way in single
-player, every answer still being correct. On by default only after a
-determinism pair with `-randomlog` with and without the module (as for 0.15.0,
-with the lab's tie-break plugin so that address ties do not count) and a
-SIMULATION series.
+Without the copy the hot path allocates less, which changes the heap layout the way
+mimalloc and `range_witness` do, and AI ties broken by address (#79, section 4) can
+then go another way in single player, every answer still being correct. A
+determinism pair on 0.18.0 with `-randomlog`, with and without the module (two runs
+each, without the lab's tie-break plugin), had the same random draws and commands on
+all 67 days it compared. That save shows no address tie in that window, and later series
+found the AI's order differing between runs of one setup anyway (README, "AI ties and
+multiplayer"), so the pair says less about this than was asked of it when the condition
+was written here.
 
 ### army_search_memo (simulation)
 
-Off by default. The AI searches the province graph once a day for every army
+On by default since 1.4. The AI searches the province graph once a day for every army
 (`0x1022B0`, called only from `0xEAB50` in `ai_army.cpp`; the lab's
 `army_search_profile` session counted one search per AI army a day, about half
 of the AI's time). For each move it considers, the scoring functor's method
@@ -1258,7 +1273,7 @@ Bellows declares both builds and needs Anvil 1.7 (`anvil = ">=1.7.0"`, SDK
 
 ## 7. Open questions (Q)
 
-None at the moment. Work after 1.0 (the `army_search_memo` default, `save_compress_parallel`
+None at the moment. Work after 1.0 (`save_compress_parallel`
 on by default, the GOG build 1.37.5.0) is listed at the end of
 [#90](https://github.com/happy-dwarf-team/bellows/issues/90).
 

@@ -88,24 +88,32 @@ start after a reboot was not measured on this mod set.
 ### A year at speed 5
 
 Every default setting together, against the same game without Bellows: EU4 1.37.5
-(Steam), original `eu4.exe`, the save of Russia on 17 March 1719, warmed up to
-1 January 1720, then the year 1720 at speed 5 with the game's main thread on one
-processor and 8 workers in both of its pools. Anvil 1.9.0, anvil-game and Tongs (which
-drives the run) were in both setups, and Bellows was a build of the code that
-became 1.2. One game per run, interleaved, each after a check that the processor
-was idle, 5 November 2026:
+(Steam), original `eu4.exe`, the game's main thread on one processor and 8 workers in
+both of its pools. Two years at speed 5: 1720, from the save of Russia on 17 March 1719
+warmed up to 1 January 1720, and the year from 1 March 1821 on an autosave of a late
+game, in observer mode. Anvil 1.13.0, anvil-game and Tongs (which drives the run) were
+in all three setups. One game per run, interleaved, each after a check that the
+processor was idle, 7 November 2026. Bellows was 1.3.0 from the release files: once with
+its defaults, and once with `port_table`, `province_modifier_view`, `army_search_memo`
+and `pops_pacing` set to `on`, which is what the defaults became in 1.4.
 
-| Setup | Year 1720 | Median |
-| --- | --- | ---: |
-| Without Bellows | 26.50 / 27.11 / 24.70 / 28.95 s | 26.80 s |
-| With Bellows, default settings | 18.72 / 21.63 / 20.92 / 20.07 s | **20.49 s** |
+| Setup | Year 1720, sorted | Median | Year from March 1821, sorted | Median |
+| --- | --- | ---: | --- | ---: |
+| Without Bellows | 24.95 / 25.55 / 27.10 / 27.44 / 27.98 / 30.86 s | 27.27 s | 33.79 / 34.05 / 36.81 s | 34.05 s |
+| With Bellows, the defaults of 1.3 | 18.41 / 18.68 / 19.21 / 19.60 / 19.77 / 20.27 s | 19.41 s | 22.21 / 24.83 / 25.04 / 25.30 s | 24.94 s |
+| With Bellows, default settings | 16.16 / 16.57 / 16.77 / 16.94 / 17.04 / 17.35 s | **16.86 s** | 19.06 / 20.57 / 21.60 / 22.19 s | **21.09 s** |
 
-So about a quarter less, and the two ranges do not overlap. All modules
-reported 0 differences from the game's own answers. Runs in which an event held the
-game paused were thrown out, as the method requires: 5 of the 16 in this series,
-none of them in these two setups. A late-game year has no such comparison yet: the runs
-of the 1821 save without Bellows were lost to a dialog. This is one machine and one
-save: your years will differ with your processor and your campaign.
+So more than a third less in both years. The four modules together, against the
+defaults of 1.3, took 13.1% off 1720 (exact permutation test of the medians, p = 0.013)
+and 15.4% off 1821 (p = 0.057 with four games each, so not below 0.05, though the ranges
+do not overlap). That number is for the four together and says nothing about each of them.
+
+All modules reported 0 differences from the game's own answers. Two games of 1720 in
+which an event held the game paused were thrown out, as the method requires, and the
+series reached its time limit with 3 or 4 games of 1821 per setup. In 1720 five of the six
+games without Bellows ran after the other setups' first round, so that row is weaker
+than the comparison of the two Bellows rows. This is one machine and two saves: your
+years will differ with your processor and your campaign.
 
 ### A year of Anbennar at speed 5
 
@@ -188,10 +196,10 @@ about 1.5 s longer than the times above, which stop at `Running application`.
 | `token_dict_cache` | Caches the script tokenizer's keyword lookups (~0.4 s) |
 | `range_witness` | **Simulation, not start-up.** Answers the country range check from the province that was in range last time instead of walking all of the country's provinces again; same answers as the game's code (lab: a year at speed 5 in 20.6 s instead of 27.6 s). `"verify"` compares every answer with the game's and writes the first mismatches to `range_witness_mismatches.tsv` |
 | `modifier_merge` | **Simulation, on by default.** Adds large modifier lists (each country's modifiers to every unit's in the monthly update) with an index instead of a scan per entry: the same entries, order, values and memory growth as the game's code. `"verify"` runs the game's merge and compares. Lab: 10.1 µs a merge against 1.08 µs, so about 0.7 s less in the merge per game year (about 3% of a year at speed 5 in 1720, 2% in 1821); 1.5 million merges compared with the game's, all the same. SIMULATION: the year 1720 in 19.45 s instead of 20.64 s (medians, p = 0.02); in 1821 the same direction, not conclusive |
-| `port_table` | **Simulation, off by default.** Rebuilds a country's table of the nearest port from one list of its ports instead of walking its provinces and relations again for every province of the map; the table and the distances stay the game's |
-| `province_modifier_view` | **Simulation, off by default.** Reads one value from a province's modifiers in place instead of copying the whole list first (the daily knowledge refresh of every country does this for each province it owns): the same value as the game's code. `"verify"` runs the game's copy and compares |
-| `army_search_memo` | **Simulation, off by default.** In the AI's daily search for each army, in a path search and when a unit's moves from a province are listed, works out once whether modifier `0xE0` lets the army ignore forts' zones of control and what its speed modifier is, instead of for every move (each of these builds a modifier list from the army's regiments): the same answers. `"verify"` runs the game's check for every move and compares. Lab: 183 million answers compared with the game's on the 1719 save and an 1821 save, 0 differences; 99.6–99.8% of the checks answered from the memo. Its effect on a year at speed 5 is not measured yet |
-| `pops_pacing` | **Simulation, off by default.** At the fastest speed, runs the game's Paradox online-service callbacks every 500 ms instead of twice a frame; with nothing to deliver, each run makes the main thread sleep 1 ms. The simulation is the same, the callbacks arrive later. Multiplayer, pauses and other speeds keep the game's rate. `"verify"` runs them as the game does and counts what would be left out. Lab: its counters show about 1 s less sleep per game year; whether a year gets shorter by as much is not measured yet (two series without the lab's fixed conditions could not tell) |
+| `port_table` | **Simulation, on by default since 1.4.** Rebuilds a country's table of the nearest port from one list of its ports instead of walking its provinces and relations again for every province of the map; the table and the distances stay the game's. `"verify"` runs the game's function and compares every cell; `"on"` does that for every 32nd rebuild (3 and 5 times in the lab's years of 1720 and 1821, which had 118 and 187 rebuilds) and goes back to the game's function after a mismatch. Lab: 1,961 rebuilds compared on saves of 1720 and 1821, two Anbennar saves and the GOG build, 0 differences; by the module's clocks a year of 1821 spends 2.0 s in the table instead of 3.1 s. See [A year at speed 5](#a-year-at-speed-5) |
+| `province_modifier_view` | **Simulation, on by default since 1.4.** Reads one value from a province's modifiers in place instead of copying the whole list first (the daily knowledge refresh of every country does this for each province it owns): the same value as the game's code. `"verify"` runs the game's copy and compares. See [A year at speed 5](#a-year-at-speed-5) |
+| `army_search_memo` | **Simulation, on by default since 1.4.** In the AI's daily search for each army, in a path search and when a unit's moves from a province are listed, works out once whether modifier `0xE0` lets the army ignore forts' zones of control and what its speed modifier is, instead of for every move (each of these builds a modifier list from the army's regiments): the same answers. `"verify"` runs the game's check for every move and compares. Lab: 183 million answers compared with the game's on the 1719 save and an 1821 save, 0 differences; 99.6–99.8% of the checks answered from the memo. See [A year at speed 5](#a-year-at-speed-5) |
+| `pops_pacing` | **Simulation, on by default since 1.4.** At the fastest speed in single player, runs the game's Paradox online-service callbacks every 500 ms instead of twice a frame; with nothing to deliver, each run makes the main thread sleep 1 ms. The simulation is the same. What those services bring (Paradox account, friends and chat, telemetry, the news feed, their file storage) can arrive up to 500 ms later while the game runs at that speed; nothing is left out for good. Achievements and Workshop mods do not go through them. Multiplayer, pauses, menus and other speeds keep the game's rate. `"verify"` runs them as the game does and counts what would be left out. Lab: its counters show about 1 s less sleep per game year. See [A year at speed 5](#a-year-at-speed-5) |
 | `save_compress` | **Saving, on by default since 0.18.** For compressed saves (`compress_autosave = yes` and the like): compresses each member of the save with the game's own zlib, call for call as the game does, but computes its CRC-32 eight bytes at a time instead of one; the file is byte for byte the game's. `"verify"` runs the game's own compression as well, writes its result and compares the two members byte for byte. Lab, the 1719 save with `compress_autosave = yes`, 6 autosaves per setting in interleaved games: an autosave took 0.831 s (0.823–0.842) instead of 0.873 s (0.871–0.900); `"verify"` found 0 differences in 10 members. `save_compress_parallel = "on"` (off by default) compresses large members (the gamestate) in 1 MiB chunks on several threads instead: a valid archive with the same members, which the game loads and other tools read, but with other compressed bytes than the game's (`"verify"` decodes each member again before writing it). An autosave then took 0.612 s (0.575–0.637), the gamestate 80–95 ms on 7 threads instead of about 300 ms |
 | `transfer_skip` | **Loading, on by default since 1.1.** In single player, "Continue" of a text save no longer compresses the whole file at level 9 for a multiplayer transfer nobody receives; the game loads the same file as before. Hosted multiplayer is left as it is. `"verify"` keeps the game's copy and checks that it is the save, that the load does not use it and that nothing is sent. Lab, interleaved runs, 5 per setting, click on "Continue" to the game ready: the 64.5 MB save of 1821 8.95 s (8.55–9.23) instead of 10.91 s (10.78–11.06), a 40 MB vanilla save of 1450 4.47 s (4.35–4.99) instead of 5.84 s (5.70–6.14). Compressed saves have no such copy and do not change |
 | `history_add` | **Loading, on by default since 1.2.** Adds an entry the game just read to a dated list without first walking the whole list to see whether that new entry is in it; the list comes out the same. The gain grows with the square of the list, so it depends on the mods: about 0.5 s of "Continue" with the lab's 10 mods (38,000 entries, 154 million list steps), almost nothing on vanilla (4,300 entries, 2 million steps). `"verify"` lets the game walk and compares: 0 differences. See [Loading a save](#loading-a-save) |
@@ -230,7 +238,8 @@ more often: in a planned series at speed 2, 11 of 30 runs with default settings
 went the other way, against 1 of 30 without Bellows (sign test over paired
 blocks, p = 0.002), each time at the same point of that save. That is one save,
 one speed and one computer, and we don't know how often it happens over a whole
-campaign. Both orders are normal games.
+campaign. The series ran the defaults of 1.2; the modules that became default in 1.4
+have not been through it. Both orders are normal games.
 
 In multiplayer the known ties are safe. The host's AI makes these choices and sends them
 to every player as commands, so every game gets the same choices whoever runs Bellows.
@@ -239,6 +248,7 @@ no Bellows: 233 game days on 0.17.0, with the game's own out-of-sync check shown
 to catch a single extra random draw on the host, and 231 on the code of 1.3.0, at
 speed 3 because the other computer could not keep up at 5. Neither run went out
 of sync. Both used one save of 1444, and neither had Bellows on the other computer.
+The modules that became default in 1.4 have not been through that test.
 Details in [bellows#79](https://github.com/happy-dwarf-team/bellows/issues/79)
 and the [design notes](docs/design.md#4-correctness-safeguards-d).
 

@@ -1,4 +1,4 @@
-// province_modifier_view (off by default): 0x2FFC60 without its copy of the province's modifier list (lab docs:
+// province_modifier_view (on by default since 1.4): 0x2FFC60 without its copy of the province's modifier list (lab docs:
 // docs/simulation-profile.md, "RefreshKnowledge"; the reasoning in province_modifier_view_core.hpp).
 //
 // 0x2FFC60 copies a province's whole modifier list (hundreds of entries, reallocating from 8 by doubling,
