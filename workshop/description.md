@@ -14,6 +14,8 @@ Needs [Anvil](https://anvil.happydwarf.dev/) 1.7 or newer and EU4 1.37.5 (Steam;
 
 [![](https://anvil.happydwarf.dev/workshop/bellows-docs.png)](https://anvil.happydwarf.dev/plugins/bellows/) [![](https://anvil.happydwarf.dev/workshop/bellows-github.png)](https://github.com/happy-dwarf-team/bellows)
 
+[![](https://anvil.happydwarf.dev/workshop/discord-en.png)](https://discord.happydwarf.dev/)
+
 ![](https://anvil.happydwarf.dev/workshop/bellows-faq.png)
 
 ### Why do I have to approve it?
