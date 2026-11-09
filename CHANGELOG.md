@@ -1,5 +1,18 @@
 # Changelog
 
+## [1.4.0](https://github.com/happy-dwarf-team/bellows/compare/v1.3.0...v1.4.0) (2026-11-09)
+
+
+### Features
+
+* **frame_pacing:** change the interval and the input mode while the game runs ([#152](https://github.com/happy-dwarf-team/bellows/issues/152)) ([8dab270](https://github.com/happy-dwarf-team/bellows/commit/8dab2706abc860f24e29616a1cb50172d0714a41))
+* **settings:** port_table, province_modifier_view, army_search_memo and pops_pacing on by default ([#142](https://github.com/happy-dwarf-team/bellows/issues/142)) ([8e68638](https://github.com/happy-dwarf-team/bellows/commit/8e6863837f51721c34a287c53dfc628d54ceb330))
+
+
+### Bug Fixes
+
+* **profiles:** drop learned entries whose file or ZIP member is gone ([#144](https://github.com/happy-dwarf-team/bellows/issues/144)) ([ee1b5b2](https://github.com/happy-dwarf-team/bellows/commit/ee1b5b214ba16c414fe2229873e1a9ca1ef15000))
+
 ## [1.3.0](https://github.com/happy-dwarf-team/bellows/compare/v1.2.0...v1.3.0) (2026-11-06)
 
 
