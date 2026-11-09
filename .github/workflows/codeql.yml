@@ -40,7 +40,43 @@ permissions:
   contents: read
 
 jobs:
+  # A pull request that changes no input of the C/C++ build CodeQL traces skips
+  # c-cpp: the analysis takes minutes on Windows and would find what main's last
+  # one found. Inputs: sources, headers, resources, CMake files, the TOML that
+  # `anvil gen` turns into headers, this workflow; files under tests/ do not
+  # count (CodeQL builds without the tests). Pushes to main and the weekly run
+  # always analyse.
+  changes:
+    runs-on: ubuntu-latest
+    permissions:
+      pull-requests: read
+    outputs:
+      cpp: ${{ steps.files.outputs.cpp }}
+    steps:
+      - name: C/C++ inputs changed
+        id: files
+        env:
+          GH_TOKEN: ${{ github.token }}
+          EVENT: ${{ github.event_name }}
+          PR: ${{ github.event.pull_request.number }}
+          CPP_INPUTS: '\.(c|cc|cpp|cxx|h|hh|hpp|hxx|inl|ipp|rc|def|toml)$|(^|/)CMakeLists\.txt$|\.cmake$|^\.github/workflows/codeql\.yml$|^\.gitmodules$'
+        run: |
+          if [ "$EVENT" != pull_request ]; then
+            echo "cpp=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          gh api "repos/$GITHUB_REPOSITORY/pulls/$PR/files" --paginate --jq '.[].filename' > files.txt
+          cpp=false
+          # The API lists at most 3000 files: a larger pull request is analysed.
+          if [ "$(wc -l < files.txt)" -ge 3000 ] || grep -E -v '(^|/)tests?/' files.txt | grep -E -q "$CPP_INPUTS"; then
+            cpp=true
+          fi
+          echo "cpp=$cpp" >> "$GITHUB_OUTPUT"
+          echo "C/C++ inputs changed: $cpp"
+
   c-cpp:
+    needs: changes
+    if: needs.changes.outputs.cpp == 'true'
     runs-on: windows-2022
     permissions:
       contents: read
