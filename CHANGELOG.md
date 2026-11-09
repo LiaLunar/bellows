@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.5.0](https://github.com/happy-dwarf-team/bellows/compare/v1.4.1...v1.5.0) (2026-11-09)
+
+### Features
+
+* **symbols:** Bellows runs on the GOG build 1.37.5.0, the version GOG Galaxy installs when you roll EU4 back. On that build it loads with Anvil 1.15.0 or later, which knows the build. Every address Bellows uses is the same as on GOG 1.37.5.2. Tested in the lab on a copy of a GOG 1.37.5.0 install with Tongs, Hamweard and Mei: a new campaign and one year of a 1719 save at speed 5. That was one run and not a measurement; the speed figures in the README are from Steam 1.37.5. Nothing changes on Steam or on GOG 1.37.5.2. ([#169](https://github.com/happy-dwarf-team/bellows/issues/169))
+
 ## [1.4.1](https://github.com/happy-dwarf-team/bellows/compare/v1.4.0...v1.4.1) (2026-11-09)
 
 
