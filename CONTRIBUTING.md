@@ -66,7 +66,7 @@ disagree. To force a version, put `Release-As: x.y.z` in a commit body.
 
 ```powershell
 cmake -S . -B build -G "Visual Studio 17 2022" -A x64
-cmake --build build --config Release
+cmake --build build --config Release --parallel
 ctest --test-dir build -C Release --output-on-failure
 ```
 

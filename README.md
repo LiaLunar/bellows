@@ -404,7 +404,7 @@ Visual Studio 2022 (or Build Tools) with the C++ workload, CMake ≥ 3.28, Git
 
 ```powershell
 cmake -S . -B build -G "Visual Studio 17 2022" -A x64
-cmake --build build --config Release
+cmake --build build --config Release --parallel
 ctest --test-dir build -C Release --output-on-failure
 cmake --install build --config Release --component plugin --prefix dist
 ```

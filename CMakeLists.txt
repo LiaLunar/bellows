@@ -18,6 +18,11 @@ endif()
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
+if(MSVC AND CMAKE_GENERATOR MATCHES "^Visual Studio")
+    # Compile a target's sources on every core; the Visual Studio generator runs cl one file at a time
+    # (Ninja, as CI uses it, runs one cl per source on its own).
+    add_compile_options(/MP)
+endif()
 
 option(SB_BUILD_TESTS "Build unit tests" ON)
 
@@ -142,19 +147,22 @@ endif()
 
 if(SB_BUILD_TESTS)
     enable_testing()
+    # The sources every unit test links, compiled once rather than once per test.
+    add_library(sb_test_support OBJECT src/benchmark.cpp src/common.cpp src/settings.cpp src/rename.cpp
+        src/modules/access_profile.cpp src/modules/zip_reader.cpp)
+    # The SDK headers and the generated symbols.gen.hpp / settings.gen.hpp of the plugin.
+    target_include_directories(sb_test_support PUBLIC src $<TARGET_PROPERTY:bellows,INCLUDE_DIRECTORIES>)
+    add_dependencies(sb_test_support bellows)
+    target_link_libraries(sb_test_support PUBLIC tomlplusplus::tomlplusplus shell32 ole32 uuid)
+    target_compile_definitions(sb_test_support PUBLIC WIN32_LEAN_AND_MEAN NOMINMAX
+        SB_SETTINGS_SCHEMA="${CMAKE_CURRENT_SOURCE_DIR}/plugin/settings.toml")
+    if(MSVC)
+        # /UNDEBUG: the tests use assert(), which Release would compile out.
+        target_compile_options(sb_test_support PUBLIC /utf-8 /permissive- /EHsc /UNDEBUG)
+    endif()
     foreach(test rename trigger_intern token_dict_cache metascript_subst metascript_blocks settings access_profile path_rules zip_reader range_stats range_witness tick_profile army_search score_probe monthly_probe modifier_merge port_table province_modifier_view army_search_memo army_strength_memo frame_pacing pops_pacing history_add verifypath_listing exists_index open_warmup ram_prefetch)
-        add_executable(test_${test} tests/test_${test}.cpp src/benchmark.cpp src/common.cpp src/settings.cpp src/rename.cpp
-            src/modules/access_profile.cpp src/modules/zip_reader.cpp)
-        # The SDK headers and the generated symbols.gen.hpp / settings.gen.hpp of the plugin.
-        target_include_directories(test_${test} PRIVATE src $<TARGET_PROPERTY:bellows,INCLUDE_DIRECTORIES>)
-        add_dependencies(test_${test} bellows)
-        target_link_libraries(test_${test} PRIVATE tomlplusplus::tomlplusplus shell32 ole32 uuid)
-        target_compile_definitions(test_${test} PRIVATE WIN32_LEAN_AND_MEAN NOMINMAX
-            SB_SETTINGS_SCHEMA="${CMAKE_CURRENT_SOURCE_DIR}/plugin/settings.toml")
-        if(MSVC)
-            # /UNDEBUG: the tests use assert(), which Release would compile out.
-            target_compile_options(test_${test} PRIVATE /utf-8 /permissive- /EHsc /UNDEBUG)
-        endif()
+        add_executable(test_${test} tests/test_${test}.cpp)
+        target_link_libraries(test_${test} PRIVATE sb_test_support)
         add_test(NAME ${test} COMMAND test_${test})
     endforeach()
     # DEFLATE members with zlib's raw inflate in place of the game's tinfl.
