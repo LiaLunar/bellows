@@ -1,13 +1,16 @@
-// Trigger interning at the end of loading (ported from the lab's
+// Trigger profile lookup at the end of loading (ported from the lab's
 // startup_trigger_intern.inc; docs in the lab: docs/startup-trigger-intern.md).
 //
 // Every trigger node created while loading registers itself in a registry.
 // Near the end of loading the game walks both registry lists and sets
-// node+0x58 = intern(singleton, node). The original deep-copies the node's whole
+// node+0x58 = lookup(singleton, node). The original deep-copies the node's whole
 // subtree into a key (id = node+0x50, children as a deduplicated set), hashes
 // it, looks it up in the singleton's map and returns the entry's value or 0.
-// In 1.37.5 with the tested mods the map is empty, so 2.35 M calls each build a
-// key only to find nothing.
+// The map is the trigger profile the game reads from trigger_profile.txt at
+// start-up: a trigger shape and a number per line. The value is that number,
+// not a shared node, so this is a lookup and not interning (the module kept
+// its old name). Without the file (the lab's early copies) the map is empty,
+// and 2.35 M calls each build a key only to find nothing.
 //
 // Both call sites are redirected (Anvil redirect_call on the declared call
 // sites; the instructions around each call are declared too) to
@@ -189,7 +192,7 @@ struct State {
     bool usable = false;
 };
 
-// The rest of each call site's chain (the game's intern unless another plugin
+// The rest of each call site's chain (the game's lookup unless another plugin
 // redirected the site too).
 InternFn g_original = nullptr;   // first site
 InternFn g_originalB = nullptr;  // second site
@@ -213,7 +216,7 @@ volatile LONG64 g_calls = 0;
 volatile LONG64 g_firstCall = 0;
 volatile LONG64 g_lastCall = 0;
 
-// Hot-path counters use plain (non-locked) updates: the game interns from one
+// Hot-path counters use plain (non-locked) updates: the game looks up from one
 // thread under its own mutex, and a locked instruction on every call waits for
 // the walk's outstanding cache misses. Concurrent calls could lose a count,
 // never change an answer.
@@ -439,7 +442,7 @@ namespace sb {
 bool InstallTriggerIntern(anvil::Host& host, Mode mode) {
     if (mode == Mode::Off) return false;
     // Each site (declared with the code around it): "mov rdx,rdi; mov rcx,rax;
-    // call <intern>; mov [rdi+58h],rax".
+    // call <lookup>; mov [rdi+58h],rax".
     try {
         g_state = new State();
     } catch (...) {

@@ -84,11 +84,11 @@ build."eu4-1.37.5.2-gog-win64" = { rva = 0x205BC9 }
 
 [symbol.trigger_intern_call_a]
 memory = "code"
-note = "loading tail, first registry list: node+0x58 = intern(singleton, node)"
+note = "loading tail, first registry list: node+0x58 = lookup(singleton, node) in the trigger profile map"
 
 [symbol.trigger_intern_call_a.build."eu4-1.37.5-steam-win64"]
 rva = 0x205C0F
-bytes = "E8 CC 58 99 00 48 89 47 58"   # call 0xB9B4E0 (intern); mov [rdi+58h],rax
+bytes = "E8 CC 58 99 00 48 89 47 58"   # call 0xB9B4E0 (profile lookup); mov [rdi+58h],rax
 
 [symbol.trigger_intern_call_a.build."eu4-1.37.5.2-gog-win64"]
 rva = 0x205BCF
@@ -107,7 +107,7 @@ note = "loading tail, second registry list"
 
 [symbol.trigger_intern_call_b.build."eu4-1.37.5-steam-win64"]
 rva = 0x205C3F
-bytes = "E8 9C 58 99 00 48 89 47 58"   # call 0xB9B4E0 (intern); mov [rdi+58h],rax
+bytes = "E8 9C 58 99 00 48 89 47 58"   # call 0xB9B4E0 (profile lookup); mov [rdi+58h],rax
 
 [symbol.trigger_intern_call_b.build."eu4-1.37.5.2-gog-win64"]
 rva = 0x205BFF

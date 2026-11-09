@@ -7,9 +7,9 @@
 
 **Faster Europa Universalis IV start-up, simulation and saves.** Bellows is an
 [Anvil](https://github.com/happy-dwarf-team/anvil) plugin. The game starts faster
-and years pass sooner at speed 5. It changes no game files and not what the game
-computes: every module gives the game's own answers, only sooner. One thing can
-still differ, see [AI ties and multiplayer](#ai-ties-and-multiplayer). Like a
+and years pass sooner at speed 5. It changes no game files and no rule, and in
+`verify` the modules' answers match the game's own. A game can still come out
+differently, see [AI ties and multiplayer](#ai-ties-and-multiplayer). Like a
 smith's bellows, it gets the forge hot sooner.
 
 **Install guide:
@@ -115,6 +115,36 @@ games without Bellows ran after the other setups' first round, so that row is we
 than the comparison of the two Bellows rows. This is one machine and two saves: your
 years will differ with your processor and your campaign.
 
+### A year of Anbennar at speed 5
+
+`frame_pacing` alone, on and off, on the Anbennar mod set above (the same three
+Workshop items): a save of Verne on 11 November 1444, warmed up to 1 January 1445,
+then the year 1445 at speed 5. EU4 1.37.5 (Steam), original `eu4.exe`, Anvil 1.13.0,
+anvil-game and Tongs 0.26.1 (which drives the run), and a build of Bellows with the
+defaults proposed for 1.4 (`port_table`, `province_modifier_view`, `army_search_memo`
+and `pops_pacing` on as well) plus `tick_profile`, the same in both setups except
+`frame_pacing`. One game per run, interleaved (on, off, off, on, on, off, off, on),
+each after a check that the processor was idle, 7 November 2026:
+
+| Setup | Year 1445 | Median |
+| --- | --- | ---: |
+| `frame_pacing = "off"` | 54.15 / 53.42 / 57.90 / 56.69 s | 55.42 s |
+| `frame_pacing` on (default) | 46.52 / 46.98 / 49.87 / 54.60 s | **48.42 s** |
+
+So about 7 s (13%) less, about as much as on the base game. The ranges overlap by one
+run (the slowest with `frame_pacing`, 54.60 s, against the fastest without, 53.42 s),
+and with four runs each a permutation test of the medians gives p = 0.09: the
+direction is clear, the size is not pinned down. In `tick_profile`, frames drawn
+inside the daily tick took 7.9 s of the year without `frame_pacing` and 1.8 s with
+it (medians). No run was paused during the year; in one run `tick_profile` missed
+11 of 364 days, the year's time is complete.
+
+What differs from the 1720 series: the game ran on processors 1–7 with its main
+thread on one of them and 6 workers in each pool, not 8, and the year was not
+compared with the game without Bellows. This is one machine, one graphics card and
+resolution, and one save: how much a frame costs decides how much `frame_pacing`
+saves, so your years will differ.
+
 ### Loading a save
 
 "Continue" on the main menu until the game is ready, EU4 1.37.5 (Steam), original
@@ -157,7 +187,7 @@ about 1.5 s longer than the times above, which stop at `Running application`.
 | `mimalloc` | Faster memory allocator for the game's C runtime until the main menu (`startup`, the default; later allocations use the Windows heap), or for the whole session (`on`, which made the simulation about 5% slower in the lab) |
 | `verifypath_listing` | Answers PhysFS path checks from directory listings. With `verifypath_session = "on"` (**loading, on by default since 1.2**) it goes on after the main menu is up, so loading a save finds its textures sooner; a listing is then read again once it is 30 s old. `verifypath_listing = "verify"` compares every answer, also after the main menu: 0 differences in about 650,000 answers on three saves. Lab: see [Loading a save](#loading-a-save) |
 | `exists_index` | Answers "does this file exist" for the modifier icon check |
-| `trigger_intern` | Faster trigger interning at the end of loading (~0.4 s instead of ~0.6 s for the game's own code with the shipped trigger profile; a `config.toml` written by 0.3.0 or earlier said `trigger_intern = "off"`, and the migration keeps that: delete the line from `settings.toml` to use the default `"on"`) |
+| `trigger_intern` | Faster lookup of each trigger in the game's trigger profile at the end of loading (~0.4 s instead of ~0.6 s for the game's own code with the shipped trigger profile; a `config.toml` written by 0.3.0 or earlier said `trigger_intern = "off"`, and the migration keeps that: delete the line from `settings.toml` to use the default `"on"`) |
 | `metascript_subst` | Single-pass `$parameter$` substitution in scripted effects |
 | `metascript_blocks` | Single-pass resolution of the `[[parameter] ...]` blocks of scripted effects and triggers (matters for mods with large scripted effects, e.g. Anbennar) |
 | `open_warmup` | Opens the files the game will need ahead of it on parallel threads, from a profile learned per mod set (meant for the first start after a reboot, when every first open of a file is slow: 61 → 15 s in the lab's build before the plugin; the first start after a reboot with the plugin has not been measured, so Bellows makes no claim for it) |
@@ -166,7 +196,7 @@ about 1.5 s longer than the times above, which stop at `Running application`.
 | `token_dict_cache` | Caches the script tokenizer's keyword lookups (~0.4 s) |
 | `range_witness` | **Simulation, not start-up.** Answers the country range check from the province that was in range last time instead of walking all of the country's provinces again; same answers as the game's code (lab: a year at speed 5 in 20.6 s instead of 27.6 s). `"verify"` compares every answer with the game's and writes the first mismatches to `range_witness_mismatches.tsv` |
 | `modifier_merge` | **Simulation, on by default.** Adds large modifier lists (each country's modifiers to every unit's in the monthly update) with an index instead of a scan per entry: the same entries, order, values and memory growth as the game's code. `"verify"` runs the game's merge and compares. Lab: 10.1 µs a merge against 1.08 µs, so about 0.7 s less in the merge per game year (about 3% of a year at speed 5 in 1720, 2% in 1821); 1.5 million merges compared with the game's, all the same. SIMULATION: the year 1720 in 19.45 s instead of 20.64 s (medians, p = 0.02); in 1821 the same direction, not conclusive |
-| `port_table` | **Simulation, on by default since 1.4.** Rebuilds a country's table of the nearest port from one list of its ports instead of walking its provinces and relations again for every province of the map; the table and the distances stay the game's. `"verify"` runs the game's function and compares every cell; `"on"` does that for every 256th rebuild and goes back to the game's function after a mismatch. Lab: 1,961 rebuilds compared on saves of 1720 and 1821, two Anbennar saves and the GOG build, 0 differences; by the module's clocks a year of 1821 spends 2.0 s in the table instead of 3.1 s. See [A year at speed 5](#a-year-at-speed-5) |
+| `port_table` | **Simulation, on by default since 1.4.** Rebuilds a country's table of the nearest port from one list of its ports instead of walking its provinces and relations again for every province of the map; the table and the distances stay the game's. `"verify"` runs the game's function and compares every cell; `"on"` does that for every 32nd rebuild (3 and 5 times in the lab's years of 1720 and 1821, which had 118 and 187 rebuilds) and goes back to the game's function after a mismatch. Lab: 1,961 rebuilds compared on saves of 1720 and 1821, two Anbennar saves and the GOG build, 0 differences; by the module's clocks a year of 1821 spends 2.0 s in the table instead of 3.1 s. See [A year at speed 5](#a-year-at-speed-5) |
 | `province_modifier_view` | **Simulation, on by default since 1.4.** Reads one value from a province's modifiers in place instead of copying the whole list first (the daily knowledge refresh of every country does this for each province it owns): the same value as the game's code. `"verify"` runs the game's copy and compares. See [A year at speed 5](#a-year-at-speed-5) |
 | `army_search_memo` | **Simulation, on by default since 1.4.** In the AI's daily search for each army, in a path search and when a unit's moves from a province are listed, works out once whether modifier `0xE0` lets the army ignore forts' zones of control and what its speed modifier is, instead of for every move (each of these builds a modifier list from the army's regiments): the same answers. `"verify"` runs the game's check for every move and compares. Lab: 183 million answers compared with the game's on the 1719 save and an 1821 save, 0 differences; 99.6–99.8% of the checks answered from the memo. See [A year at speed 5](#a-year-at-speed-5) |
 | `army_strength_memo` | **Simulation, off by default.** In the AI's daily search for each army, works out the army's strength against a province once instead of once for each neighbouring province it reaches it from. `"verify"` compares every repeated answer with the game's; `army_strength_memo.tsv` has the counters. Not measured over a year yet |
@@ -174,7 +204,7 @@ about 1.5 s longer than the times above, which stop at `Running application`.
 | `save_compress` | **Saving, on by default since 0.18.** For compressed saves (`compress_autosave = yes` and the like): compresses each member of the save with the game's own zlib, call for call as the game does, but computes its CRC-32 eight bytes at a time instead of one; the file is byte for byte the game's. `"verify"` runs the game's own compression as well, writes its result and compares the two members byte for byte. Lab, the 1719 save with `compress_autosave = yes`, 6 autosaves per setting in interleaved games: an autosave took 0.831 s (0.823–0.842) instead of 0.873 s (0.871–0.900); `"verify"` found 0 differences in 10 members. `save_compress_parallel = "on"` (off by default) compresses large members (the gamestate) in 1 MiB chunks on several threads instead: a valid archive with the same members, which the game loads and other tools read, but with other compressed bytes than the game's (`"verify"` decodes each member again before writing it). An autosave then took 0.612 s (0.575–0.637), the gamestate 80–95 ms on 7 threads instead of about 300 ms |
 | `transfer_skip` | **Loading, on by default since 1.1.** In single player, "Continue" of a text save no longer compresses the whole file at level 9 for a multiplayer transfer nobody receives; the game loads the same file as before. Hosted multiplayer is left as it is. `"verify"` keeps the game's copy and checks that it is the save, that the load does not use it and that nothing is sent. Lab, interleaved runs, 5 per setting, click on "Continue" to the game ready: the 64.5 MB save of 1821 8.95 s (8.55–9.23) instead of 10.91 s (10.78–11.06), a 40 MB vanilla save of 1450 4.47 s (4.35–4.99) instead of 5.84 s (5.70–6.14). Compressed saves have no such copy and do not change |
 | `history_add` | **Loading, on by default since 1.2.** Adds an entry the game just read to a dated list without first walking the whole list to see whether that new entry is in it; the list comes out the same. The gain grows with the square of the list, so it depends on the mods: about 0.5 s of "Continue" with the lab's 10 mods (38,000 entries, 154 million list steps), almost nothing on vanilla (4,300 entries, 2 million steps). `"verify"` lets the game walk and compares: 0 differences. See [Loading a save](#loading-a-save) |
-| `frame_pacing` | **Simulation, on by default since 0.15.** At the fastest speed, draws frames from inside the daily tick less often while you do nothing (setting `frame_pacing_interval_ms`, 100 ms; the game's own is 50 ms), and at once when a key press, click or wheel turn waits (`frame_pacing_input = "draw"`). The simulation is the same; the map updates about 16 instead of 22 times a second at speed 5 while you do nothing (lab: a year at speed 5 in 20.8 s instead of 23.4 s; a key press at speed 5 handled after 21 ms instead of 51.5 ms in the median, a real key press after 21.6 ms instead of 56.8 ms) |
+| `frame_pacing` | **Simulation, on by default since 0.15.** At the fastest speed, draws frames from inside the daily tick less often while you do nothing (setting `frame_pacing_interval_ms`, 100 ms; the game's own is 50 ms), and at once when a key press, click or wheel turn waits (`frame_pacing_input = "draw"`). The simulation is the same; the map updates about 16 instead of 22 times a second at speed 5 while you do nothing (lab: a year at speed 5 in 20.8 s instead of 23.4 s, on Anbennar 48.4 s instead of 55.4 s, see [A year of Anbennar at speed 5](#a-year-of-anbennar-at-speed-5); a key press at speed 5 handled after 21 ms instead of 51.5 ms in the median, a real key press after 21.6 ms instead of 56.8 ms) |
 
 Diagnostics, off by default: `zip_profile`, `token_dict_profile`,
 `range_profile`, `tick_profile` (time of each stage of the daily, monthly and
@@ -213,7 +243,7 @@ campaign. The series ran the defaults of 1.2; the modules that became default in
 have not been through it. Both orders are normal games.
 
 In multiplayer the known ties are safe. The host's AI makes these choices and sends them
-to every player as commands, so all games stay the same whoever runs Bellows.
+to every player as commands, so every game gets the same choices whoever runs Bellows.
 In the lab the host ran Bellows with default settings and the other computer ran
 no Bellows: 233 game days on 0.17.0, with the game's own out-of-sync check shown
 to catch a single extra random draw on the host, and 231 on the code of 1.3.0, at
@@ -246,7 +276,10 @@ attr_cache = "on"
 ram_prefetch_budget_mb = 2048
 ```
 
-Every setting applies at the next start. For one start, an environment variable
+`frame_pacing_interval_ms` and `frame_pacing_input` apply at once when you change
+them in the Anvil panel (Ctrl+Shift+F12) while `frame_pacing` is on; 0 ms turns
+its effect off until you set another value. Every other setting applies at the
+next start. For one start, an environment variable
 overrides it: `ANVIL_BELLOWS_<NAME>`, for example
 `ANVIL_BELLOWS_EXISTS_INDEX=verify`. Anvil logs each override. The plugin writes
 its counters to `anvil/anvil.log` when the game is ready.
@@ -304,7 +337,10 @@ release.
 - **Reporting a problem:** a
   [bug report](https://github.com/happy-dwarf-team/bellows/issues/new?template=bug_report.yml)
   with `anvil/anvil.log` of that start, `anvil/data/bellows/settings.toml`, the
-  mods of the playset, and whether it happens with Bellows removed.
+  mods of the playset, and whether it happens with Bellows removed. To ask
+  first, post in `#help-and-bugs` on the team's
+  [Discord server](https://discord.happydwarf.dev/) with the Bellows tag; what
+  the team confirms there is tracked in an issue.
 
 ## For mod authors
 

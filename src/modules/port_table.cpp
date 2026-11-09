@@ -2,7 +2,7 @@
 // (lab docs: docs/simulation-profile.md, "Tabela portów"; the loop in port_table_core.hpp).
 //
 // "verify" never changes the table: the game's function runs, and Fill runs on a copy that must end with
-// the same cells. "on" checks every 256th rebuild the same way and goes back to the game's function for
+// the same cells. "on" checks every 32nd rebuild the same way and goes back to the game's function for
 // good after a mismatch. A background thread writes the counters every 5 s to port_table.tsv in the data
 // directory, because the game is usually closed without a clean exit.
 #include "modules.hpp"
@@ -42,7 +42,7 @@ volatile LONG64 g_gameTicks = 0, g_fastTicks = 0, g_collectTicks = 0, g_ports = 
 volatile LONG64 g_unchanged = 0, g_unchangedTicks = 0;
 std::wstring* g_dir = nullptr;
 constexpr DWORD kWriteEveryMs = 5000;
-constexpr LONG64 kCheckEvery = 256;
+constexpr LONG64 kCheckEvery = 32;  // a power of two: the check masks the sequence
 
 thread_local std::vector<port::Bytes>* t_ports = nullptr;
 
