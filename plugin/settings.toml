@@ -27,15 +27,6 @@ description = "Answers PhysFS path checks from directory listings."
 group = "Start-up"
 restart = true
 
-[setting.verifypath_session]
-type = "enum"
-values = [{ name = "off", label = "Off" }, { name = "on", label = "On" }]
-default = "on"
-label = "PhysFS path checks after start-up"
-description = "Loading: keeps answering PhysFS path checks from directory listings after the main menu is up (used while verifypath_listing is on), so loading a save finds its textures about 1.8 s sooner. A listing is read again once it is 30 s old."
-group = "Loading"
-restart = true
-
 [setting.exists_index]
 type = "enum"
 values = [{ name = "on", label = "On" }, { name = "off", label = "Off" }, { name = "verify", label = "Verify" }]
@@ -119,6 +110,24 @@ description = "Caches the script tokenizer's keyword lookups."
 group = "Start-up"
 restart = true
 
+[setting.verifypath_session]
+type = "enum"
+values = [{ name = "off", label = "Off" }, { name = "on", label = "On" }]
+default = "on"
+label = "PhysFS path checks after start-up"
+description = "Loading: keeps answering PhysFS path checks from directory listings after the main menu is up (used while verifypath_listing is on), so loading a save finds its textures about 1.8 s sooner. A listing is read again once it is 30 s old."
+group = "Loading"
+restart = true
+
+[setting.history_add]
+type = "enum"
+values = [{ name = "off", label = "Off" }, { name = "on", label = "On" }, { name = "verify", label = "Verify" }]
+default = "on"
+label = "Dated lists while loading"
+description = "Loading: adds an entry the game just read to a dated list without first walking the whole list to see whether that new entry is in it. The list comes out the same. Verify lets the game walk and compares."
+group = "Loading"
+restart = true
+
 [setting.range_witness]
 type = "enum"
 values = [{ name = "on", label = "On" }, { name = "off", label = "Off" }, { name = "verify", label = "Verify" }]
@@ -126,42 +135,6 @@ default = "on"
 label = "Country range check"
 description = "Simulation, not start-up: answers the country range check from the province that was in range last time; same answers as the game's code."
 group = "Simulation"
-restart = true
-
-[setting.tick_profile]
-type = "enum"
-values = [{ name = "off", label = "Off" }, { name = "on", label = "On" }]
-default = "off"
-label = "Daily tick profile"
-description = "Diagnostic: time of each stage of the daily, monthly and yearly tick and of the frames drawn inside it, per game day, in tick_profile*.tsv."
-group = "Diagnostics"
-restart = true
-
-[setting.army_search_profile]
-type = "enum"
-values = [{ name = "off", label = "Off" }, { name = "on", label = "On" }]
-default = "off"
-label = "AI army search profile"
-description = "Diagnostic: calls, time and repeated answers of the AI army search, in army_search*.tsv."
-group = "Diagnostics"
-restart = true
-
-[setting.score_probe]
-type = "enum"
-values = [{ name = "off", label = "Off" }, { name = "on", label = "On" }]
-default = "off"
-label = "AI scoring probe"
-description = "Diagnostic: how often the inputs of the AI army search's scoring functions repeat within a game day, in score_probe.tsv."
-group = "Diagnostics"
-restart = true
-
-[setting.monthly_probe]
-type = "enum"
-values = [{ name = "off", label = "Off" }, { name = "on", label = "On" }]
-default = "off"
-label = "Monthly tick probe"
-description = "Diagnostic: time of the monthly tick's country, province and unit updates, modifier merges and random draws, in monthly_probe*.tsv."
-group = "Diagnostics"
 restart = true
 
 [setting.modifier_merge]
@@ -209,42 +182,6 @@ description = "Simulation: in the AI's daily search for each army, in a path sea
 group = "Simulation"
 restart = true
 
-[setting.save_compress]
-type = "enum"
-values = [{ name = "off", label = "Off" }, { name = "on", label = "On" }, { name = "verify", label = "Verify" }]
-default = "on"
-label = "Save compression"
-description = "Saving: compressed saves (compress_autosave and the like) without the game's byte-at-a-time CRC-32; the file is byte for byte the game's. Verify runs the game's own compression as well, writes its result and compares the two."
-group = "Saving"
-restart = true
-
-[setting.save_compress_parallel]
-type = "enum"
-values = [{ name = "off", label = "Off" }, { name = "on", label = "On" }, { name = "verify", label = "Verify" }]
-default = "off"
-label = "Parallel save compression"
-description = "Saving, with save compression on: compresses large members of a compressed save (the gamestate) on several threads. The save is a valid archive that the game and other tools read as before, but its compressed bytes differ from the game's. Verify decodes each member again before writing it."
-group = "Saving"
-restart = true
-
-[setting.history_add]
-type = "enum"
-values = [{ name = "off", label = "Off" }, { name = "on", label = "On" }, { name = "verify", label = "Verify" }]
-default = "on"
-label = "Dated lists while loading"
-description = "Loading: adds an entry the game just read to a dated list without first walking the whole list to see whether that new entry is in it. The list comes out the same. Verify lets the game walk and compares."
-group = "Loading"
-restart = true
-
-[setting.transfer_skip]
-type = "enum"
-values = [{ name = "off", label = "Off" }, { name = "on", label = "On" }, { name = "verify", label = "Verify" }]
-default = "on"
-label = "Skip transfer compression"
-description = "Loading in single player: does not compress a text save for a multiplayer transfer that nobody receives; the game loads the same file as before. Hosted multiplayer is left as it is. Verify keeps the game's copy and checks that nothing reads it."
-group = "Saving"
-restart = true
-
 [setting.frame_pacing]
 type = "enum"
 values = [{ name = "off", label = "Off" }, { name = "on", label = "On" }]
@@ -273,6 +210,69 @@ label = "Frame pacing while you play"
 description = "What frame pacing does when you press a key, click or turn the wheel at speed 5: draw a frame at once, so the game reacts at least as fast as without frame pacing (frames are skipped only while you do nothing), or wait for the longer interval (0.12.0). Applies at once while frame pacing is on."
 group = "Simulation"
 restart = false
+
+[setting.save_compress]
+type = "enum"
+values = [{ name = "off", label = "Off" }, { name = "on", label = "On" }, { name = "verify", label = "Verify" }]
+default = "on"
+label = "Save compression"
+description = "Saving: compressed saves (compress_autosave and the like) without the game's byte-at-a-time CRC-32; the file is byte for byte the game's. Verify runs the game's own compression as well, writes its result and compares the two."
+group = "Saving"
+restart = true
+
+[setting.save_compress_parallel]
+type = "enum"
+values = [{ name = "off", label = "Off" }, { name = "on", label = "On" }, { name = "verify", label = "Verify" }]
+default = "off"
+label = "Parallel save compression"
+description = "Saving, with save compression on: compresses large members of a compressed save (the gamestate) on several threads. The save is a valid archive that the game and other tools read as before, but its compressed bytes differ from the game's. Verify decodes each member again before writing it."
+group = "Saving"
+restart = true
+
+[setting.transfer_skip]
+type = "enum"
+values = [{ name = "off", label = "Off" }, { name = "on", label = "On" }, { name = "verify", label = "Verify" }]
+default = "on"
+label = "Skip transfer compression"
+description = "Loading in single player: does not compress a text save for a multiplayer transfer that nobody receives; the game loads the same file as before. Hosted multiplayer is left as it is. Verify keeps the game's copy and checks that nothing reads it."
+group = "Saving"
+restart = true
+
+[setting.tick_profile]
+type = "enum"
+values = [{ name = "off", label = "Off" }, { name = "on", label = "On" }]
+default = "off"
+label = "Daily tick profile"
+description = "Diagnostic: time of each stage of the daily, monthly and yearly tick and of the frames drawn inside it, per game day, in tick_profile*.tsv."
+group = "Diagnostics"
+restart = true
+
+[setting.army_search_profile]
+type = "enum"
+values = [{ name = "off", label = "Off" }, { name = "on", label = "On" }]
+default = "off"
+label = "AI army search profile"
+description = "Diagnostic: calls, time and repeated answers of the AI army search, in army_search*.tsv."
+group = "Diagnostics"
+restart = true
+
+[setting.score_probe]
+type = "enum"
+values = [{ name = "off", label = "Off" }, { name = "on", label = "On" }]
+default = "off"
+label = "AI scoring probe"
+description = "Diagnostic: how often the inputs of the AI army search's scoring functions repeat within a game day, in score_probe.tsv."
+group = "Diagnostics"
+restart = true
+
+[setting.monthly_probe]
+type = "enum"
+values = [{ name = "off", label = "Off" }, { name = "on", label = "On" }]
+default = "off"
+label = "Monthly tick probe"
+description = "Diagnostic: time of the monthly tick's country, province and unit updates, modifier merges and random draws, in monthly_probe*.tsv."
+group = "Diagnostics"
+restart = true
 
 [setting.zip_profile]
 type = "enum"
