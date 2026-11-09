@@ -38,6 +38,7 @@ code only.
 | `modifier_merge` | Simulation: adds large modifier lists with an index instead of a scan per entry (§6a) | year 1720: 20.64 → 19.45 s |
 | `port_table` | Simulation, on by default since 1.4: the country's nearest-port table from one list of its ports (§6a) | measured with the three below, README |
 | `province_modifier_view` | Simulation, on by default since 1.4: reads one value of a province's modifiers without copying the list (§6a) | measured with `port_table`, `army_search_memo` and `pops_pacing`, README |
+| `never_throttle` | Simulation, off by default: sets the application's never-throttle flag while a single-player game runs at speed 5, so a minimized game skips its 100 ms frame wait (§6a) | minimized year: vanilla 84.0 → 32.5 s, Anbennar 107.7 → 67.2 s (flag set from outside, lab) |
 | `save_compress` | Saving: the game's own zlib with a faster CRC-32 (the game's bytes); optionally in parallel (§6a) | autosave 0.873 → 0.831 s; parallel 0.612 s |
 | `transfer_skip` | Loading in single player: no level 9 copy of a text save for a transfer nobody receives (§6a) | "Continue" of a 64.5 MB save 10.91 → 8.95 s |
 
@@ -508,6 +509,34 @@ fastest speed in single player. The library's HTTP transfers run inside the pump
 progress at that speed moves on at two pumps a second until the game pauses or slows down; a
 multiplayer session is noticed in the next frame (anvil-game's session event) and goes back to the
 game's rate. Not tried: a live chat message or a file transfer at speed 5, which needs a second account.
+
+### never_throttle (simulation)
+
+With the window minimized the game runs a year at speed 5 two to four times slower than with the window
+visible. Windows is not the cause (opting out of power throttling changes nothing); the game throttles its
+own main loop. The frame function (`0x14C25A0`) waits in `SDL_Delay`:
+
+- 50 ms and no frame while the application's in-background flag (`+0x2F9`) is set;
+- 100 ms before a frame it would draw while the graphics device is not usable (`+0x530` of the graphics
+  object), which is the case while the window is minimized; 0 ms otherwise.
+
+One flag of the application object, `+0x32B`, skips both waits. The game writes it only in the console's
+timing switch (`0xB7AD50`, `timer start` / `timer restart` set it, `timer stop` clears it); that is also
+where `plugin/symbols.toml` takes the global of the application object (`0x242BF50`) and the offset from.
+
+The module hooks the daily tick to note the speed and the time of the last game day, as `pops_pacing` does,
+and decides once a frame (anvil-game's frame event, on the main thread) whether the flag should be set: a
+single-player game (anvil-game's session event) that ran a day at speed index 4 less than 1 s ago. It writes
+the flag only when that changes, and clears only a flag it set, so `timer start` keeps working. There is no
+`"verify"`: the flag changes only how long the main loop waits, not what it computes, and no game answer is
+replaced. `never_throttle.tsv` has the frames, the frames with the flag set, the sets and clears, and the
+time the flag was set.
+
+Costs: a minimized game at speed 5 uses more processor time per second, since the same year takes less wall
+time (lab, flag set from outside: 0.49 → 1.17 cores on vanilla, 0.74 → 1.14 on Anbennar; about the same
+processor time per game year). A paused or slower game keeps the game's waits. Not tried: a window covered
+but not minimized, full screen with alt-tab (a lost device may need the 100 ms wait while it resets),
+laptops on battery.
 
 ### port_table (simulation)
 

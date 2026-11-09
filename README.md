@@ -145,6 +145,38 @@ compared with the game without Bellows. This is one machine, one graphics card a
 resolution, and one save: how much a frame costs decides how much `frame_pacing`
 saves, so your years will differ.
 
+### Minimized at speed 5
+
+`never_throttle` off and on, with the game window minimized for the measured year,
+on the base game (the save of Russia, the year 1720) and on the Anbennar mod set
+above (the year 1445). EU4 1.37.5 (Steam), original `eu4.exe` started from a copy
+of the game folder, Anvil 1.13.0, anvil-game and Tongs 0.26.1, a build of Bellows
+with the 1.4 defaults apart from `never_throttle`. Five games per setup and save,
+interleaved, 9 November 2026 (the visible games in a separate series):
+
+| Save | Window | `never_throttle` off | `never_throttle` on |
+| --- | --- | --- | --- |
+| Russia, 1720 | minimized | 81.35–83.86 s, median 82.94 s | 30.23–35.79 s, median **34.37 s** |
+| | visible | 20.52–50.39 s, median 23.68 s | 21.70–33.82 s, median 24.13 s |
+| Anbennar, 1445 | minimized | 105.69–110.08 s, median 107.11 s | 61.78–66.47 s, median **65.26 s** |
+| | visible | 42.69–48.39 s, median 46.03 s | 42.54–52.06 s, median 44.67 s |
+
+So a minimized year takes 59% less on the base game and 39% less on Anbennar; the
+ranges do not overlap, and a permutation test of the medians gives p = 0.048 on
+each save, the lowest possible with five games each. A minimized game at speed 5
+used 1.15 cores instead of 0.49 (base game) and 1.16 instead of 0.73 (Anbennar),
+about the same processor time for the year in less wall time. Paused and minimized
+for 30 s after the year, it used 0.077 against 0.074 and 0.034 against 0.035 cores,
+and the flag was cleared in every game.
+
+With the window visible the game does not wait, and the module changes nothing
+there: the medians differ by +1.9% (base game) and −3.0% (Anbennar), the ranges
+overlap and the permutation tests give p = 1.0 and 0.71. Other work on the same
+computer slowed two visible base-game years (50.39 s off, 33.82 s on); the
+medians do not move with them. The game ran on processors 1–7 with its main thread on one
+of them and 6 workers in each pool. Not measured: a window covered but not
+minimized, full screen with alt-tab, laptops on battery, multiplayer.
+
 ### Loading a save
 
 "Continue" on the main menu until the game is ready, EU4 1.37.5 (Steam), original
@@ -200,6 +232,7 @@ about 1.5 s longer than the times above, which stop at `Running application`.
 | `province_modifier_view` | **Simulation, on by default since 1.4.** Reads one value from a province's modifiers in place instead of copying the whole list first (the daily knowledge refresh of every country does this for each province it owns): the same value as the game's code. `"verify"` runs the game's copy and compares. See [A year at speed 5](#a-year-at-speed-5) |
 | `army_search_memo` | **Simulation, on by default since 1.4.** In the AI's daily search for each army, in a path search and when a unit's moves from a province are listed, works out once whether modifier `0xE0` lets the army ignore forts' zones of control and what its speed modifier is, instead of for every move (each of these builds a modifier list from the army's regiments): the same answers. `"verify"` runs the game's check for every move and compares. Lab: 183 million answers compared with the game's on the 1719 save and an 1821 save, 0 differences; 99.6–99.8% of the checks answered from the memo. See [A year at speed 5](#a-year-at-speed-5) |
 | `pops_pacing` | **Simulation, on by default since 1.4.** At the fastest speed in single player, runs the game's Paradox online-service callbacks every 500 ms instead of twice a frame; with nothing to deliver, each run makes the main thread sleep 1 ms. The simulation is the same. What those services bring (Paradox account, friends and chat, telemetry, the news feed, their file storage) can arrive up to 500 ms later while the game runs at that speed; nothing is left out for good. Achievements and Workshop mods do not go through them. Multiplayer, pauses, menus and other speeds keep the game's rate. `"verify"` runs them as the game does and counts what would be left out. Lab: its counters show about 1 s less sleep per game year. See [A year at speed 5](#a-year-at-speed-5) |
+| `never_throttle` | **Simulation, off by default.** While a single-player game runs at speed 5, sets the game's own flag (the one the console's `timer start` sets) that skips the main loop's waits: with the window minimized the game otherwise waits 100 ms a frame. A minimized year then takes about 40–60% less time; with the window visible both waits are already 0 ms, so nothing changes. The simulation is the same; only the pace changes, as with `frame_pacing`. A minimized game at speed 5 uses more processor time per second (lab: about 1.1 cores instead of 0.5–0.7). Pauses, menus, other speeds and multiplayer keep the game's waits; the module clears the flag within a second and never clears one the game set itself. See [Minimized at speed 5](#minimized-at-speed-5) |
 | `save_compress` | **Saving, on by default since 0.18.** For compressed saves (`compress_autosave = yes` and the like): compresses each member of the save with the game's own zlib, call for call as the game does, but computes its CRC-32 eight bytes at a time instead of one; the file is byte for byte the game's. `"verify"` runs the game's own compression as well, writes its result and compares the two members byte for byte. Lab, the 1719 save with `compress_autosave = yes`, 6 autosaves per setting in interleaved games: an autosave took 0.831 s (0.823–0.842) instead of 0.873 s (0.871–0.900); `"verify"` found 0 differences in 10 members. `save_compress_parallel = "on"` (off by default) compresses large members (the gamestate) in 1 MiB chunks on several threads instead: a valid archive with the same members, which the game loads and other tools read, but with other compressed bytes than the game's (`"verify"` decodes each member again before writing it). An autosave then took 0.612 s (0.575–0.637), the gamestate 80–95 ms on 7 threads instead of about 300 ms |
 | `transfer_skip` | **Loading, on by default since 1.1.** In single player, "Continue" of a text save no longer compresses the whole file at level 9 for a multiplayer transfer nobody receives; the game loads the same file as before. Hosted multiplayer is left as it is. `"verify"` keeps the game's copy and checks that it is the save, that the load does not use it and that nothing is sent. Lab, interleaved runs, 5 per setting, click on "Continue" to the game ready: the 64.5 MB save of 1821 8.95 s (8.55–9.23) instead of 10.91 s (10.78–11.06), a 40 MB vanilla save of 1450 4.47 s (4.35–4.99) instead of 5.84 s (5.70–6.14). Compressed saves have no such copy and do not change |
 | `history_add` | **Loading, on by default since 1.2.** Adds an entry the game just read to a dated list without first walking the whole list to see whether that new entry is in it; the list comes out the same. The gain grows with the square of the list, so it depends on the mods: about 0.5 s of "Continue" with the lab's 10 mods (38,000 entries, 154 million list steps), almost nothing on vanilla (4,300 entries, 2 million steps). `"verify"` lets the game walk and compares: 0 differences. See [Loading a save](#loading-a-save) |

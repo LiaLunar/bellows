@@ -481,6 +481,24 @@ build."eu4-1.37.5.0-gog-win64" = { rva = 0x7A6730 }
 
 # --- frame_pacing ------------------------------------------------------------------
 
+[symbol.app_never_throttle]
+memory = "code"
+values.app_global = { at = 3, rip_relative = 7, type = "unsigned char* const" }
+values.never_throttle_offset = { at = 9, size = 4 }
+note = "never_throttle: 0xB7AD50 (the console's timer switch) stores its bool in the application object (global 0x242BF50) + 0x32B; the frame function 0x14C25A0 skips its SDL_Delay waits while it is set"
+
+[symbol.app_never_throttle.build."eu4-1.37.5-steam-win64"]
+rva = 0xB7AE12
+bytes = "48 8B 05 37 11 8B 01 88 90 2B 03 00 00"   # mov rax,[app]; mov [rax+32Bh],dl
+
+[symbol.app_never_throttle.build."eu4-1.37.5.2-gog-win64"]
+rva = 0xB795B2
+bytes = "48 8B 05 CF 67 89 01 88 90 2B 03 00 00"
+
+[symbol.app_never_throttle.build."eu4-1.37.5.0-gog-win64"]
+rva = 0xB795B2
+bytes = "48 8B 05 CF 67 89 01 88 90 2B 03 00 00"
+
 [symbol.nested_frame_threshold]
 memory = "code"
 values.speed_offset = { at = 3, size = 4 }

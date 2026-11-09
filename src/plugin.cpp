@@ -53,6 +53,7 @@ DWORD WINAPI FinishAfterReady(void*) {
         {"range_witness report", sb::ReportRangeWitness},
         {"frame_pacing report", sb::ReportFramePacing},
         {"pops_pacing report", sb::ReportPopsPacing},
+        {"never_throttle report", sb::ReportNeverThrottle},
         {"modifier_merge report", sb::ReportModifierMerge},
         {"port_table report", sb::ReportPortTable},
         {"province_modifier_view report", sb::ReportProvinceModifierView},
@@ -132,6 +133,7 @@ struct Bellows : anvil::Plugin {
             {"range_witness", cfg::range_witness.id, sb::InstallRangeWitness},
             {"frame_pacing", cfg::frame_pacing.id, sb::InstallFramePacing},
             {"pops_pacing", cfg::pops_pacing.id, sb::InstallPopsPacing},
+            {"never_throttle", cfg::never_throttle.id, sb::InstallNeverThrottle},
             {"modifier_merge", cfg::modifier_merge.id, sb::InstallModifierMerge},
             // hooks the entry of 0x350B80; monthly_probe's hook on it chains.
             {"port_table", cfg::port_table.id, sb::InstallPortTable},
@@ -216,6 +218,7 @@ struct Bellows : anvil::Plugin {
             const bool ended = session != nullptr && session->change == ANVIL_GAME_SESSION_ENDED;
             sb::CollectMimalloc(ended ? "session end" : "session start");
             sb::NotePopsSession(session != nullptr && !ended && session->multiplayer != 0);
+            sb::NoteNeverThrottleSession(session != nullptr && !ended && session->multiplayer != 0);
         });
         // ... and so does a save loaded from the in-game menu, which publishes no session event in
         // anvil-game 1.5: a frame collects once enough was freed (a counter read otherwise).

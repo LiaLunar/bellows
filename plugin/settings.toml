@@ -211,6 +211,15 @@ description = "What frame pacing does when you press a key, click or turn the wh
 group = "Simulation"
 restart = false
 
+[setting.never_throttle]
+type = "enum"
+values = [{ name = "off", label = "Off" }, { name = "on", label = "On" }]
+default = "off"
+label = "Full speed while minimized"
+description = "Simulation: while a single-player game runs at speed 5, the game skips its own waits of up to 100 ms a frame, which it makes while the window is minimized. A minimized year then takes about 40-60% less time; with the window visible nothing changes. Uses more processor time per second while minimized at speed 5. Pauses, menus, other speeds and multiplayer keep the game's waits."
+group = "Simulation"
+restart = true
+
 [setting.save_compress]
 type = "enum"
 values = [{ name = "off", label = "Off" }, { name = "on", label = "On" }, { name = "verify", label = "Verify" }]
