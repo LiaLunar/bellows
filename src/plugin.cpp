@@ -143,6 +143,7 @@ struct Bellows : anvil::Plugin {
             {"save_compress", cfg::save_compress.id, sb::InstallSaveCompress},
             {"transfer_skip", cfg::transfer_skip.id, sb::InstallTransferSkip},
             {"history_add", cfg::history_add.id, sb::InstallHistoryAdd},
+            {"checksum_defer", cfg::checksum_defer.id, sb::InstallChecksumDefer},  // prototype, off by default
             // diagnostic; its hook on 0x769EA0 sits at the entry, frame_pacing's inside the function.
             {"tick_profile", cfg::tick_profile.id, sb::InstallTickProfile},
             {"army_search_profile", cfg::army_search_profile.id, sb::InstallArmySearchProfile},  // diagnostic

@@ -1004,6 +1004,36 @@ note = "deflateEnd of the zlib 1.2.8 linked into eu4.exe"
 build."eu4-1.37.5-steam-win64" = { rva = 0x181FB90 }
 build."eu4-1.37.5.2-gog-win64" = { rva = 0x1809810 }
 build."eu4-1.37.5.0-gog-win64" = { rva = 0x1809810 }
+
+# --- checksum_defer (prototype, lab #66) -------------------------------------------
+
+[symbol.checksum_task_invoke]
+bytes = "40 53 48 83 EC 60 48 8B D9 48 C7 44 24 40 00 00 00 00"
+memory = "code"
+signature = "void (void* buffer)"
+note = "the checksum task's work on a long-task worker (0x2178D0): reads the files of checksum_manifest.txt and builds the version checksum"
+build."eu4-1.37.5-steam-win64" = { rva = 0x2178D0 }
+build."eu4-1.37.5.2-gog-win64" = { rva = 0x217890 }
+build."eu4-1.37.5.0-gog-win64" = { rva = 0x217890 }
+
+[symbol.database_load]
+bytes = "40 53 56 57 41 54 41 55 41 56 41 57 B8 F0 F5 00 00"
+memory = "code"
+signature = "void (void* app)"
+note = "loads the game databases (0x208620); called once at start-up (0x204918), right after the checksum task was queued"
+build."eu4-1.37.5-steam-win64" = { rva = 0x208620 }
+build."eu4-1.37.5.2-gog-win64" = { rva = 0x2085E0 }
+build."eu4-1.37.5.0-gog-win64" = { rva = 0x2085E0 }
+
+[symbol.menu_checksum_poll]
+bytes = "40 57 48 83 EC 20 48 8B 81 30 04 00 00 48 8B F9"
+memory = "code"
+signature = "bool (void* app)"
+note = "polled by the menu (0x211100): true once it copied the finished task's checksum to the game version"
+build."eu4-1.37.5-steam-win64" = { rva = 0x211100 }
+build."eu4-1.37.5.2-gog-win64" = { rva = 0x2110C0 }
+build."eu4-1.37.5.0-gog-win64" = { rva = 0x2110C0 }
+
 # --- history_add -------------------------------------------------------------------
 
 [symbol.history_add_call]

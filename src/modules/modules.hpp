@@ -40,6 +40,7 @@ void NoteNeverThrottleSession(bool multiplayer) noexcept;  // from anvil-game's 
 bool InstallSaveCompress(anvil::Host& host, Mode mode);
 bool InstallTransferSkip(anvil::Host& host, Mode mode);
 bool InstallHistoryAdd(anvil::Host& host, Mode mode);
+bool InstallChecksumDefer(anvil::Host& host, Mode mode);  // prototype, lab #66
 bool InstallTickProfile(anvil::Host& host, Mode mode);  // diagnostic
 bool InstallArmySearchProfile(anvil::Host& host, Mode mode);  // diagnostic
 bool InstallScoreProbe(anvil::Host& host, Mode mode);  // diagnostic

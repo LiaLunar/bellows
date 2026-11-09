@@ -128,6 +128,15 @@ description = "Loading: adds an entry the game just read to a dated list without
 group = "Loading"
 restart = true
 
+[setting.checksum_defer]
+type = "enum"
+values = [{ name = "off", label = "Off" }, { name = "on", label = "On" }, { name = "verify", label = "Verify" }]
+default = "off"
+label = "Checksum after the databases"
+description = "Loading: the game's checksum task starts reading files only once the databases are loaded, so it no longer competes with them for the file system lock. Same files, order and checksum shown in the menu; about 1 s off the start of a big mod set such as Anbennar, nothing measurable on the base game. Verify only logs the task's times."
+group = "Loading"
+restart = true
+
 [setting.range_witness]
 type = "enum"
 values = [{ name = "on", label = "On" }, { name = "off", label = "Off" }, { name = "verify", label = "Verify" }]

@@ -177,6 +177,42 @@ medians do not move with them. The game ran on processors 1–7 with its main th
 of them and 6 workers in each pool. Not measured: a window covered but not
 minimized, full screen with alt-tab, laptops on battery, multiplayer.
 
+### The checksum after the databases
+
+`checksum_defer` off (`"verify"`, which hooks the same functions and only logs
+times) and `"on"`, warm starts to the main menu (`Running application` in
+`system.log`), EU4 1.37.5 (Steam), original `eu4.exe` started from a copy of the
+game folder on processors 1–7, Anvil 1.13.0 and anvil-game, Bellows defaults
+apart from these settings and the profiles it learned on a warm-up start. Five
+starts per setting, in the order `off on on off off on on off off on`, after one
+warm-up start, 9 November 2026:
+
+| Mod set | Bellows build | `checksum_defer` off | `"on"` | Difference |
+| --- | --- | --- | --- | ---: |
+| Anbennar (above) | 1.4.1 + the module | 21.89–22.53 s, median 22.09 s | 20.69–21.05 s, median **20.98 s** | −1.11 s |
+| | 1.5 + `never_throttle = "on"` + the module | 22.08–26.10 s, median 22.56 s | 21.22–23.41 s, median **21.55 s** | −1.01 s |
+| Base game | 1.4.1 + the module | 11.54–11.80 s, median 11.58 s | 11.29–11.62 s, median 11.47 s | −0.12 s |
+| | 1.5 + `never_throttle = "on"` + the module | 11.69–12.82 s, median 11.72 s | 11.29–11.68 s, median 11.44 s | −0.28 s |
+
+On Anbennar the databases load 2.3–2.5 s sooner and the events and the rest of the
+start take 1.2–1.3 s longer, since the checksum now runs alongside them. In the
+first series the ranges do not overlap; in the second two slow starts (26.10 s
+off, 23.41 s on) make them overlap, and a permutation test of the medians gives
+p = 0.24. On the base game the checksum takes about 2 s and the databases barely
+wait for it: in the second series 0.27 s of the 0.28 s comes before the checksum
+starts, so it is not the module.
+
+The checksum ended before the main menu was ready in every start with `"on"`,
+1.0–1.4 s before on the base game and 3.0–3.3 s before on Anbennar, and the menu
+took it in its next poll, about 2 s after `Running application`, as without the
+module. `setup.log`, `error.log` and `system.log` had the same lines in every start
+of a mod set. Every capture of the main menu showed the same version code, `(1824)`
+on Anbennar and `(491d)` on the base game, and none showed `Calculating
+Version...`. Multiplayer compares that code, and ironman and achievements use it,
+so they get the same value. Not measured: the first start after a reboot or a slow
+disk (the margin before the menu is smallest on the base game), other mod sets,
+and multiplayer with the module on.
+
 ### Loading a save
 
 "Continue" on the main menu until the game is ready, EU4 1.37.5 (Steam), original
@@ -236,6 +272,7 @@ about 1.5 s longer than the times above, which stop at `Running application`.
 | `save_compress` | **Saving, on by default since 0.18.** For compressed saves (`compress_autosave = yes` and the like): compresses each member of the save with the game's own zlib, call for call as the game does, but computes its CRC-32 eight bytes at a time instead of one; the file is byte for byte the game's. `"verify"` runs the game's own compression as well, writes its result and compares the two members byte for byte. Lab, the 1719 save with `compress_autosave = yes`, 6 autosaves per setting in interleaved games: an autosave took 0.831 s (0.823–0.842) instead of 0.873 s (0.871–0.900); `"verify"` found 0 differences in 10 members. `save_compress_parallel = "on"` (off by default) compresses large members (the gamestate) in 1 MiB chunks on several threads instead: a valid archive with the same members, which the game loads and other tools read, but with other compressed bytes than the game's (`"verify"` decodes each member again before writing it). An autosave then took 0.612 s (0.575–0.637), the gamestate 80–95 ms on 7 threads instead of about 300 ms |
 | `transfer_skip` | **Loading, on by default since 1.1.** In single player, "Continue" of a text save no longer compresses the whole file at level 9 for a multiplayer transfer nobody receives; the game loads the same file as before. Hosted multiplayer is left as it is. `"verify"` keeps the game's copy and checks that it is the save, that the load does not use it and that nothing is sent. Lab, interleaved runs, 5 per setting, click on "Continue" to the game ready: the 64.5 MB save of 1821 8.95 s (8.55–9.23) instead of 10.91 s (10.78–11.06), a 40 MB vanilla save of 1450 4.47 s (4.35–4.99) instead of 5.84 s (5.70–6.14). Compressed saves have no such copy and do not change |
 | `history_add` | **Loading, on by default since 1.2.** Adds an entry the game just read to a dated list without first walking the whole list to see whether that new entry is in it; the list comes out the same. The gain grows with the square of the list, so it depends on the mods: about 0.5 s of "Continue" with the lab's 10 mods (38,000 entries, 154 million list steps), almost nothing on vanilla (4,300 entries, 2 million steps). `"verify"` lets the game walk and compares: 0 differences. See [Loading a save](#loading-a-save) |
+| `checksum_defer` | **Loading, off by default.** At start-up the game reads the files of its version checksum (the code in brackets next to the version on the main menu) while it loads its databases, and the two take turns on the file system. With `"on"` the checksum starts once the databases are loaded: the same files in the same order and the same checksum, ready before the main menu is. Lab: about 1 s less to the main menu on Anbennar, nothing measurable on the base game; the game's logs and the checksum on the menu were the same in every start. `"verify"` only logs the times. See [The checksum after the databases](#the-checksum-after-the-databases) |
 | `frame_pacing` | **Simulation, on by default since 0.15.** At the fastest speed, draws frames from inside the daily tick less often while you do nothing (setting `frame_pacing_interval_ms`, 100 ms; the game's own is 50 ms), and at once when a key press, click or wheel turn waits (`frame_pacing_input = "draw"`). The simulation is the same; the map updates about 16 instead of 22 times a second at speed 5 while you do nothing (lab: a year at speed 5 in 20.8 s instead of 23.4 s, on Anbennar 48.4 s instead of 55.4 s, see [A year of Anbennar at speed 5](#a-year-of-anbennar-at-speed-5); a key press at speed 5 handled after 21 ms instead of 51.5 ms in the median, a real key press after 21.6 ms instead of 56.8 ms) |
 
 Diagnostics, off by default: `zip_profile`, `token_dict_profile`,

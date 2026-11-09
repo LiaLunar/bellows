@@ -41,6 +41,7 @@ code only.
 | `never_throttle` | Simulation, off by default: sets the application's never-throttle flag while a single-player game runs at speed 5, so a minimized game skips its 100 ms frame wait (§6a) | minimized year: vanilla 84.0 → 32.5 s, Anbennar 107.7 → 67.2 s (flag set from outside, lab) |
 | `save_compress` | Saving: the game's own zlib with a faster CRC-32 (the game's bytes); optionally in parallel (§6a) | autosave 0.873 → 0.831 s; parallel 0.612 s |
 | `transfer_skip` | Loading in single player: no level 9 copy of a text save for a transfer nobody receives (§6a) | "Continue" of a 64.5 MB save 10.91 → 8.95 s |
+| `checksum_defer` | Loading, off by default: the game's checksum task waits until the databases are loaded, so the two no longer take turns on the file system locks; the same files and checksum (§6a) | Anbennar: −1.11 and −1.01 s to the menu (two series); base game: in the noise |
 
 The table's start-up modules are in the order they were ported; §6a has the
 results per module and release.
@@ -905,6 +906,31 @@ after a mismatch.
 
 Lab: `"verify"` on the 1821 save (37,995 entries), on a vanilla save (4,311) and in a session that loaded the 1719
 save and played on (35,081): 0 differences. Interleaved "Continue" with `verifypath_session`: 6.79 s without it, 6.27 s with it.
+
+### checksum_defer (loading)
+
+Start-up queues the game's checksum task (`0x2178D0`, the body of the long task that reads the files of
+`checksum_manifest.txt` and builds the version checksum shown in the menu) on the long-task pool just before the
+databases load (`0x208620`). The task then reads its files while the databases read theirs, and the two take
+turns on the file system's locks (the VFS lock and PhysFS's state lock). On Anbennar the databases lose about
+2.3 s to that; on the base game almost nothing.
+
+A hook on the task's body waits on an event that a hook on the end of the database load sets, and then calls the
+game's body: the same files in the same order, the same digest, the same log lines (only their place in
+`error.log` moves). The long-task pool has no other task while the databases load, so the waiting worker holds
+up nobody. After 120 s the task runs anyway and the log says `TIMEOUT`. A third hook, on the menu's poll for the
+finished checksum (`0x211100`), only logs the first time the menu took it. `"verify"` installs the same hooks and
+logs the same times without moving the task, so the control arm of a series has the same hooks. The wait is in
+`checksum_defer_core.hpp` and tested without the game.
+
+What it changes for the player: the checksum is ready later in the start, but before the menu is (lab: about 3 s
+before on Anbennar and 1.1–1.3 s on the base game, warm file cache), and the menu takes it in its next poll, about
+2 s after `Running application`, in both arms. If the task ended after the menu was up, the menu would show
+`Calculating Version...` a little longer, as on a slow disk, and multiplayer and ironman would wait for it as the
+game makes them wait; the checksum itself would not change. With `-threads=1` the game does not queue the task on
+the pool, the body hook never runs and the database hook only sets the event.
+
+GOG: `0x217890`, `0x2085E0`, `0x2110C0` on 1.37.5.2, the same on 1.37.5.0.
 
 ### tick_profile (diagnostic, simulation)
 
