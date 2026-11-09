@@ -1,6 +1,6 @@
 ![](https://anvil.happydwarf.dev/workshop/bellows-hero.png)
 
-Bellows makes EU4 reach the main menu much sooner and lets the years pass about a quarter sooner at speed 5. The rules and your game files stay the same.
+Bellows makes EU4 reach the main menu much sooner and lets the years pass more than a third sooner at speed 5. The rules and your game files stay the same.
 
 ![](https://anvil.happydwarf.dev/workshop/bellows-install.png)
 
@@ -31,7 +31,10 @@ Yes. It doesn't care what your mods contain, it only helps the game read them fa
 It hasn't in our tests. It changes how fast the game starts and runs, not its rules. A new ironman game with Bellows still says achievements can be earned, but we haven't earned one in a full campaign yet. When the game compresses a save, Bellows writes exactly the file the game would write, byte for byte (unless you turn on parallel save compression, which packs the same save a little differently).
 
 ### Will the AI play differently?
-Your AI can occasionally play out differently. In a planned test on one save, that happened in 11 of 30 runs with Bellows and 1 of 30 without it. The rules stay the same, and both are normal games. In multiplayer the host's AI decides for everyone (our only test: Bellows 0.17.0 on the host alone, one save, 233 days, no out-of-sync).
+Your AI can occasionally play out differently. In a planned test on one save, that happened in 11 of 30 runs with Bellows 1.2 and 1 of 30 without it; the four simulation modules that 1.4 turns on were not part of that test. The rules stay the same, and both are normal games. In multiplayer the host's AI decides for everyone (our tests: Bellows on the host alone, one save, no out-of-sync in 233 days with 0.17.0, 231 days with the code of 1.3.0 and 203 days with the defaults of 1.4).
+
+### I turned a module off before 1.4. Is it still off?
+Maybe not. Anvil only remembers settings that differ from the default, so if you turned **Port table**, **Province modifier view**, **AI army search memo** or **Online service pacing** off while off was already the default, 1.4 turns it on. Press **Ctrl+Shift+F12**, set it to **Off** in Bellows' **Simulation** settings and restart the game.
 
 ### I play on GOG. Can I use it?
 Yes, the GOG build 1.37.5.2. GOG has no Workshop: install Bellows from the **Catalog** tab in Anvil Manager (Anvil 1.9 or newer) or from [GitHub](https://github.com/happy-dwarf-team/bellows/releases). Same plugin, same forge, different road.
