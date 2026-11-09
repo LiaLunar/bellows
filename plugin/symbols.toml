@@ -6,11 +6,12 @@
 # carry `values` prove a global or a struct offset the modules use. The GOG
 # build 1.37.5.2 has the same code at other addresses: each symbol was matched
 # to the same instructions there and named from the eu4.pdb GOG ships, and only
-# rva, bytes and points_to differ (in `build."<id>"`). Addresses in notes are
-# the Steam build's.
+# rva, bytes and points_to differ (in `build."<id>"`). The GOG build 1.37.5.0
+# has every symbol at the GOG 1.37.5.2 address (anvil port, anvil#187).
+# Addresses in notes are the Steam build's.
 # After a change run `anvil check plugin --exe <eu4.exe>` with each build's
 # eu4.exe and commit symbols.lock.
-builds = ["eu4-1.37.5-steam-win64", "eu4-1.37.5.2-gog-win64"]
+builds = ["eu4-1.37.5-steam-win64", "eu4-1.37.5.2-gog-win64", "eu4-1.37.5.0-gog-win64"]
 
 # --- PhysFS, exported by eu4.exe (verifypath_listing, exists_index) -----------
 
@@ -50,12 +51,14 @@ memory = "code"
 note = "PhysFS verifyPath: the archiver's stat call and the copy of its result; replaced as a block"
 build."eu4-1.37.5-steam-win64" = { rva = 0x19FB7F4 }
 build."eu4-1.37.5.2-gog-win64" = { rva = 0x19E5474 }
+build."eu4-1.37.5.0-gog-win64" = { rva = 0x19E5474 }
 
 [symbol.dir_archiver_stat]
 memory = "read"
 note = "PhysFS DIR archiver function table (0x1C1D7A0) + 0x68: its stat"
 build."eu4-1.37.5-steam-win64" = { rva = 0x1C1D808, points_to = 0x1A07080 }
 build."eu4-1.37.5.2-gog-win64" = { rva = 0x1C065C8, points_to = 0x19F0D00 }
+build."eu4-1.37.5.0-gog-win64" = { rva = 0x1C065C8, points_to = 0x19F0D00 }
 
 # --- exists_index --------------------------------------------------------------
 
@@ -64,6 +67,7 @@ memory = "read"
 note = "file-system object vtable 0x1D9C968, slot +0x30: does a virtual file exist"
 build."eu4-1.37.5-steam-win64" = { rva = 0x1D9C998, points_to = 0x15CCE80 }
 build."eu4-1.37.5.2-gog-win64" = { rva = 0x1D84D60, points_to = 0x15C39A0 }
+build."eu4-1.37.5.0-gog-win64" = { rva = 0x1D84D60, points_to = 0x15C39A0 }
 
 [symbol.fs_exists]
 bytes = "48 83 EC 28 48 83 7A 18 10 72 03 48 8B 12 48 85 D2 74 18 80 3A 00 74 13"
@@ -72,6 +76,7 @@ signature = "bool (void* self, const void* name)"
 note = "thin wrapper around PHYSFS_exists"
 build."eu4-1.37.5-steam-win64" = { rva = 0x15CCE80 }
 build."eu4-1.37.5.2-gog-win64" = { rva = 0x15C39A0 }
+build."eu4-1.37.5.0-gog-win64" = { rva = 0x15C39A0 }
 
 # --- trigger_intern ------------------------------------------------------------
 
@@ -81,6 +86,7 @@ memory = "code"
 note = "the arguments of trigger_intern_call_a: (singleton, node)"
 build."eu4-1.37.5-steam-win64" = { rva = 0x205C09 }
 build."eu4-1.37.5.2-gog-win64" = { rva = 0x205BC9 }
+build."eu4-1.37.5.0-gog-win64" = { rva = 0x205BC9 }
 
 [symbol.trigger_intern_call_a]
 memory = "code"
@@ -94,12 +100,17 @@ bytes = "E8 CC 58 99 00 48 89 47 58"   # call 0xB9B4E0 (profile lookup); mov [rd
 rva = 0x205BCF
 bytes = "E8 BC 40 99 00 48 89 47 58"
 
+[symbol.trigger_intern_call_a.build."eu4-1.37.5.0-gog-win64"]
+rva = 0x205BCF
+bytes = "E8 BC 40 99 00 48 89 47 58"
+
 [symbol.trigger_intern_args_b]
 bytes = "48 8B D7 48 8B C8"            # mov rdx,rdi; mov rcx,rax
 memory = "code"
 note = "the arguments of trigger_intern_call_b"
 build."eu4-1.37.5-steam-win64" = { rva = 0x205C39 }
 build."eu4-1.37.5.2-gog-win64" = { rva = 0x205BF9 }
+build."eu4-1.37.5.0-gog-win64" = { rva = 0x205BF9 }
 
 [symbol.trigger_intern_call_b]
 memory = "code"
@@ -110,6 +121,10 @@ rva = 0x205C3F
 bytes = "E8 9C 58 99 00 48 89 47 58"   # call 0xB9B4E0 (profile lookup); mov [rdi+58h],rax
 
 [symbol.trigger_intern_call_b.build."eu4-1.37.5.2-gog-win64"]
+rva = 0x205BFF
+bytes = "E8 8C 40 99 00 48 89 47 58"
+
+[symbol.trigger_intern_call_b.build."eu4-1.37.5.0-gog-win64"]
 rva = 0x205BFF
 bytes = "E8 8C 40 99 00 48 89 47 58"
 
@@ -126,6 +141,10 @@ bytes = "48 8B 0D 5F A4 13 02"         # mov rcx,[rip -> 0x2340010]
 rva = 0x205B6A
 bytes = "48 8B 0D 1F E3 11 02"
 
+[symbol.trigger_registry_load.build."eu4-1.37.5.0-gog-win64"]
+rva = 0x205B6A
+bytes = "48 8B 0D 1F E3 11 02"
+
 # --- metascript_subst ----------------------------------------------------------
 
 [symbol.metascript_args_a]
@@ -134,6 +153,7 @@ memory = "code"
 note = "the arguments of metascript_call_a: (text, arguments, tokens)"
 build."eu4-1.37.5-steam-win64" = { rva = 0xDB0908 }
 build."eu4-1.37.5.2-gog-win64" = { rva = 0xDAF088 }
+build."eu4-1.37.5.0-gog-win64" = { rva = 0xDAF088 }
 
 [symbol.metascript_call_a]
 bytes = "E8 ED 0E 00 00"               # call 0xDB1800 ($param$ substitution)
@@ -141,6 +161,7 @@ memory = "code"
 note = "first call of the substitution in 0xDB0860"
 build."eu4-1.37.5-steam-win64" = { rva = 0xDB090E }
 build."eu4-1.37.5.2-gog-win64" = { rva = 0xDAF08E }
+build."eu4-1.37.5.0-gog-win64" = { rva = 0xDAF08E }
 
 [symbol.metascript_args_b]
 bytes = "4C 8B C6 48 8B D7"            # mov r8,rsi; mov rdx,rdi
@@ -148,6 +169,7 @@ memory = "code"
 note = "the arguments of metascript_call_b"
 build."eu4-1.37.5-steam-win64" = { rva = 0xDB0961 }
 build."eu4-1.37.5.2-gog-win64" = { rva = 0xDAF0E1 }
+build."eu4-1.37.5.0-gog-win64" = { rva = 0xDAF0E1 }
 
 [symbol.metascript_call_b]
 bytes = "E8 94 0E 00 00"               # call 0xDB1800
@@ -155,6 +177,7 @@ memory = "code"
 note = "second call of the substitution in 0xDB0860"
 build."eu4-1.37.5-steam-win64" = { rva = 0xDB0967 }
 build."eu4-1.37.5.2-gog-win64" = { rva = 0xDAF0E7 }
+build."eu4-1.37.5.0-gog-win64" = { rva = 0xDAF0E7 }
 
 [symbol.metascript_blocks_args]
 bytes = "4C 8B C6 48 8B D7 48 8B CB"   # mov r8,rsi; mov rdx,rdi; mov rcx,rbx
@@ -162,6 +185,7 @@ memory = "code"
 note = "the arguments of metascript_blocks_call: (script, text, arguments)"
 build."eu4-1.37.5-steam-win64" = { rva = 0xDB08B7 }
 build."eu4-1.37.5.2-gog-win64" = { rva = 0xDAF037 }
+build."eu4-1.37.5.0-gog-win64" = { rva = 0xDAF037 }
 
 [symbol.metascript_blocks_call]
 bytes = "E8 4B 0B 00 00"               # call 0xDB1410 (conditional blocks [[param] ...])
@@ -169,6 +193,7 @@ memory = "code"
 note = "the only call of the block resolution, in 0xDB0860 before the substitution"
 build."eu4-1.37.5-steam-win64" = { rva = 0xDB08C0 }
 build."eu4-1.37.5.2-gog-win64" = { rva = 0xDAF040 }
+build."eu4-1.37.5.0-gog-win64" = { rva = 0xDAF040 }
 
 [symbol.string_assign]
 bytes = "48 89 5C 24 10 48 89 6C 24 18 56 57 41 57"
@@ -177,6 +202,7 @@ signature = "void* (void* text, const char* data, size_t size)"
 note = "the game's std::string assign(data, size)"
 build."eu4-1.37.5-steam-win64" = { rva = 0x95110 }
 build."eu4-1.37.5.2-gog-win64" = { rva = 0x95140 }
+build."eu4-1.37.5.0-gog-win64" = { rva = 0x95140 }
 
 # --- PhysFS ZIP archiver (ram_prefetch, zip_profile) ---------------------------
 
@@ -185,18 +211,21 @@ memory = "read"
 note = "ZIP archiver table (0x1C1D890) + 0x30: openArchive"
 build."eu4-1.37.5-steam-win64" = { rva = 0x1C1D8C0, points_to = 0x1A073F0 }
 build."eu4-1.37.5.2-gog-win64" = { rva = 0x1C06680, points_to = 0x19F1070 }
+build."eu4-1.37.5.0-gog-win64" = { rva = 0x1C06680, points_to = 0x19F1070 }
 
 [symbol.zip_open_read_slot]
 memory = "read"
 note = "ZIP archiver table + 0x40: openRead"
 build."eu4-1.37.5-steam-win64" = { rva = 0x1C1D8D0, points_to = 0x1A07580 }
 build."eu4-1.37.5.2-gog-win64" = { rva = 0x1C06690, points_to = 0x19F1200 }
+build."eu4-1.37.5.0-gog-win64" = { rva = 0x1C06690, points_to = 0x19F1200 }
 
 [symbol.zip_close_archive_slot]
 memory = "read"
 note = "ZIP archiver table + 0x70: closeArchive"
 build."eu4-1.37.5-steam-win64" = { rva = 0x1C1D900, points_to = 0x1A073B0 }
 build."eu4-1.37.5.2-gog-win64" = { rva = 0x1C066C0, points_to = 0x19F1030 }
+build."eu4-1.37.5.0-gog-win64" = { rva = 0x1C066C0, points_to = 0x19F1030 }
 
 [symbol.tinfl_decompress]
 bytes = "48 89 5C 24 20 55 56 57 41 54 41 55 41 56 41 57"
@@ -205,12 +234,14 @@ signature = "int (void* state, const uint8_t* in, size_t* in_size, uint8_t* out_
 note = "miniz tinfl_decompress (pure; the caller owns the state)"
 build."eu4-1.37.5-steam-win64" = { rva = 0x1A08470 }
 build."eu4-1.37.5.2-gog-win64" = { rva = 0x19F20F0 }
+build."eu4-1.37.5.0-gog-win64" = { rva = 0x19F20F0 }
 
 [symbol.zip_io_read_slot]
 memory = "read"
 note = "ZIP Io template (0x1C1D840) + 0x10: read"
 build."eu4-1.37.5-steam-win64" = { rva = 0x1C1D850, points_to = 0x1A07A10 }
 build."eu4-1.37.5.2-gog-win64" = { rva = 0x1C06610, points_to = 0x19F1690 }
+build."eu4-1.37.5.0-gog-win64" = { rva = 0x1C06610, points_to = 0x19F1690 }
 
 [symbol.mz_inflate_call]
 bytes = "E8 00 CA FF FF"               # call 0x1A080D0 (mz_inflate)
@@ -218,6 +249,7 @@ memory = "code"
 note = "the call of mz_inflate outside the ZIP Io read"
 build."eu4-1.37.5-steam-win64" = { rva = 0x1A0B6CB }
 build."eu4-1.37.5.2-gog-win64" = { rva = 0x19F534B }
+build."eu4-1.37.5.0-gog-win64" = { rva = 0x19F534B }
 
 # --- token_dict_cache, token_dict_profile --------------------------------------
 
@@ -234,6 +266,10 @@ bytes = "48 8B D6 48 8D 0D 0E 7D C1 00"   # mov rdx,rsi; lea rcx,[rip -> 0x23267
 rva = 0x16F8628
 bytes = "48 8B D6 48 8D 0D CE 20 C1 00"
 
+[symbol.token_lookup_tokenizer_args.build."eu4-1.37.5.0-gog-win64"]
+rva = 0x16F8628
+bytes = "48 8B D6 48 8D 0D CE 20 C1 00"
+
 [symbol.token_lookup_tokenizer_call]
 memory = "code"
 note = "the script tokenizer's keyword lookup"
@@ -243,6 +279,10 @@ rva = 0x170EA12
 bytes = "E8 69 5E FD FE 48 85 C0"      # call 0x6E4880 (lookup); test rax,rax
 
 [symbol.token_lookup_tokenizer_call.build."eu4-1.37.5.2-gog-win64"]
+rva = 0x16F8632
+bytes = "E8 19 BD FE FE 48 85 C0"
+
+[symbol.token_lookup_tokenizer_call.build."eu4-1.37.5.0-gog-win64"]
 rva = 0x16F8632
 bytes = "E8 19 BD FE FE 48 85 C0"
 
@@ -258,6 +298,10 @@ bytes = "48 8D 0D A2 92 C1 00"         # lea rcx,[rip -> 0x2326720], the same di
 rva = 0x16F7097
 bytes = "48 8D 0D 62 36 C1 00"
 
+[symbol.token_lookup_get_or_add_args.build."eu4-1.37.5.0-gog-win64"]
+rva = 0x16F7097
+bytes = "48 8D 0D 62 36 C1 00"
+
 [symbol.token_lookup_get_or_add_call]
 memory = "code"
 note = "the get-or-add lookup"
@@ -267,6 +311,10 @@ rva = 0x170D47E
 bytes = "E8 FD 73 FD FE 48 85 C0"      # call 0x6E4880; test rax,rax
 
 [symbol.token_lookup_get_or_add_call.build."eu4-1.37.5.2-gog-win64"]
+rva = 0x16F709E
+bytes = "E8 AD D2 FE FE 48 85 C0"
+
+[symbol.token_lookup_get_or_add_call.build."eu4-1.37.5.0-gog-win64"]
 rva = 0x16F709E
 bytes = "E8 AD D2 FE FE 48 85 C0"
 
@@ -281,6 +329,10 @@ rva = 0x170D48F
 bytes = "48 8B 0D 12 E4 D1 00 48 2B 0D 03 E4 D1 00"   # mov rcx,[end]; sub rcx,[begin]
 
 [symbol.token_dynamic_tokens.build."eu4-1.37.5.2-gog-win64"]
+rva = 0x16F70AF
+bytes = "48 8B 0D 6A 86 D1 00 48 2B 0D 5B 86 D1 00"
+
+[symbol.token_dynamic_tokens.build."eu4-1.37.5.0-gog-win64"]
 rva = 0x16F70AF
 bytes = "48 8B 0D 6A 86 D1 00 48 2B 0D 5B 86 D1 00"
 
@@ -300,6 +352,10 @@ bytes = "48 8B 05 75 DC F0 00 8B 98 D0 1D 00 00"   # mov rax,[root]; mov ebx,[ra
 rva = 0x142C19C
 bytes = "48 8B 05 55 7B EF 00 8B 98 D0 1D 00 00"
 
+[symbol.root_and_date.build."eu4-1.37.5.0-gog-win64"]
+rva = 0x142C19C
+bytes = "48 8B 05 55 7B EF 00 8B 98 D0 1D 00 00"
+
 [symbol.range_min_distance]
 bytes = "4C 89 4C 24 20 48 89 54 24 10 48 89 4C 24 08"
 memory = "code"
@@ -307,6 +363,7 @@ signature = "int* (void* country, int* out, void* province, void* arg4, int* thr
 note = "the country range check: minimum distance from the country's provinces"
 build."eu4-1.37.5-steam-win64" = { rva = 0x3526B0 }
 build."eu4-1.37.5.2-gog-win64" = { rva = 0x352580 }
+build."eu4-1.37.5.0-gog-win64" = { rva = 0x352580 }
 
 [symbol.province_distance]
 bytes = "4C 89 4C 24 20 4C 89 44 24 18 48 89 54 24 10 48 89 4C 24 08"
@@ -315,6 +372,7 @@ signature = "void* (void* out, void* a2, void* a3, void* a4, uintptr_t a5, uintp
 note = "province-to-province distance"
 build."eu4-1.37.5-steam-win64" = { rva = 0x2D2520 }
 build."eu4-1.37.5.2-gog-win64" = { rva = 0x2D24D0 }
+build."eu4-1.37.5.0-gog-win64" = { rva = 0x2D24D0 }
 
 [symbol.range_check_call]
 bytes = "E8 5F 05 00 00"               # call 0x3526B0
@@ -322,6 +380,7 @@ memory = "code"
 note = "0x3520D0 (is the province within the country's range): the call of the range check"
 build."eu4-1.37.5-steam-win64" = { rva = 0x35214C }
 build."eu4-1.37.5.2-gog-win64" = { rva = 0x35201C }
+build."eu4-1.37.5.0-gog-win64" = { rva = 0x35201C }
 
 [symbol.range_walk_scale]
 memory = "code"
@@ -334,6 +393,10 @@ rva = 0x35272E
 bytes = "F3 0F 10 35 02 F2 A6 01 F3 0F 10 3D 56 76 A4 01"   # movss xmm6,[scale]; movss xmm7,[offset]
 
 [symbol.range_walk_scale.build."eu4-1.37.5.2-gog-win64"]
+rva = 0x3525FE
+bytes = "F3 0F 10 35 4A 5C A5 01 F3 0F 10 3D 56 FB A2 01"
+
+[symbol.range_walk_scale.build."eu4-1.37.5.0-gog-win64"]
 rva = 0x3525FE
 bytes = "F3 0F 10 35 4A 5C A5 01 F3 0F 10 3D 56 FB A2 01"
 
@@ -350,6 +413,10 @@ bytes = "4C 8B 05 FC D6 FE 01"         # mov r8,[map]
 rva = 0x3526A5
 bytes = "4C 8B 05 AC 16 FD 01"
 
+[symbol.range_walk_map.build."eu4-1.37.5.0-gog-win64"]
+rva = 0x3526A5
+bytes = "4C 8B 05 AC 16 FD 01"
+
 [symbol.range_walk_bonus]
 memory = "code"
 values.range_bonus_global = { at = 2, rip_relative = 6, type = "const int" }
@@ -363,6 +430,10 @@ bytes = "8B 3D 1D B8 FE 01"            # mov edi,[bonus]
 rva = 0x352769
 bytes = "8B 3D DD F7 FC 01"
 
+[symbol.range_walk_bonus.build."eu4-1.37.5.0-gog-win64"]
+rva = 0x352769
+bytes = "8B 3D DD F7 FC 01"
+
 [symbol.map_line]
 bytes = "40 53 48 81 EC 80 00 00 00 41 8B D8 4C 8B DA"
 memory = "code"
@@ -370,6 +441,7 @@ signature = "int (const int* a, const int* b, int width, int height, uint64_t fl
 note = "straight-line distance between two map coordinates"
 build."eu4-1.37.5-steam-win64" = { rva = 0x88A390 }
 build."eu4-1.37.5.2-gog-win64" = { rva = 0x8895C0 }
+build."eu4-1.37.5.0-gog-win64" = { rva = 0x8895C0 }
 
 [symbol.range_bonus]
 bytes = "40 53 48 83 EC 20 48 8B 99 20 14 00 00"
@@ -378,6 +450,7 @@ signature = "bool (void* country)"
 note = "the country's range bonus check"
 build."eu4-1.37.5-steam-win64" = { rva = 0x3F14A0 }
 build."eu4-1.37.5.2-gog-win64" = { rva = 0x3F1370 }
+build."eu4-1.37.5.0-gog-win64" = { rva = 0x3F1370 }
 
 [symbol.related_bonus]
 bytes = "48 89 5C 24 08 57 48 83 EC 60 48 8B F9"
@@ -386,6 +459,7 @@ signature = "bool (void* modifiers)"
 note = "the range bonus check of the second walk (related countries)"
 build."eu4-1.37.5-steam-win64" = { rva = 0x7ACEC0 }
 build."eu4-1.37.5.2-gog-win64" = { rva = 0x7AC230 }
+build."eu4-1.37.5.0-gog-win64" = { rva = 0x7AC230 }
 
 [symbol.related_bonus_default_a]
 bytes = "40 53 48 83 EC 40"
@@ -394,6 +468,7 @@ signature = "unsigned char* ()"
 note = "getter the second walk falls back to when the country has no modifier object at +0x1420"
 build."eu4-1.37.5-steam-win64" = { rva = 0x798DC0 }
 build."eu4-1.37.5.2-gog-win64" = { rva = 0x798130 }
+build."eu4-1.37.5.0-gog-win64" = { rva = 0x798130 }
 
 [symbol.related_bonus_default_b]
 bytes = "48 89 5C 24 20 55 56 57 48 83 EC 20"
@@ -402,6 +477,7 @@ signature = "unsigned char* ()"
 note = "second fallback getter"
 build."eu4-1.37.5-steam-win64" = { rva = 0x7A73C0 }
 build."eu4-1.37.5.2-gog-win64" = { rva = 0x7A6730 }
+build."eu4-1.37.5.0-gog-win64" = { rva = 0x7A6730 }
 
 # --- frame_pacing ------------------------------------------------------------------
 
@@ -418,6 +494,10 @@ bytes = "48 63 86 08 1E 00 00 4C 8D 2D A7 60 89 FF F3 0F 10 35 0F 11 CF 01 F3 41
 rva = 0x76910B
 bytes = "48 63 86 08 1E 00 00 4C 8D 2D E7 6E 89 FF F3 0F 10 35 9F 58 CD 01 F3 41 0F 59 B4 85 E8 CB C1 01"
 
+[symbol.nested_frame_threshold.build."eu4-1.37.5.0-gog-win64"]
+rva = 0x76910B
+bytes = "48 63 86 08 1E 00 00 4C 8D 2D E7 6E 89 FF F3 0F 10 35 9F 58 CD 01 F3 41 0F 59 B4 85 E8 CB C1 01"
+
 [symbol.nested_frame_compare]
 bytes = "0F 28 F8 F2 0F 5C BE 20 1E 00 00"   # movaps xmm7,xmm0; subsd xmm7,[rsi+1E20h]
 memory = "code"
@@ -425,6 +505,7 @@ values.last_frame_offset = { at = 7, size = 4 }
 note = "0x769EA0 after the clock read: xmm6 = threshold (float), xmm0 = the clock now (double), rsi = game state with the last frame's time at +last_frame_offset; the time since the last frame is compared with xmm6 next"
 build."eu4-1.37.5-steam-win64" = { rva = 0x769F78 }
 build."eu4-1.37.5.2-gog-win64" = { rva = 0x769138 }
+build."eu4-1.37.5.0-gog-win64" = { rva = 0x769138 }
 
 [symbol.sdl_peep_events]
 memory = "code"
@@ -439,12 +520,17 @@ bytes = "40 53 55 41 55 41 57 48 83 EC 68 8B 05 67 AB 86 00 45 8B E9 4C 63 FA"
 rva = 0x1730420
 bytes = "40 53 55 41 55 41 57 48 83 EC 68 8B 05 E7 4E 86 00 45 8B E9 4C 63 FA"
 
+[symbol.sdl_peep_events.build."eu4-1.37.5.0-gog-win64"]
+rva = 0x1730420
+bytes = "40 53 55 41 55 41 57 48 83 EC 68 8B 05 E7 4E 86 00 45 8B E9 4C 63 FA"
+
 [symbol.nested_frame_render]
 bytes = "48 8B BE 00 1E 00 00"            # mov rdi,[rsi+1E00h]
 memory = "code"
 note = "0x769EA0: the branch that draws the frame (0x14C25A0 with outer = 0)"
 build."eu4-1.37.5-steam-win64" = { rva = 0x769F9A }
 build."eu4-1.37.5.2-gog-win64" = { rva = 0x76915A }
+build."eu4-1.37.5.0-gog-win64" = { rva = 0x76915A }
 
 # --- tick_profile ------------------------------------------------------------------
 
@@ -455,6 +541,7 @@ signature = "void (void* state)"
 note = "gamestate.cpp: one game day (daily part 0x75BBE0, monthly 0x75D690, yearly 0x75E260)"
 build."eu4-1.37.5-steam-win64" = { rva = 0x758430 }
 build."eu4-1.37.5.2-gog-win64" = { rva = 0x7575F0 }
+build."eu4-1.37.5.0-gog-win64" = { rva = 0x7575F0 }
 
 [symbol.nested_frame_check]
 bytes = "48 8B C4 48 89 58 10 4C 89 40 18 55 56 57"
@@ -463,6 +550,7 @@ signature = "void (void* state, uint8_t force, void* a3, int line)"
 note = "gamestate.cpp: draws a frame if enough time passed; called between the stages of the tick"
 build."eu4-1.37.5-steam-win64" = { rva = 0x769EA0 }
 build."eu4-1.37.5.2-gog-win64" = { rva = 0x769060 }
+build."eu4-1.37.5.0-gog-win64" = { rva = 0x769060 }
 
 [symbol.ai_job]
 bytes = "48 89 5C 24 10 48 89 74 24 20 55 57 41 54"
@@ -471,6 +559,7 @@ signature = "void (void* list, void* arg)"
 note = "called only from 0x75B4B0: parallel_for on the pools over the per-country AI objects (item 0xB0FA0)"
 build."eu4-1.37.5-steam-win64" = { rva = 0x77D8A0 }
 build."eu4-1.37.5.2-gog-win64" = { rva = 0x77CBA0 }
+build."eu4-1.37.5.0-gog-win64" = { rva = 0x77CBA0 }
 
 [symbol.ai_country]
 bytes = "40 55 53 56 57 41 54 41 55"
@@ -479,6 +568,7 @@ signature = "void (void* ai)"
 note = "one country's daily AI update; from the pool job's functor (0x7861C2) or serially from 0x75B4B0 (0x75BA13)"
 build."eu4-1.37.5-steam-win64" = { rva = 0xB0FA0 }
 build."eu4-1.37.5.2-gog-win64" = { rva = 0xB0FD0 }
+build."eu4-1.37.5.0-gog-win64" = { rva = 0xB0FD0 }
 
 # --- army_search_profile -----------------------------------------------------------
 
@@ -489,6 +579,7 @@ signature = "uint64_t (void* scorer, int mode, void* army, uint64_t arg, float* 
 note = "ai_army.cpp (called from 0xEAB50): AI army search over the province graph with a scoring functor"
 build."eu4-1.37.5-steam-win64" = { rva = 0x1022B0 }
 build."eu4-1.37.5.2-gog-win64" = { rva = 0x1022E0 }
+build."eu4-1.37.5.0-gog-win64" = { rva = 0x1022E0 }
 
 # --- score_probe -------------------------------------------------------------------
 
@@ -499,6 +590,7 @@ signature = "uint64_t (void* self, void* unit, void* a3, void* a4, void* a5, voi
 note = "method of the army search's scoring functor (vtable 0x1C3CD98 + 8): can the unit move into a province"
 build."eu4-1.37.5-steam-win64" = { rva = 0x96F860 }
 build."eu4-1.37.5.2-gog-win64" = { rva = 0x96EA90 }
+build."eu4-1.37.5.0-gog-win64" = { rva = 0x96EA90 }
 
 [symbol.score_strength]
 bytes = "48 89 5C 24 10 48 89 4C 24 08 55 56 57 48 81 EC 90 00 00 00"
@@ -507,6 +599,7 @@ signature = "float (uint64_t flag, uint64_t army, void* province, uint8_t a4, in
 note = "AI army strength against a province (0x198C70 on the per-province table 0x242BA00)"
 build."eu4-1.37.5-steam-win64" = { rva = 0x102140 }
 build."eu4-1.37.5.2-gog-win64" = { rva = 0x102170 }
+build."eu4-1.37.5.0-gog-win64" = { rva = 0x102170 }
 
 [symbol.score_table]
 bytes = "48 8B C4 4C 89 48 20 44 89 40 18 48 89 50 10 48 89 48 08 53"
@@ -515,6 +608,7 @@ signature = "int* (int* out, int64_t* entry, int delta, int64_t table, int64_t* 
 note = "value of a per-province table entry at a date delta (called from 0x198C70)"
 build."eu4-1.37.5-steam-win64" = { rva = 0x1998F0 }
 build."eu4-1.37.5.2-gog-win64" = { rva = 0x199920 }
+build."eu4-1.37.5.0-gog-win64" = { rva = 0x199920 }
 
 # --- monthly_probe (modifier_merge also hooks 0x8EA420) ---------------------------
 
@@ -525,6 +619,7 @@ signature = "void (void* state, uint8_t a2)"
 note = "gamestate.cpp: the monthly tick (countries 0x2F36C0, provinces 0x9F35C0, units 0x763470)"
 build."eu4-1.37.5-steam-win64" = { rva = 0x75D690 }
 build."eu4-1.37.5.2-gog-win64" = { rva = 0x75C850 }
+build."eu4-1.37.5.0-gog-win64" = { rva = 0x75C850 }
 
 [symbol.country_month]
 bytes = "48 8B C4 48 89 58 10 44 88 40 18 48 89 48 08 55 56 57 41 54"
@@ -533,6 +628,7 @@ signature = "void (void* country, uint8_t a2, uint8_t a3)"
 note = "country.cpp: one country's monthly update, called in a serial loop from the monthly tick"
 build."eu4-1.37.5-steam-win64" = { rva = 0x2F36C0 }
 build."eu4-1.37.5.2-gog-win64" = { rva = 0x2F3670 }
+build."eu4-1.37.5.0-gog-win64" = { rva = 0x2F3670 }
 
 [symbol.province_month]
 bytes = "40 55 53 56 57 41 54 41 55 41 56 41 57 48 8D AC 24 58 FF FF FF"
@@ -541,6 +637,7 @@ signature = "void (void* province)"
 note = "one province's monthly update, called in a serial loop from the monthly tick"
 build."eu4-1.37.5-steam-win64" = { rva = 0x9F35C0 }
 build."eu4-1.37.5.2-gog-win64" = { rva = 0x9F25A0 }
+build."eu4-1.37.5.0-gog-win64" = { rva = 0x9F25A0 }
 
 [symbol.units_month]
 bytes = "48 89 5C 24 10 55 56 57 41 54 41 55 41 56 41 57 48 8D AC 24 80 F0 FF FF"
@@ -549,6 +646,7 @@ signature = "void (void* state, uint8_t a2)"
 note = "monthly update of the units (0x3BC640 > 0xD54600 per unit), called from the monthly tick"
 build."eu4-1.37.5-steam-win64" = { rva = 0x763470 }
 build."eu4-1.37.5.2-gog-win64" = { rva = 0x762630 }
+build."eu4-1.37.5.0-gog-win64" = { rva = 0x762630 }
 
 [symbol.port_table]
 bytes = "4C 8B DC 53 55 56 57 41 56 41 57 48 81 EC 98 00 00 00"
@@ -557,6 +655,7 @@ signature = "void (void* country)"
 note = "rebuilds the country's nearest-own-port table for every province (+0x2320), from 0x2F36C0"
 build."eu4-1.37.5-steam-win64" = { rva = 0x350B80 }
 build."eu4-1.37.5.2-gog-win64" = { rva = 0x350A50 }
+build."eu4-1.37.5.0-gog-win64" = { rva = 0x350A50 }
 
 
 [symbol.port_range]
@@ -572,6 +671,10 @@ bytes = "40 53 48 83 EC 20 48 8B DA"
 rva = 0x3508F0
 bytes = "40 53 48 83 EC 20 48 8B DA"
 
+[symbol.port_range.build."eu4-1.37.5.0-gog-win64"]
+rva = 0x3508F0
+bytes = "40 53 48 83 EC 20 48 8B DA"
+
 [symbol.modifier_merge]
 bytes = "40 55 41 55 48 83 EC 48 4C 63 4A 64 45 33 C0 4C 89 7C 24 20"
 memory = "code"
@@ -579,6 +682,7 @@ signature = "void* (void* dest, void* src)"
 note = "adds the (id, value) entries of one modifier list to another; linear scan for each non-static id"
 build."eu4-1.37.5-steam-win64" = { rva = 0x8EA420 }
 build."eu4-1.37.5.2-gog-win64" = { rva = 0x8E9650 }
+build."eu4-1.37.5.0-gog-win64" = { rva = 0x8E9650 }
 
 [symbol.game_random]
 bytes = "48 89 5C 24 08 8B 91 C0 09 00 00 48 8B D9 85 D2"
@@ -587,6 +691,7 @@ signature = "uint32_t (void* twister)"
 note = "Mersenne Twister draw (the game's random generator object at 0x2325220 among others)"
 build."eu4-1.37.5-steam-win64" = { rva = 0x14C71B0 }
 build."eu4-1.37.5.2-gog-win64" = { rva = 0x14C0D20 }
+build."eu4-1.37.5.0-gog-win64" = { rva = 0x14C0D20 }
 
 # --- modifier_merge ----------------------------------------------------------------
 
@@ -597,6 +702,7 @@ signature = "void* (size_t size)"
 note = "the game's operator new (_malloc_base with the new handler), which 0x8EA420 calls through a thunk"
 build."eu4-1.37.5-steam-win64" = { rva = 0x1A332D4 }
 build."eu4-1.37.5.2-gog-win64" = { rva = 0x1A1CF54 }
+build."eu4-1.37.5.0-gog-win64" = { rva = 0x1A1CF54 }
 
 [symbol.pointer_vector_emplace]
 bytes = "48 89 5C 24 20 55 56 41 54 48 83 EC 20"
@@ -605,6 +711,7 @@ signature = "void* (void* vector, void* where, void** value)"
 note = "std::vector<T*> reallocating insert, which 0x8EA420 calls when its vector of sources is full"
 build."eu4-1.37.5-steam-win64" = { rva = 0x8F0E0 }
 build."eu4-1.37.5.2-gog-win64" = { rva = 0x8F110 }
+build."eu4-1.37.5.0-gog-win64" = { rva = 0x8F110 }
 
 # --- monthly_probe: daily country parts ---------------------------------------------
 
@@ -615,6 +722,7 @@ signature = "void (void* country)"
 note = "country.cpp: one country's daily update, called in a loop from 0x75B0D0"
 build."eu4-1.37.5-steam-win64" = { rva = 0x2EE280 }
 build."eu4-1.37.5.2-gog-win64" = { rva = 0x2EE230 }
+build."eu4-1.37.5.0-gog-win64" = { rva = 0x2EE230 }
 
 [symbol.country_day_armies]
 bytes = "40 57 48 83 EC 40 4C 89 74 24 30 48 8B F9"
@@ -623,6 +731,7 @@ signature = "void (void* unit)"
 note = "daily update of an army (0xD3E110, then 0x195E10), from the daily country update"
 build."eu4-1.37.5-steam-win64" = { rva = 0x1A2D30 }
 build."eu4-1.37.5.2-gog-win64" = { rva = 0x1A2D60 }
+build."eu4-1.37.5.0-gog-win64" = { rva = 0x1A2D60 }
 
 [symbol.country_day_93fe30]
 bytes = "48 89 5C 24 08 55 56 57 41 54 41 55 41 56 41 57"
@@ -631,6 +740,7 @@ signature = "void (void* country, char* a2)"
 note = "part of the daily country update (0x93FB80 under it)"
 build."eu4-1.37.5-steam-win64" = { rva = 0x93FE30 }
 build."eu4-1.37.5.2-gog-win64" = { rva = 0x93F060 }
+build."eu4-1.37.5.0-gog-win64" = { rva = 0x93F060 }
 
 [symbol.country_day_327dc0]
 bytes = "48 89 5C 24 10 55 56 57 41 54 41 55 41 56 41 57"
@@ -639,6 +749,7 @@ signature = "void (void* country, char* a2, uint8_t a3)"
 note = "part of the daily country update (the country's modifiers through 0x93D130)"
 build."eu4-1.37.5-steam-win64" = { rva = 0x327DC0 }
 build."eu4-1.37.5.2-gog-win64" = { rva = 0x327D50 }
+build."eu4-1.37.5.0-gog-win64" = { rva = 0x327D50 }
 
 [symbol.country_day_fleets]
 bytes = "40 53 57 48 83 EC 48 48 8B 99 E8 00 00 00 48 8B F9"
@@ -647,6 +758,7 @@ signature = "void (void* unit)"
 note = "daily update of a fleet (0xD3E110), from the daily country update"
 build."eu4-1.37.5-steam-win64" = { rva = 0x90E410 }
 build."eu4-1.37.5.2-gog-win64" = { rva = 0x90D640 }
+build."eu4-1.37.5.0-gog-win64" = { rva = 0x90D640 }
 
 [symbol.country_day_18e7f0]
 bytes = "48 89 5C 24 10 48 89 6C 24 18 48 89 74 24 20 57"
@@ -655,6 +767,7 @@ signature = "void (void* object)"
 note = "part of the daily country update"
 build."eu4-1.37.5-steam-win64" = { rva = 0x18E7F0 }
 build."eu4-1.37.5.2-gog-win64" = { rva = 0x18E820 }
+build."eu4-1.37.5.0-gog-win64" = { rva = 0x18E820 }
 
 [symbol.country_day_37c730]
 bytes = "44 88 44 24 18 88 54 24 10 48 89 4C 24 08 55 53"
@@ -663,6 +776,7 @@ signature = "void (void* country, uint8_t a2, uint64_t a3)"
 note = "part of the daily country update"
 build."eu4-1.37.5-steam-win64" = { rva = 0x37C730 }
 build."eu4-1.37.5.2-gog-win64" = { rva = 0x37C600 }
+build."eu4-1.37.5.0-gog-win64" = { rva = 0x37C600 }
 
 [symbol.country_day_358ee0]
 bytes = "48 89 4C 24 08 55 53 56 57 41 54 41 55 41 56"
@@ -671,6 +785,7 @@ signature = "void (void* country)"
 note = "called by the daily country update 0x2EE280"
 build."eu4-1.37.5-steam-win64" = { rva = 0x358EE0 }
 build."eu4-1.37.5.2-gog-win64" = { rva = 0x358DB0 }
+build."eu4-1.37.5.0-gog-win64" = { rva = 0x358DB0 }
 
 [symbol.country_day_3288b0]
 bytes = "48 89 5C 24 18 48 89 54 24 10 55 56 57 41 54"
@@ -679,6 +794,7 @@ signature = "void (void* country, void* a2)"
 note = "called by the daily country update 0x2EE280"
 build."eu4-1.37.5-steam-win64" = { rva = 0x3288B0 }
 build."eu4-1.37.5.2-gog-win64" = { rva = 0x328840 }
+build."eu4-1.37.5.0-gog-win64" = { rva = 0x328840 }
 
 [symbol.country_modifiers]
 bytes = "48 89 5C 24 18 48 89 6C 24 20 56 57 41 54 41 56"
@@ -687,6 +803,7 @@ signature = "void (void* holder)"
 note = "recomputes a country's modifier list (date checks, 0x93ba00, 0x93D750), from 0x327DC0"
 build."eu4-1.37.5-steam-win64" = { rva = 0x93D130 }
 build."eu4-1.37.5.2-gog-win64" = { rva = 0x93C360 }
+build."eu4-1.37.5.0-gog-win64" = { rva = 0x93C360 }
 
 # --- province_modifier_view ------------------------------------------------------------
 
@@ -697,6 +814,7 @@ signature = "int32_t* (void* country, int32_t* out, void* province, void* cultur
 note = "copies the province's modifier list without id 0x286, then 0x3003B0 reads one value from the copy"
 build."eu4-1.37.5-steam-win64" = { rva = 0x2FFC60 }
 build."eu4-1.37.5.2-gog-win64" = { rva = 0x2FFC10 }
+build."eu4-1.37.5.0-gog-win64" = { rva = 0x2FFC10 }
 
 [symbol.province_culture_value_list]
 bytes = "4D 8D A0 98 09 00 00"          # lea r12,[r8+998h]: the province's modifier list
@@ -705,6 +823,7 @@ values.province_modifiers = { at = 3, size = 4 }
 note = "0x2FFC60: the offset of the province's modifier list it copies"
 build."eu4-1.37.5-steam-win64" = { rva = 0x2FFCB7 }
 build."eu4-1.37.5.2-gog-win64" = { rva = 0x2FFC67 }
+build."eu4-1.37.5.0-gog-win64" = { rva = 0x2FFC67 }
 
 [symbol.culture_modifier_value]
 bytes = "48 89 5C 24 08 48 89 6C 24 10 48 89 74 24 18 57"
@@ -713,6 +832,7 @@ signature = "int32_t* (void* country, int32_t* out, void* modifiers, void* cultu
 note = "the value 0x2FFC60 returns, from the country's modifiers and (through 0x300720) the province list"
 build."eu4-1.37.5-steam-win64" = { rva = 0x3003B0 }
 build."eu4-1.37.5.2-gog-win64" = { rva = 0x300360 }
+build."eu4-1.37.5.0-gog-win64" = { rva = 0x300360 }
 
 [symbol.modifier_value_registry]
 memory = "code"
@@ -727,6 +847,10 @@ bytes = "4C 8B 05 BA 78 05 02"          # mov r8,[registry] in 0x300720
 rva = 0x30076F
 bytes = "4C 8B 05 82 B7 03 02"
 
+[symbol.modifier_value_registry.build."eu4-1.37.5.0-gog-win64"]
+rva = 0x30076F
+bytes = "4C 8B 05 82 B7 03 02"
+
 [symbol.modifier_value_post_267]
 bytes = "49 8B 88 E0 E6 00 00"          # mov rcx,[r8+0E6E0h]
 memory = "code"
@@ -734,6 +858,7 @@ values.post_267 = { at = 3, size = 4 }
 note = "0x300720: the value object of modifier 0x267, called with the province list when set"
 build."eu4-1.37.5-steam-win64" = { rva = 0x30080A }
 build."eu4-1.37.5.2-gog-win64" = { rva = 0x3007BA }
+build."eu4-1.37.5.0-gog-win64" = { rva = 0x3007BA }
 
 [symbol.modifier_value_post_266]
 bytes = "49 8B 88 80 E6 00 00"          # mov rcx,[r8+0E680h]
@@ -742,6 +867,7 @@ values.post_266 = { at = 3, size = 4 }
 note = "0x300720: the value object of modifier 0x266, called with the province list when set"
 build."eu4-1.37.5-steam-win64" = { rva = 0x300959 }
 build."eu4-1.37.5.2-gog-win64" = { rva = 0x300909 }
+build."eu4-1.37.5.0-gog-win64" = { rva = 0x300909 }
 
 # --- save_compress ---------------------------------------------------------------
 
@@ -752,6 +878,7 @@ signature = "int (void* writer, void* input, uint8_t* buffer, uint64_t size, uin
 note = "compresses one ZIP member of a save (raw DEFLATE, CRC-32 a byte at a time); replaced as a whole"
 build."eu4-1.37.5-steam-win64" = { rva = 0x153C790 }
 build."eu4-1.37.5.2-gog-win64" = { rva = 0x1533690 }
+build."eu4-1.37.5.0-gog-win64" = { rva = 0x1533690 }
 
 [symbol.zip_deflate_member_init]
 memory = "code"
@@ -762,6 +889,10 @@ rva = 0x153C7FE
 bytes = "E8 6D 34 2E 00 85 C0"          # call 0x181FC70 (deflateInit2_); test eax,eax
 
 [symbol.zip_deflate_member_init.build."eu4-1.37.5.2-gog-win64"]
+rva = 0x15336FE
+bytes = "E8 ED 61 2D 00 85 C0"
+
+[symbol.zip_deflate_member_init.build."eu4-1.37.5.0-gog-win64"]
 rva = 0x15336FE
 bytes = "E8 ED 61 2D 00 85 C0"
 
@@ -777,6 +908,10 @@ bytes = "E8 87 29 2E 00 85 C0"          # call 0x181F210 (deflate, Z_NO_FLUSH); 
 rva = 0x1533784
 bytes = "E8 07 57 2D 00 85 C0"
 
+[symbol.zip_deflate_member_deflate.build."eu4-1.37.5.0-gog-win64"]
+rva = 0x1533784
+bytes = "E8 07 57 2D 00 85 C0"
+
 [symbol.zip_deflate_member_crc]
 memory = "code"
 note = "0x153C790: the CRC-32 loop over the bytes deflate consumed (table 0x1D91CD0), a byte per turn"
@@ -786,6 +921,10 @@ rva = 0x153C8A1
 bytes = "4C 8D 3D 28 54 85 00 0F 1F 84 00 00 00 00 00 41 0F B6 11 4D 8D 49 01 0F B6 C8 48 33 D1 C1 E8 08 41 33 04 97 41 83 C0 FF 75 E5"
 
 [symbol.zip_deflate_member_crc.build."eu4-1.37.5.2-gog-win64"]
+rva = 0x15337A1
+bytes = "4C 8D 3D 38 69 84 00 0F 1F 84 00 00 00 00 00 41 0F B6 11 4D 8D 49 01 0F B6 C8 48 33 D1 C1 E8 08 41 33 04 97 41 83 C0 FF 75 E5"
+
+[symbol.zip_deflate_member_crc.build."eu4-1.37.5.0-gog-win64"]
 rva = 0x15337A1
 bytes = "4C 8D 3D 38 69 84 00 0F 1F 84 00 00 00 00 00 41 0F B6 11 4D 8D 49 01 0F B6 C8 48 33 D1 C1 E8 08 41 33 04 97 41 83 C0 FF 75 E5"
 
@@ -801,6 +940,10 @@ bytes = "BA 04 00 00 00 48 8D 4C 24 40 E8 D1 28 2E 00 85 C0 74 ED 83 F8 01"  # d
 rva = 0x1533830
 bytes = "BA 04 00 00 00 48 8D 4C 24 40 E8 51 56 2D 00 85 C0 74 ED 83 F8 01"
 
+[symbol.zip_deflate_member_finish.build."eu4-1.37.5.0-gog-win64"]
+rva = 0x1533830
+bytes = "BA 04 00 00 00 48 8D 4C 24 40 E8 51 56 2D 00 85 C0 74 ED 83 F8 01"
+
 [symbol.zip_deflate_member_end]
 memory = "code"
 note = "0x153C790: deflateEnd and ~crc"
@@ -813,6 +956,10 @@ bytes = "E8 1A 32 2E 00 41 F7 17"       # call 0x181FB90 (deflateEnd); not dword
 rva = 0x1533871
 bytes = "E8 9A 5F 2D 00 41 F7 17"
 
+[symbol.zip_deflate_member_end.build."eu4-1.37.5.0-gog-win64"]
+rva = 0x1533871
+bytes = "E8 9A 5F 2D 00 41 F7 17"
+
 [symbol.zlib_deflate_init2]
 bytes = "40 53 56 41 54 41 55 41 57 48 83 EC 20 48 8B 84 24 80 00 00 00"
 memory = "code"
@@ -820,6 +967,7 @@ signature = "int (void* strm, int level, int method, int window_bits, int mem_le
 note = "deflateInit2_ of the zlib 1.2.8 linked into eu4.exe"
 build."eu4-1.37.5-steam-win64" = { rva = 0x181FC70 }
 build."eu4-1.37.5.2-gog-win64" = { rva = 0x18098F0 }
+build."eu4-1.37.5.0-gog-win64" = { rva = 0x18098F0 }
 
 [symbol.zlib_deflate]
 bytes = "40 53 57 41 56 48 83 EC 20 44 8B F2 48 8B F9 48 85 C9 0F 84 5A 09 00 00"
@@ -828,6 +976,7 @@ signature = "int (void* strm, int flush)"
 note = "deflate of the zlib 1.2.8 linked into eu4.exe"
 build."eu4-1.37.5-steam-win64" = { rva = 0x181F210 }
 build."eu4-1.37.5.2-gog-win64" = { rva = 0x1808E90 }
+build."eu4-1.37.5.0-gog-win64" = { rva = 0x1808E90 }
 
 [symbol.zlib_deflate_end]
 bytes = "48 89 5C 24 08 57 48 83 EC 20 48 8B D9 48 85 C9 0F 84 B4 00 00 00"
@@ -836,6 +985,7 @@ signature = "int (void* strm)"
 note = "deflateEnd of the zlib 1.2.8 linked into eu4.exe"
 build."eu4-1.37.5-steam-win64" = { rva = 0x181FB90 }
 build."eu4-1.37.5.2-gog-win64" = { rva = 0x1809810 }
+build."eu4-1.37.5.0-gog-win64" = { rva = 0x1809810 }
 # --- history_add -------------------------------------------------------------------
 
 [symbol.history_add_call]
@@ -844,6 +994,7 @@ memory = "code"
 note = "0xDA66A0 (reads one entry of a dated list from a save): the add of the entry it allocated, rdx = the entry"
 build."eu4-1.37.5-steam-win64" = { rva = 0xDA69E5 }
 build."eu4-1.37.5.2-gog-win64" = { rva = 0xDA5195 }
+build."eu4-1.37.5.0-gog-win64" = { rva = 0xDA5195 }
 
 [symbol.history_add_global_call]
 bytes = "FF 90 A0 00 00 00"            # call [rax+0A0h], after mov rdx,[rdx]; mov rcx,[rax+38h]; mov rax,[rcx]
@@ -851,6 +1002,7 @@ memory = "code"
 note = "0xDA66A0: the entry goes to the list of all such entries (0x7EC6C0 + 0x38) too, rdx = the entry; after a key that is no date, the owner's last entry, which can be in that list already"
 build."eu4-1.37.5-steam-win64" = { rva = 0xDA6A1D }
 build."eu4-1.37.5.2-gog-win64" = { rva = 0xDA51CD }
+build."eu4-1.37.5.0-gog-win64" = { rva = 0xDA51CD }
 
 [symbol.history_add_walk]
 bytes = "48 8B 41 20 48 8B FA 48 8B F1"  # mov rax,[rcx+20h]; mov rdi,rdx; mov rsi,rcx
@@ -858,6 +1010,7 @@ memory = "code"
 note = "0x7E7CD0 (add to a dated list): the head of the list, before the walk that looks for the entry; +0x20 is history_add_core.hpp's head"
 build."eu4-1.37.5-steam-win64" = { rva = 0x7E7CDA }
 build."eu4-1.37.5.2-gog-win64" = { rva = 0x7E704A }
+build."eu4-1.37.5.0-gog-win64" = { rva = 0x7E704A }
 
 [symbol.history_add_after_walk]
 bytes = "48 8B 06 48 8B CE 48 89 5C 24 38"  # mov rax,[rsi]; mov rcx,rsi; mov [rsp+38h],rbx
@@ -865,6 +1018,7 @@ memory = "code"
 note = "0x7E7CD0: where the walk ends when the entry is not in the list; reads rsi and rdi only"
 build."eu4-1.37.5-steam-win64" = { rva = 0x7E7D0E }
 build."eu4-1.37.5.2-gog-win64" = { rva = 0x7E707E }
+build."eu4-1.37.5.0-gog-win64" = { rva = 0x7E707E }
 
 # --- transfer_skip -----------------------------------------------------------------
 
@@ -875,6 +1029,7 @@ signature = "int (void* manager, const char* name, void** data, bool compress)"
 note = "CFileTransferManager::AddFile: compress = true deflates the file at level 9 into SFileDesc::CompressedData"
 build."eu4-1.37.5-steam-win64" = { rva = 0xD7AAD0 }
 build."eu4-1.37.5.2-gog-win64" = { rva = 0xD79280 }
+build."eu4-1.37.5.0-gog-win64" = { rva = 0xD79280 }
 
 [symbol.file_transfer_send]
 bytes = "48 89 5C 24 10 55 56 57 41 56 41 57 48 83 EC 40 45 8B F8 48 8B E9 4C 8B 49 28"
@@ -883,6 +1038,7 @@ signature = "uint64_t (void* manager, uint32_t index, uint32_t peer)"
 note = "CFileTransferManager::SendFile: the only reader of CompressedData; the bytes prove _Files at manager+0x28"
 build."eu4-1.37.5-steam-win64" = { rva = 0xD7B2A0 }
 build."eu4-1.37.5.2-gog-win64" = { rva = 0xD79A50 }
+build."eu4-1.37.5.0-gog-win64" = { rva = 0xD79A50 }
 
 [symbol.game_setup_load_file]
 bytes = "48 89 5C 24 10 48 89 74 24 18 55 57 41 56 48 8D 6C 24 B0"
@@ -891,6 +1047,7 @@ signature = "uint64_t (void* handler, const char* name, void* data, bool compres
 note = "CGameSetup::LoadFile, what the start command calls with the entry's Data and the flag 0"
 build."eu4-1.37.5-steam-win64" = { rva = 0x110D760 }
 build."eu4-1.37.5.2-gog-win64" = { rva = 0x1108310 }
+build."eu4-1.37.5.0-gog-win64" = { rva = 0x1108310 }
 
 [symbol.file_transfer_get_session]
 bytes = "49 8B 4D 20 48 8B 01 FF 50 08 48 8B D0"  # mov rcx,[r13+20h] (_Parent); mov rax,[rcx]; call [rax+8]; mov rdx,rax
@@ -898,6 +1055,7 @@ memory = "code"
 note = "AddFile asks its handler for the session: manager+0x20, slot 1, the offsets of transfer_skip_core.hpp"
 build."eu4-1.37.5-steam-win64" = { rva = 0xD7AE4E }
 build."eu4-1.37.5.2-gog-win64" = { rva = 0xD795FE }
+build."eu4-1.37.5.0-gog-win64" = { rva = 0xD795FE }
 
 [symbol.session_kind_check]
 bytes = "80 78 54 00 75 2B 80 78 55 00 75 25"  # cmp byte [rax+54h],0; jne; cmp byte [rax+55h],0; jne
@@ -907,6 +1065,7 @@ values.session_is_dummy = { at = 8, size = 1 }
 note = "CGameSetup::Load: CSession::_bIsServer and _bIsDummy; both zero is a client, who loads at once"
 build."eu4-1.37.5-steam-win64" = { rva = 0x1133713 }
 build."eu4-1.37.5.2-gog-win64" = { rva = 0x112DA83 }
+build."eu4-1.37.5.0-gog-win64" = { rva = 0x112DA83 }
 
 
 # --- army_search_memo ------------------------------------------------------------------
@@ -917,6 +1076,7 @@ memory = "code"
 note = "0xEAB50 (ai_army.cpp): the only call of the AI army search 0x1022B0"
 build."eu4-1.37.5-steam-win64" = { rva = 0xEBB5F }
 build."eu4-1.37.5.2-gog-win64" = { rva = 0xEBB8F }
+build."eu4-1.37.5.0-gog-win64" = { rva = 0xEBB8F }
 
 [symbol.unit_path_search]
 bytes = "4C 89 4C 24 20 48 89 54 24 10 48 89 4C 24 08 55 56 57 41 54 41 55 41 56 41 57 48 81 EC 00 02 00 00"
@@ -925,6 +1085,7 @@ signature = "uint8_t (void* a1, void* a2, void* a3, void* a4, void* a5, void* a6
 note = "the path search for one unit: it asks 0xD45250 for every move it considers"
 build."eu4-1.37.5-steam-win64" = { rva = 0x96C520 }
 build."eu4-1.37.5.2-gog-win64" = { rva = 0x96B750 }
+build."eu4-1.37.5.0-gog-win64" = { rva = 0x96B750 }
 
 [symbol.unit_neighbour_moves]
 bytes = "44 88 4C 24 20 48 89 54 24 10 55 53 41 54 41 55 41 57 48 8D 6C 24 D9 48 81 EC C0 00 00 00"
@@ -933,6 +1094,7 @@ signature = "void (void* a1, void* unit, int province, uint8_t a4, void* a5, voi
 note = "the moves of a unit from one province, in its daily update: it asks 0xD45250 for each neighbour"
 build."eu4-1.37.5-steam-win64" = { rva = 0x195750 }
 build."eu4-1.37.5.2-gog-win64" = { rva = 0x195780 }
+build."eu4-1.37.5.0-gog-win64" = { rva = 0x195780 }
 
 [symbol.army_speed_modifier_call]
 memory = "code"
@@ -946,9 +1108,14 @@ bytes = "E8 03 9E B9 00"
 rva = 0x1A69B8
 bytes = "E8 83 85 B9 00"
 
+[symbol.army_speed_modifier_call.build."eu4-1.37.5.0-gog-win64"]
+rva = 0x1A69B8
+bytes = "E8 83 85 B9 00"
+
 [symbol.zoc_flag_call]
 bytes = "E8 4A B8 FF FF"               # call 0xD40AE0, after mov edx,0E0h and xor r8d,r8d
 memory = "code"
 note = "0xD45250 (is a move blocked by a fort's zone of control): 0xD40AE0(army, 0xE0, 0), whether modifier 0xE0 applies to the army"
 build."eu4-1.37.5-steam-win64" = { rva = 0xD45291 }
 build."eu4-1.37.5.2-gog-win64" = { rva = 0xD43A41 }
+build."eu4-1.37.5.0-gog-win64" = { rva = 0xD43A41 }
