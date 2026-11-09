@@ -232,7 +232,9 @@ same happens between them.
 
 Ties do not explain everything. In the lab, runs of one vanilla save of 1444
 sometimes became a different game with the same seed, also with no Bellows at
-all. In every case we traced, one AI command landed on the other side of the
+all. Those runs used the game's `-seed` option, which also runs the AI's daily
+work on one thread; the year timings in this README ran without it, as a
+player's game does. In every case we traced, one AI command landed on the other side of the
 game's daily tick, so the order depends on timing. Bellows makes that happen
 more often: in a planned series at speed 2, 11 of 30 runs with default settings
 went the other way, against 1 of 30 without Bellows (sign test over paired
@@ -246,9 +248,9 @@ to every player as commands, so every game gets the same choices whoever runs Be
 In the lab the host ran Bellows with default settings and the other computer ran
 no Bellows: 233 game days on 0.17.0, with the game's own out-of-sync check shown
 to catch a single extra random draw on the host, and 231 on the code of 1.3.0, at
-speed 3 because the other computer could not keep up at 5. Neither run went out
-of sync. Both used one save of 1444, and neither had Bellows on the other computer.
-The modules that became default in 1.4 have not been through that test.
+speed 3 because the other computer could not keep up at 5. With the defaults of
+1.4 the same test ran 203 game days at speed 3. None of the three runs went out
+of sync. All used one save of 1444, and none had Bellows on the other computer.
 Details in [bellows#79](https://github.com/happy-dwarf-team/bellows/issues/79)
 and the [design notes](docs/design.md#4-correctness-safeguards-d).
 
