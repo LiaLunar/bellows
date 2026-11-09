@@ -1,5 +1,14 @@
 # Changelog
 
+## [1.6.0](https://github.com/happy-dwarf-team/bellows/compare/v1.5.0...v1.6.0) (2026-11-09)
+
+### Features
+
+* **never_throttle:** a new setting for players who minimize the game at speed 5. While a single-player game runs at speed 5 with the window minimized, the game normally waits 100 ms every frame; with `never_throttle = "on"` it skips that wait. In the lab a minimized year took 34 s instead of 83 s on the base game and 65 s instead of 107 s on Anbennar (medians of 5 games each, without `-seed`). With the window visible nothing changes. A minimized game at speed 5 uses more processor time per second (about 1.15 cores instead of 0.5–0.7). Pauses, menus, other speeds and multiplayer keep the game's waits. Off by default: turn it on in Anvil Manager's Settings tab. ([#171](https://github.com/happy-dwarf-team/bellows/issues/171))
+* **checksum_defer:** a new start-up setting for big mod sets. The game reads the files for its version code (the code next to the version on the main menu) while it loads its databases, and the two slow each other down. With `checksum_defer = "on"` that code is built once the databases are loaded: the same files and the same code, ready before the main menu. In the lab this took about 1 s off a start of Anbennar (22.1 → 21.0 s and 22.6 → 21.6 s in two series), with nothing measurable on the base game. The game's logs and the version code on the menu were the same in every start. Off by default. Not measured yet: the first start after a reboot, a slow disk, other mod sets. ([#172](https://github.com/happy-dwarf-team/bellows/issues/172))
+
+Nothing changes for players who keep the default settings. Both modules are off by default, and the default modules are the same as in 1.4 and 1.5. Neither new module was tested in multiplayer. `never_throttle` does nothing in multiplayer. With `checksum_defer` on, the game builds the same version code that multiplayer compares, so it should not matter there, but that has not been tested. The multiplayer test of the current defaults (Bellows 1.4) used the game's usual out-of-sync check, which compares the random-number count and seed, and it reported nothing in 203 days.
+
 ## [1.5.0](https://github.com/happy-dwarf-team/bellows/compare/v1.4.1...v1.5.0) (2026-11-09)
 
 ### Features
