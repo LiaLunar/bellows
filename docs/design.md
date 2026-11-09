@@ -127,8 +127,9 @@ format change.
   the host's AI decides and its commands go to every player: in the lab's MP
   test (host with 0.17.0 defaults, client without Bellows, 233 days) the
   client received 21,011 commands from `server.cpp`, including 73
-  `assign_leader`, and there was no out-of-sync; a lab plugin that draws one
-  extra random number on the host made the client go out of sync within 2
+  `assign_leader`, and the game's default out-of-sync check (random-number
+  count and seed, without `-hardoos`) reported nothing; a lab plugin that draws
+  one extra random number on the host made the client go out of sync within 2
   days. The code every machine runs (daily tick, command execution) showed no
   address ordering that changes game state. For determinism pairs the lab
   breaks these ties by object id with a lab-only plugin.
