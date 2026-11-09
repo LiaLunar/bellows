@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.4.1](https://github.com/happy-dwarf-team/bellows/compare/v1.4.0...v1.4.1) (2026-11-09)
+
+
+### Bug Fixes
+
+* **settings:** list each group's settings together ([#167](https://github.com/happy-dwarf-team/bellows/issues/167)) ([c9d7711](https://github.com/happy-dwarf-team/bellows/commit/c9d771162301e6c093d9f0786d2716d9d3b98367))
+
 ## [1.4.0](https://github.com/happy-dwarf-team/bellows/compare/v1.3.0...v1.4.0) (2026-11-09)
 
 
