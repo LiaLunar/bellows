@@ -90,6 +90,19 @@ inline bool IsWriteRoot(const char* root, const char* write) {
     return rl == wl || root[wl] == '\\' || root[wl] == '/';
 }
 
+// RFLAGS after `test eax,eax` for this eax: CF and OF cleared, ZF, SF and PF from the value; the other
+// bits (AF is undefined after test) kept.
+constexpr std::uint64_t TestFlags(std::uint64_t flags, std::uint32_t eax) noexcept {
+    constexpr std::uint64_t kCf = 0x1, kPf = 0x4, kZf = 0x40, kSf = 0x80, kOf = 0x800;
+    flags &= ~(kCf | kPf | kZf | kSf | kOf);
+    if (eax == 0) flags |= kZf;
+    if ((eax & 0x80000000u) != 0) flags |= kSf;
+    unsigned bits = 0;
+    for (std::uint32_t low = eax & 0xFF; low != 0; low &= low - 1) ++bits;
+    if ((bits & 1) == 0) flags |= kPf;
+    return flags;
+}
+
 // Mirrors the directory archiver: native path = opaque + name, '/' -> '\'.
 // `root` and `name` are not null and `name` is not empty; `get_listing(directory)` returns
 // the listing of a directory (shared_ptr<const Listing>).

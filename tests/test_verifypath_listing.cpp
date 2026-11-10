@@ -102,6 +102,13 @@ int main() {
     assert(!vp::Expired(*fresh, fresh->readAtMs + vp::kSessionListingMs - 1));
     assert(vp::Expired(*fresh, fresh->readAtMs + vp::kSessionListingMs));
 
+    // listing_lookup: the flags `test eax,eax` leaves for the game's jne (ZF), and SF/PF/CF/OF as the test.
+    static_assert(vp::TestFlags(0x202, 0) == (0x202 | 0x40 | 0x4));       // zero: ZF, PF (even parity)
+    static_assert(vp::TestFlags(0x202 | 0x40 | 0x4 | 0x1 | 0x800, 1) == 0x202);  // one: ZF, PF, CF, OF cleared
+    static_assert(vp::TestFlags(0x202, 3) == (0x202 | 0x4));              // 0b11: even parity
+    static_assert(vp::TestFlags(0x202, 0x80000000u) == (0x202 | 0x80 | 0x4));  // SF; low byte 0 -> PF
+    static_assert(vp::TestFlags(0x202 | 0x10, 1) == (0x202 | 0x10));      // AF kept
+
     std::puts("verifypath_listing: ok");
     return 0;
 }

@@ -363,7 +363,7 @@ int main(int argc, char** argv) {
                              "token_dict_profile=off, range_profile=on, range_witness=on, frame_pacing=on, pops_pacing=on, never_throttle=on, modifier_merge=on, port_table=on, province_modifier_view=on, army_search_memo=on, save_compress=on, transfer_skip=on, history_add=on, checksum_defer=on, tick_profile=on, army_search_profile=on, score_probe=on, monthly_probe=on";
     if (g_scenario != "refuse") {
         assert(Logged("modules: mimalloc=startup, open_warmup=off, ram_prefetch=off, verifypath_listing=on, "
-                      "exists_index=on, trigger_intern=on" + rest));
+                      "listing_lookup=on, exists_index=on, trigger_intern=on" + rest));
         for (const char* f : {"HeapFree", "HeapReAlloc", "HeapSize", "HeapAlloc", "GetFileAttributesExW",
                               "GetFileAttributesA"}) {
             assert(Live(std::string("replace_import ") + f));
@@ -400,7 +400,7 @@ int main(int argc, char** argv) {
         // HeapAlloc refused: the three heap imports mimalloc already had are removed. The
         // second trigger_intern site refused: the first one is removed. The rest stays.
         assert(Logged("modules: mimalloc=FAILED, open_warmup=off, ram_prefetch=off, verifypath_listing=on, "
-                      "exists_index=on, trigger_intern=FAILED" + rest));
+                      "listing_lookup=on, exists_index=on, trigger_intern=FAILED" + rest));
         for (const char* f : {"HeapFree", "HeapReAlloc", "HeapSize", "HeapAlloc"}) {
             assert(!Live(std::string("replace_import ") + f));
         }

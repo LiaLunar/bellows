@@ -45,6 +45,7 @@ using sb::verifypath::ReadListing;
 
 constexpr int kPhysfsNotFound = 0xB;
 constexpr std::size_t kArchiverStat = 0x68;  // the stat slot of a PhysFS archiver function table
+constexpr std::size_t kArchiverOpenRead = 0x40;  // its openRead slot
 
 using StatFn = int (*)(void*, const char*, void*);
 using SetErrorFn = void (*)(int);
@@ -81,6 +82,11 @@ extern "C" {
 // verifications/mismatches = checks against the original, mode = 1 patched,
 // cacheDisabled = disabled after a mismatch.
 __declspec(dllexport) sb::Stats EU4SB_VerifyPathStats = SB_STATS_INIT;
+// listing_lookup: the stat after verifyPath in getRealDir (PHYSFS_exists, PHYSFS_getRealDir) and the DIR
+// archiver's openRead in PHYSFS_openRead; same fields (openRead: hits = passed on to the game for an existing
+// name, misses = answered "not found" without CreateFileW).
+__declspec(dllexport) sb::Stats EU4SB_RealDirStatStats = SB_STATS_INIT;
+__declspec(dllexport) sb::Stats EU4SB_DirOpenReadStats = SB_STATS_INIT;
 }
 
 namespace {
@@ -211,7 +217,170 @@ extern "C" int SB_VerifyPathStat(void* opaque, const char* name, void* statOut, 
     }
 }
 
+// --- listing_lookup -------------------------------------------------------------
+//
+// After verifyPath passed for a directory archive, PhysFS asks the archiver again:
+//  - getRealDir (0x19FAD70; PHYSFS_exists and PHYSFS_getRealDir) calls its stat and only tests the result
+//    (`call [rax+68h]; test eax,eax; jne`): the statbuf is a local nobody reads;
+//  - PHYSFS_openRead calls its openRead (`call [rax+40h]; mov rsi,rax`). For a name that is not there the
+//    DIR archiver's CreateFileW fails, then it stats the path once more (PhysFS 3.0 doOpen) and sets the error
+//    code again: NOT_FOUND for ERROR_FILE_NOT_FOUND / ERROR_PATH_NOT_FOUND.
+// verifyPath lets a missing last component through (a file may be opened for writing), so every root whose
+// folder holds the parent pays these calls under the PhysFS state lock: on Anbennar the checksum task's 9,372
+// flattened paths fail in two roots each, and replace_path enumerations call getRealDir for every file.
+// Both blocks answer from verifypath_listing's listings with the same rules (the write directory and anything
+// unusual go to the game). The stat gives rc 1 for an existing name and rc 0 with NOT_FOUND otherwise;
+// openRead answers only "not found" (null, NOT_FOUND) and passes every existing name to the game, so an
+// existing file is always opened through the real API. Every 256th answer (every one in "verify") is checked
+// against the game's own call; a difference turns listing_lookup off. Start-up only: off at the ready event.
+
+namespace {
+
+anvil::Change g_realDirBlock;  // kept for the process
+anvil::Change g_openReadBlock;
+bool g_lookupVerifyAll = false;
+volatile LONG64 g_lookupSequence = 0;
+using OpenReadFn = void* (*)(void*, const char*);
+
+bool LookupDisabled(sb::Stats& stats) noexcept {
+    if (InterlockedCompareExchange(&stats.cacheDisabled, 0, 0) != 0) return true;
+    if (InterlockedCompareExchange(&EU4SB_VerifyPathStats.cacheDisabled, 0, 0) != 0) return true;
+    if (InterlockedCompareExchange(&stats.readyDisabled, 0, 0) != 0) return true;
+    if (sb::ReadyReached()) {
+        InterlockedExchange(&stats.readyDisabled, 1);
+        return true;
+    }
+    return false;
+}
+
+Answer LookupDecide(sb::Stats& stats, const void* opaque, const char* name, const void* funcs, Kind& kind) {
+    if (LookupDisabled(stats) || reinterpret_cast<uintptr_t>(funcs) != g_dirArchiver || g_listings == nullptr) {
+        return Answer::Original;
+    }
+    return Decide(static_cast<const char*>(opaque), name, kind);
+}
+
+bool LookupSampled() noexcept { return g_lookupVerifyAll || (InterlockedIncrement64(&g_lookupSequence) & 255) == 0; }
+
+void LookupMismatch(sb::Stats& stats, const char* what, const void* opaque, const char* name, const char* said,
+                    long long actual, int error) {
+    const LONG64 count = InterlockedIncrement64(&stats.mismatches);
+    if (!g_lookupVerifyAll) InterlockedExchange(&stats.cacheDisabled, 1);
+    if (count <= 10) {
+        sb::Log(ANVIL_LOG_WARNING, "listing_lookup %s mismatch: root '%s' name '%s': listing says %s, original %lld error %d",
+                what, static_cast<const char*>(opaque), name, said, actual, error);
+    }
+}
+
+}  // namespace
+
+extern "C" int SB_RealDirStat(void* opaque, const char* name, void* statOut, const void* funcs) {
+    sb::Stats& stats = EU4SB_RealDirStatStats;
+    sb::Increment(&stats.requests);
+    const auto original = *reinterpret_cast<const StatFn*>(static_cast<const unsigned char*>(funcs) + kArchiverStat);
+    try {
+        Kind kind = Kind::Unknown;
+        const Answer answer = name == nullptr ? Answer::Original : LookupDecide(stats, opaque, name, funcs, kind);
+        if (answer == Answer::Original) {
+            sb::Increment(&stats.skips);
+            return original(opaque, name, statOut);
+        }
+        if (LookupSampled()) {
+            sb::Increment(&stats.verifications);
+            const int rc = original(opaque, name, statOut);
+            const int error = rc ? 0 : g_getError();
+            const bool same = answer == Answer::Exists ? rc == 1 : (rc == 0 && error == kPhysfsNotFound);
+            if (!same) LookupMismatch(stats, "stat", opaque, name, answer == Answer::Exists ? "exists" : "not found", rc, error);
+            if (!rc) g_setError(error);
+            return rc;  // the game's own answer whenever it was asked
+        }
+        if (answer == Answer::NotFound) {
+            sb::Increment(&stats.misses);
+            g_setError(kPhysfsNotFound);
+            return 0;
+        }
+        PhysfsStat result{};  // not read by getRealDir; filled as in verifypath_listing
+        result.filesize = kind == Kind::Directory ? 0 : -1;
+        result.modtime = result.createtime = result.accesstime = -1;
+        result.filetype = kind == Kind::Directory ? 1 : 0;
+        std::memcpy(statOut, &result, sizeof(result));
+        sb::Increment(&stats.hits);
+        return 1;
+    } catch (...) {
+        sb::Increment(&stats.skips);
+        return original(opaque, name, statOut);
+    }
+}
+
+extern "C" void* SB_DirOpenRead(void* opaque, const char* name, const void* funcs) {
+    sb::Stats& stats = EU4SB_DirOpenReadStats;
+    sb::Increment(&stats.requests);
+    const auto original = *reinterpret_cast<const OpenReadFn*>(static_cast<const unsigned char*>(funcs) + kArchiverOpenRead);
+    try {
+        Kind kind = Kind::Unknown;
+        const Answer answer = name == nullptr ? Answer::Original : LookupDecide(stats, opaque, name, funcs, kind);
+        if (answer != Answer::NotFound) {
+            sb::Increment(answer == Answer::Exists ? &stats.hits : &stats.skips);
+            return original(opaque, name);  // existing names always through the real API
+        }
+        if (LookupSampled()) {
+            sb::Increment(&stats.verifications);
+            void* io = original(opaque, name);
+            const int error = io != nullptr ? 0 : g_getError();
+            if (io != nullptr || error != kPhysfsNotFound) {
+                LookupMismatch(stats, "openRead", opaque, name, "not found", io != nullptr ? 1 : 0, error);
+            }
+            if (io == nullptr) g_setError(error);
+            return io;  // the game's own answer whenever it was asked
+        }
+        sb::Increment(&stats.misses);
+        g_setError(kPhysfsNotFound);
+        return nullptr;
+    } catch (...) {
+        sb::Increment(&stats.skips);
+        return original(opaque, name);
+    }
+}
+
 namespace sb {
+
+bool InstallListingLookup(anvil::Host& host, Mode mode) {
+    if (mode == Mode::Off) return false;
+    if (g_listings == nullptr || InterlockedCompareExchange(&EU4SB_VerifyPathStats.mode, 0, 0) != 1) {
+        Log(ANVIL_LOG_WARNING, "listing_lookup: needs verifypath_listing, which is off; module off");
+        return false;
+    }
+    g_lookupVerifyAll = mode == Mode::Verify;
+    // `call [rax+68h]` (stat(opaque = rcx, name = rdx, stat = r8), rax = the function table) and
+    // `test eax,eax`; the following jne reads ZF, so the callback sets the flags as the test would.
+    Undo undo;
+    g_realDirBlock = host.replace_block(sym::realdir_stat_call, [](anvil::Cpu& cpu) {
+        const int rc = SB_RealDirStat(reinterpret_cast<void*>(cpu.rcx), reinterpret_cast<const char*>(cpu.rdx),
+                                      reinterpret_cast<void*>(cpu.r8), reinterpret_cast<const void*>(cpu.rax));
+        cpu.rax = static_cast<std::uint32_t>(rc);
+        cpu.rflags = verifypath::TestFlags(cpu.rflags, static_cast<std::uint32_t>(rc));
+    });
+    undo.add(g_realDirBlock);
+    // `call [rax+40h]` (openRead(opaque = rcx, name = rdx)) and `mov rsi,rax`; the game tests rax next.
+    g_openReadBlock = host.replace_block(sym::dir_openread_call, [](anvil::Cpu& cpu) {
+        void* io = SB_DirOpenRead(reinterpret_cast<void*>(cpu.rcx), reinterpret_cast<const char*>(cpu.rdx),
+                                  reinterpret_cast<const void*>(cpu.rax));
+        cpu.rax = reinterpret_cast<std::uintptr_t>(io);
+        cpu.rsi = reinterpret_cast<std::uintptr_t>(io);
+    });
+    undo.add(g_openReadBlock);
+    undo.keep();
+    for (Stats* stats : {&EU4SB_RealDirStatStats, &EU4SB_DirOpenReadStats}) {
+        InterlockedExchange(&stats->mode, 1);
+        InterlockedExchange(&stats->initialized, 1);
+    }
+    return true;
+}
+
+void ReportListingLookup() {
+    LogStats("listing_lookup stat", EU4SB_RealDirStatStats);
+    LogStats("listing_lookup openRead", EU4SB_DirOpenReadStats);
+}
 
 void SetVerifyPathSession(bool on) noexcept { g_session = on; }
 

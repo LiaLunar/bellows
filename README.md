@@ -213,6 +213,35 @@ so they get the same value. Not measured: the first start after a reboot or a sl
 disk (the margin before the menu is smallest on the base game), other mod sets,
 and multiplayer with the module on.
 
+### PhysFS lookups from listings
+
+`listing_lookup` off (the default) and `"on"`, warm starts to the main menu
+(`Running application` in `system.log`), EU4 1.37.5 (Steam), original `eu4.exe`
+started from a copy of the game folder on processors 1–7, Anvil 1.13.0 and
+anvil-game, Bellows defaults otherwise and the profiles it learned on a warm-up
+start. Five starts per setting, in the order `off on on off off on on off off on`,
+after one warm-up start, 10 November 2026:
+
+| Mod set | `listing_lookup` off | `"on"` | Difference |
+| --- | --- | --- | ---: |
+| Anbennar (above) | 21.94–22.37 s, median 22.08 s | 18.71–19.53 s, median **18.86 s** | −3.23 s |
+| Base game | 11.35–11.99 s, median 11.65 s | 11.32–11.62 s, median 11.58 s | −0.07 s |
+
+On Anbennar the ranges do not overlap (permutation test of the medians
+p = 0.048): the start before the application is created is 1.1 s shorter and the
+databases 1.6 s, while the events take as long as before. Each start with
+`"on"` answered about 71,000 of the file system's second looks at a mod folder
+and skipped about 28,000 opens of files that are not there. On the base game
+without mods nothing reaches the module, and the medians differ within the
+spread (p = 0.24). `setup.log`, `error.log` and `system.log` had the same lines in
+every start of a mod set, and every capture of the main menu showed the same
+version code, `(1824)` on Anbennar and `(491d)` on the base game. One start per
+mod set with `"verify"`, which asks the game every time and returns its answer,
+compared about 100,000 answers on Anbennar and 5,500 on the base game: 0
+differences. Not measured: the first start after a reboot, other mod sets, the
+GOG build in the game (its addresses are checked against both GOG builds), and
+`listing_lookup` together with `checksum_defer = "on"`.
+
 ### Loading a save
 
 "Continue" on the main menu until the game is ready, EU4 1.37.5 (Steam), original
@@ -316,6 +345,7 @@ about 1.5 s longer than the times above, which stop at `Running application`.
 | `transfer_skip` | **Loading, on by default since 1.1.** In single player, "Continue" of a text save no longer compresses the whole file at level 9 for a multiplayer transfer nobody receives; the game loads the same file as before. Hosted multiplayer is left as it is. `"verify"` keeps the game's copy and checks that it is the save, that the load does not use it and that nothing is sent. Lab, interleaved runs, 5 per setting, click on "Continue" to the game ready: the 64.5 MB save of 1821 8.95 s (8.55–9.23) instead of 10.91 s (10.78–11.06), a 40 MB vanilla save of 1450 4.47 s (4.35–4.99) instead of 5.84 s (5.70–6.14). Compressed saves have no such copy and do not change |
 | `history_add` | **Loading, on by default since 1.2.** Adds an entry the game just read to a dated list without first walking the whole list to see whether that new entry is in it; the list comes out the same. The gain grows with the square of the list, so it depends on the mods: about 0.5 s of "Continue" with the lab's 10 mods (38,000 entries, 154 million list steps), almost nothing on vanilla (4,300 entries, 2 million steps). `"verify"` lets the game walk and compares: 0 differences. See [Loading a save](#loading-a-save) |
 | `checksum_defer` | **Loading, off by default.** At start-up the game reads the files of its version checksum (the code in brackets next to the version on the main menu) while it loads its databases, and the two take turns on the file system. With `"on"` the checksum starts once the databases are loaded: the same files in the same order and the same checksum, ready before the main menu is. Lab: about 1 s less to the main menu on Anbennar, nothing measurable on the base game; the game's logs and the checksum on the menu were the same in every start. `"verify"` only logs the times. See [The checksum after the databases](#the-checksum-after-the-databases) |
+| `listing_lookup` | **Start-up, off by default.** Once a file path passed PhysFS's checks, the game asks each mod folder once more whether the file is there, and tries to open it in every folder that has its parent folder, also where the file is not. With `"on"` (and `verifypath_listing` on) both answers for files that are not there come from the directory listings Bellows already reads; every existing file is still opened by the game. Matters for big mod sets that replace folders: lab, about 3.2 s less to the main menu on Anbennar, nothing measurable on the base game; the game's logs and the checksum on the menu were the same in every start. Every 256th answer is also asked of the game, and a difference turns the module off; `"verify"` asks every time. See [PhysFS lookups from listings](#physfs-lookups-from-listings) |
 | `frame_pacing` | **Simulation, on by default since 0.15.** At the fastest speed, draws frames from inside the daily tick less often while you do nothing (setting `frame_pacing_interval_ms`, 100 ms; the game's own is 50 ms), and at once when a key press, click or wheel turn waits (`frame_pacing_input = "draw"`). The simulation is the same; the map updates about 16 instead of 22 times a second at speed 5 while you do nothing (lab: a year at speed 5 in 20.8 s instead of 23.4 s, on Anbennar 48.4 s instead of 55.4 s, see [A year of Anbennar at speed 5](#a-year-of-anbennar-at-speed-5); a key press at speed 5 handled after 21 ms instead of 51.5 ms in the median, a real key press after 21.6 ms instead of 56.8 ms) |
 
 Diagnostics, off by default: `zip_profile`, `token_dict_profile`,

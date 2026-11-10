@@ -15,6 +15,7 @@ namespace sb {
 // failed module leaves the game unchanged for that module only.
 bool InstallMimalloc(anvil::Host& host, Mode mode);
 bool InstallVerifyPathListing(anvil::Host& host, Mode mode);
+bool InstallListingLookup(anvil::Host& host, Mode mode);  // prototype, after InstallVerifyPathListing
 bool InstallExistsIndex(anvil::Host& host, Mode mode);
 bool InstallTriggerIntern(anvil::Host& host, Mode mode);
 bool InstallMetascriptSubst(anvil::Host& host, Mode mode);
@@ -72,6 +73,7 @@ void FinishRamPrefetch();
 // benchmark fields (benchmark.hpp).
 void ReportMimalloc();
 void ReportVerifyPathListing();
+void ReportListingLookup();
 void ReportExistsIndex();
 void ReportTriggerIntern();
 void ReportMetascriptSubst();

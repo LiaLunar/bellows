@@ -39,6 +39,7 @@ DWORD WINAPI FinishAfterReady(void*) {
         {"ram_prefetch finish", sb::FinishRamPrefetch},
         {"mimalloc report", sb::ReportMimalloc},
         {"verifypath_listing report", sb::ReportVerifyPathListing},
+        {"listing_lookup report", sb::ReportListingLookup},
         {"exists_index report", sb::ReportExistsIndex},
         {"trigger_intern report", sb::ReportTriggerIntern},
         {"metascript_subst report", sb::ReportMetascriptSubst},
@@ -118,6 +119,7 @@ struct Bellows : anvil::Plugin {
             {"open_warmup", cfg::open_warmup.id, sb::InstallOpenWarmup},  // early: its threads must run ahead of the game
             {"ram_prefetch", cfg::ram_prefetch.id, sb::InstallRamPrefetch},  // early as well: workers decode ahead of the game
             {"verifypath_listing", cfg::verifypath_listing.id, sb::InstallVerifyPathListing},
+            {"listing_lookup", cfg::listing_lookup.id, sb::InstallListingLookup},  // prototype, off; needs verifypath_listing
             {"exists_index", cfg::exists_index.id, sb::InstallExistsIndex},
             {"trigger_intern", cfg::trigger_intern.id, sb::InstallTriggerIntern},
             {"metascript_subst", cfg::metascript_subst.id, sb::InstallMetascriptSubst},

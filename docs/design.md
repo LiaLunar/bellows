@@ -41,6 +41,7 @@ code only.
 | `never_throttle` | Simulation, off by default: sets the application's never-throttle flag while a single-player game runs at speed 5, so a minimized game skips its 100 ms frame wait (§6a) | minimized year: vanilla 84.0 → 32.5 s, Anbennar 107.7 → 67.2 s (flag set from outside, lab) |
 | `save_compress` | Saving: the game's own zlib with a faster CRC-32 (the game's bytes); optionally in parallel (§6a) | autosave 0.873 → 0.831 s; parallel 0.612 s |
 | `transfer_skip` | Loading in single player: no level 9 copy of a text save for a transfer nobody receives (§6a) | "Continue" of a 64.5 MB save 10.91 → 8.95 s |
+| `listing_lookup` | Start-up, off by default: the stat after `verifyPath` in `getRealDir` and the opens of names that are not there answered from `verifypath_listing`'s listings; existing files opened by the game (§6a) | Anbennar 22.08 → 18.86 s to the menu; base game: in the noise |
 | `checksum_defer` | Loading, off by default: the game's checksum task waits until the databases are loaded, so the two no longer take turns on the file system locks; the same files and checksum (§6a) | Anbennar: −1.11 and −1.01 s to the menu (two series); base game: in the noise |
 
 The table's start-up modules are in the order they were ported; §6a has the
@@ -931,6 +932,42 @@ game makes them wait; the checksum itself would not change. With `-threads=1` th
 the pool, the body hook never runs and the database hook only sets the event.
 
 GOG: `0x217890`, `0x2085E0`, `0x2110C0` on 1.37.5.2, the same on 1.37.5.0.
+
+### listing_lookup (start-up)
+
+Off by default; needs `verifypath_listing`. PhysFS 3.0 (the game's) asks a directory archive twice. `verifyPath`
+stats every prefix of the path, and `verifypath_listing` answers those stats from listings. A missing *last*
+component still passes (a file may be opened for writing), and then:
+
+- `getRealDir` (`0x19FAD70`; `PHYSFS_exists` and `PHYSFS_getRealDir`) calls the archiver's stat on the full path
+  (`call [rax+68h]` at `0x19FAE7D`) and only tests the result; its stat buffer is a local nobody reads;
+- `PHYSFS_openRead` calls the archiver's `openRead` (`call [rax+40h]` at `0x19F8072`). For a name that is not
+  there the DIR archiver's `CreateFileW` fails, it stats the same path once more and sets the error code it had
+  (`0x1A071D0`, PhysFS's `doOpen`): two system calls per root, under PhysFS's state lock.
+
+Every root whose folder holds the parent pays these calls. The game's enumeration calls `getRealDir` for every file
+of a folder a mod replaces (`replace_path`), and every file opened from a later root fails first in each earlier
+mod folder that has its parent folder. In the lab's Anbennar start that is about 3,500 failed opens for the loader
+and about 20,700 for the checksum task, whose 9,372 flattened paths fail in two or three roots each. On the base
+game without mods nothing reaches these calls.
+
+The module replaces both blocks and decides with `verifypath_listing`'s listings and rules (only the DIR archiver,
+never the write directory, unusual names to the game). The stat gives rc 1 for an existing name and rc 0 with
+`NOT_FOUND` otherwise, and sets the flags the game's `test eax,eax` would (the next instruction is a `jne`).
+`openRead` answers only "not found" (null and `NOT_FOUND`, the code the game's failed `CreateFileW` gives for
+`ERROR_FILE_NOT_FOUND` and `ERROR_PATH_NOT_FOUND`); an existing name always goes to the game, which opens it
+through the real API. Every 256th answer is asked of the game as well, and the game's answer is the one returned;
+a difference turns the module off. `"verify"` does that for every answer. The module stops at the ready event.
+What it does not keep: the Win32 `GetLastError` value after a "not found" (the game reads PhysFS's code). Counters
+in `anvil.log`: `listing_lookup stat` and `listing_lookup openRead`.
+
+GOG: `0x19E4AFD` and `0x19E1CF2` on 1.37.5.2 and 1.37.5.0.
+
+Lab (series `vfs1`, 10 November 2026, README "PhysFS lookups from listings"): Anbennar 22.08 → 18.86 s to
+`Running application` (medians of 5, ranges apart), base game 11.65 → 11.58 s (noise). Per Anbennar start the stat
+block saw about 200,000 calls and answered 46,000 "exists" and 25,000 "not found"; the openRead block saw 146,000
+and answered 28,000 "not found" (the game's own opens of the other 118,000, ZIP members among them). `"verify"`: 71,720
+stats and 28,198 opens compared on Anbennar, 5,545 stats on the base game, 0 differences.
 
 ### tick_profile (diagnostic, simulation)
 

@@ -53,6 +53,24 @@ build."eu4-1.37.5-steam-win64" = { rva = 0x19FB7F4 }
 build."eu4-1.37.5.2-gog-win64" = { rva = 0x19E5474 }
 build."eu4-1.37.5.0-gog-win64" = { rva = 0x19E5474 }
 
+# --- listing_lookup (prototype, off by default) ---------------------------------
+
+[symbol.realdir_stat_call]
+bytes = "FF 50 68 85 C0"                  # call [rax+68h]; test eax,eax
+memory = "code"
+note = "PhysFS getRealDir (PHYSFS_exists, PHYSFS_getRealDir): the archiver's stat after verifyPath and the test of its result; replaced as a block"
+build."eu4-1.37.5-steam-win64" = { rva = 0x19FAE7D }
+build."eu4-1.37.5.2-gog-win64" = { rva = 0x19E4AFD }
+build."eu4-1.37.5.0-gog-win64" = { rva = 0x19E4AFD }
+
+[symbol.dir_openread_call]
+bytes = "FF 50 40 48 8B F0"               # call [rax+40h]; mov rsi,rax
+memory = "code"
+note = "PHYSFS_openRead: the archiver's openRead after verifyPath and the copy of its result; replaced as a block"
+build."eu4-1.37.5-steam-win64" = { rva = 0x19F8072 }
+build."eu4-1.37.5.2-gog-win64" = { rva = 0x19E1CF2 }
+build."eu4-1.37.5.0-gog-win64" = { rva = 0x19E1CF2 }
+
 [symbol.dir_archiver_stat]
 memory = "read"
 note = "PhysFS DIR archiver function table (0x1C1D7A0) + 0x68: its stat"
