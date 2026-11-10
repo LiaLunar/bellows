@@ -233,6 +233,49 @@ values for three countries, the player and three provinces read after the load.
 A compressed save, a first load after a reboot, multiplayer and the GOG build were
 not timed.
 
+### Bellows 1.6.0 against the game without it
+
+The current releases, Bellows with default settings, against the same game without
+Bellows, 10 November 2026. Without Bellows means Anvil 1.18.0 and anvil-game, and in
+the years also Tongs 0.30.0, which drives the run. With Bellows is the same plus Bellows 1.6.0
+from the release files, with no setting changed. Every series ran 5 games per setup
+in the order without, with, with, without, without, with, with, without, without, with,
+each after a check that the processor was idle, without the game's `-seed` option.
+
+**This is a different setup from the series in "A year at speed 5" above, so do not
+compare their seconds.** Those years ran with the game's main thread alone on one
+processor and 8 workers in both of its pools. These ran the way the game runs on its
+own on this machine:
+
+- the game on processors 1–7, its main thread on processor 4, placed there by the game
+  itself, and 6 workers in each pool, as the game chose them;
+- EU4 1.37.5 (Steam), original `eu4.exe`, started from a copy of the game folder with a
+  separate game profile for each series;
+- one machine.
+
+| Series | Without Bellows | With Bellows | Difference |
+| --- | --- | --- | ---: |
+| The year 1720 at speed 5 (save of Russia on 17 March 1719, warmed up to 1 January 1720, window on top) | 35.12 s (33.91–38.61) | **21.29 s** (20.50–21.86) | **39% less** |
+| Warm start of the base game, no mods, to the main menu (`Running application`) | 24.58 s (24.33–24.86) | **11.69 s** (11.38–11.92) | **52% less** |
+| The year 1445 of Anbennar at speed 5 (the Anbennar mod set above, save of Verne on 11 November 1444, observer mode) | 50.00 s (48.16–53.38) | 45.69 s (41.38–51.26), 4 games | 8.6% less, ranges overlap |
+
+Medians, with the fastest and slowest game in brackets.
+
+- **The base game.** Both ranges are apart in the year and in the start (exact
+  permutation test of the medians: p = 0.048 for each, the smallest five games each
+  allow).
+  - Every year ran 365 days without a pause, at speed 5 throughout.
+  - The game's logs were the same, apart from times and counts, in all 10 starts.
+  - The modules reported 0 differences from the game's own answers.
+- **Anbennar.** The gain is small and uncertain: the slowest game with Bellows took
+  longer than the fastest without, and p = 0.095. Two games with Bellows did not reach
+  the year and are not counted:
+  - in one, the lab's driver found the lobby's save list empty;
+  - the other was the lab's own mistake (it started with the wrong game profile).
+
+The start was warm: a start after a reboot was not timed. The Steam build only, no
+multiplayer.
+
 ### Measure your own
 
 Anvil Manager (`AnvilManager.exe` in the game folder) has a **Benchmark** tab
