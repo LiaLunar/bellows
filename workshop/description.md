@@ -36,6 +36,12 @@ Your AI can occasionally play out differently. In a planned test on one save, th
 ### I turned a module off before 1.4. Is it still off?
 Maybe not. Anvil only remembers settings that differ from the default, so if you turned **Port table**, **Province modifier view**, **AI army search memo** or **Online service pacing** off while off was already the default, 1.4 turns it on. Press **Ctrl+Shift+F12**, set it to **Off** in Bellows' **Simulation** settings and restart the game.
 
+### Can it go faster while the game is minimized?
+Yes, with **Full speed while minimized** in Bellows' **Simulation** settings, off by default. A minimized game normally waits a tenth of a second every frame; with the setting on, a single-player game at speed 5 skips that wait. On our test machine a minimized year took about 60% less time without mods and about 40% less with Anbennar, and the game used more processor time meanwhile. With the window in front nothing changes, and in multiplayer the setting does nothing.
+
+### Anything else that is off by default?
+**Checksum after the databases** in the **Loading** settings starts the game's version checksum once the game's data is loaded, instead of alongside it: the same files and the same checksum, about a second off the start of Anbennar on our test machine, nothing measurable without mods. Press **Ctrl+Shift+F12**, turn it on and restart the game.
+
 ### I play on GOG. Can I use it?
 Yes, the GOG builds 1.37.5.2 and 1.37.5.0 (1.37.5.0 needs Anvil 1.15 or newer). GOG has no Workshop: install Bellows from the **Catalog** tab in Anvil Manager (Anvil 1.9 or newer) or from [GitHub](https://github.com/happy-dwarf-team/bellows/releases). Same plugin, same forge, different road.
 
