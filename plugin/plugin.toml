@@ -1,6 +1,6 @@
 id = "bellows"
 name = "Bellows"
-version = "1.6.0"
+version = "1.7.0"
 authors = ["Happy Dwarf Team"]
 description = "Faster Europa Universalis IV start-up, simulation and saves, with no change to game files or rules."
 api = 2

@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.7.0](https://github.com/happy-dwarf-team/bellows/compare/v1.6.0...v1.7.0) (2026-11-10)
+
+### Features
+
+* **listing_lookup:** a new start-up setting for big mod sets, "PhysFS lookups from listings". At start the game looks for each of its files in every folder that could hold it, and in a folder that overrides another, such as Anbennar's, most of these looks fail: about 28,000 failed opens per start. With `listing_lookup = "on"` Bellows answers "not there" from the folder listings it already reads for "PhysFS path checks" (`verifypath_listing`, on by default), and every file that exists is still opened by the game. Every 256th answer is checked against the game, and a difference turns the module off. In the lab a warm start of Anbennar took 18.9 s instead of 22.1 s (5 warm starts each, alternating), with nothing measurable on the base game (11.6 s either way). The game's logs and the version code on the menu were the same in every start, and the `verify` mode compared about 100,000 answers on Anbennar with the game's without a difference. Off by default: turn it on in Anvil Manager's Settings tab. Not measured yet: the first start after a reboot, other mod sets, GOG in the game, and together with `checksum_defer`. ([#178](https://github.com/happy-dwarf-team/bellows/issues/178))
+
+Nothing changes for players who keep the default settings: the new module is off by default, and the default modules are the same as in 1.4 to 1.6. It works only at start, before the main menu, and was not tested in multiplayer.
+
 ## [1.6.0](https://github.com/happy-dwarf-team/bellows/compare/v1.5.0...v1.6.0) (2026-11-09)
 
 ### Features
