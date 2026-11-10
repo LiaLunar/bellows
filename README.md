@@ -19,7 +19,7 @@ Players can also subscribe on the
 The team's other tools for EU4 are on [happydwarf.dev](https://happydwarf.dev/).
 
 Bellows needs **Anvil 1.7 or newer** and EU4 1.37.5 (Steam, Windows 64-bit) or
-1.37.5.2 (GOG, Windows 64-bit); the GOG build 1.37.5.0 needs Anvil 1.16 or newer. Anvil checks every game address against `eu4.exe`
+1.37.5.2 (GOG, Windows 64-bit); the GOG build 1.37.5.0 needs Anvil 1.15 or newer. Anvil checks every game address against `eu4.exe`
 before it loads Bellows ([`plugin/symbols.toml`](plugin/symbols.toml),
 [design §6d](docs/design.md#6d-the-gog-build-13752-d)). On another build, or on
 any mismatch, it skips the plugin, gives the reason in `anvil/anvil.log`, and the
