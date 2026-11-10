@@ -98,8 +98,11 @@ struct Module {
     sb::Mode mode = sb::Mode::Off;
 };
 
+extern "C" int SB_PrivateHeapActive() noexcept;  // lab experiment, src/private_heap.cpp
+
 struct Bellows : anvil::Plugin {
     void load(anvil::Host& host) override {
+        sb::Log(ANVIL_LOG_INFO, "lab experiment: private heap %s", SB_PrivateHeapActive() ? "on" : "off");
         const std::filesystem::path plugin_dir = host.plugin_dir();
         const std::filesystem::path data_dir = host.data_dir();
         // The old names are a note in the log: nothing here may stop the modules.

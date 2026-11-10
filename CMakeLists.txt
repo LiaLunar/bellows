@@ -122,7 +122,7 @@ set(SB_SOURCES
 # File version shown in the DLL's Properties, from the same version.txt.
 configure_file(src/version.rc.in ${CMAKE_CURRENT_BINARY_DIR}/sb_version.rc @ONLY)
 anvil_add_plugin(bellows PLUGIN_DIR plugin
-    SOURCES src/plugin.cpp ${SB_SOURCES} ${CMAKE_CURRENT_BINARY_DIR}/sb_version.rc)
+    SOURCES src/plugin.cpp src/private_heap.cpp ${SB_SOURCES} ${CMAKE_CURRENT_BINARY_DIR}/sb_version.rc)
 target_include_directories(bellows PRIVATE src)
 target_link_libraries(bellows PRIVATE tomlplusplus::tomlplusplus mimalloc-static sb_zlib shell32 ole32 uuid)
 target_compile_definitions(bellows PRIVATE WIN32_LEAN_AND_MEAN NOMINMAX)
