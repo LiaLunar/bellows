@@ -33,9 +33,37 @@ Every release:
    plugin page comes from a measurement with the method written next to it.
 
 Every few releases, and before 1.0, the gate also covers what a single release does not
-touch: a big mod set (Anbennar) in `"verify"`, the determinism pair of the lab
-(`-randomlog`, with and without Bellows) and the multiplayer test (host with Bellows,
-client without).
+touch: a big mod set (Anbennar) in `"verify"`, the repeatability pair below and the
+multiplayer test (host with Bellows, client without).
+
+### The repeatability pair
+
+The lab's repeatability oracle: the game with Bellows at its defaults against the same game
+without Bellows, in conditions where the game without Bellows repeats itself exactly.
+
+- **When:** every release that changes which simulation modules are on by default, and
+  every few releases otherwise.
+- **Conditions:** speed 5, `-seed=12345` and `-randomlog`, the lab plugin `lab-tiebreak`
+  (which breaks the known AI ties by a stable rule instead of the memory address), the
+  save of Russia of 17 March 1719, 60 game days, one run to the end date without stops.
+  Anvil, anvil-game and Tongs in both arms; Bellows from the release files with default
+  settings in one.
+- **Pass:** every full game day has the same random draws (file, line, value) and the same
+  executed commands (without frame numbers, command IDs and `client_ping`) in every run.
+  A run whose random log was not copied completely does not count.
+- **A difference caused by a Bellows module** keeps that module from being `on` by default
+  until it is explained.
+- **A difference from the game itself** (a new tie broken by address, or another cause the
+  game without Bellows also shows) is written up, and `lab-tiebreak` is extended to cover
+  it. It does not block the release.
+
+Last pair: Bellows 1.4.1 with default settings, 9 November 2026 (lab batch `r84e`). Six
+runs without Bellows were the same as each other in all 60 days, and so were two runs with
+Bellows and one more without. The whole random log was the same byte for byte in all nine.
+The defaults have not changed since 1.4. The pair runs with `-seed`, which also runs the
+AI's daily work on one thread, so it shows that the default modules change no draw. It does
+not show that a player's game without `-seed` comes out the same (README, "AI ties and
+multiplayer").
 
 ## Budgets
 

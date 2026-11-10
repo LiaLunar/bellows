@@ -383,8 +383,15 @@ more often: in a planned series at speed 2, 11 of 30 runs with default settings
 went the other way, against 1 of 30 without Bellows (sign test over paired
 blocks, p = 0.002), each time at the same point of that save. That is one save,
 one speed and one computer, and we don't know how often it happens over a whole
-campaign. The series ran the defaults of 1.2; the modules that became default in 1.4
-have not been through it. Both orders are normal games.
+campaign. The series ran the defaults of 1.2. The defaults of 1.4, which have not
+changed since, went through a stricter check instead: at speed 5 with `-seed`, so the
+AI's daily work runs on one thread, and with a lab plugin that breaks the known ties by a
+stable rule instead of the memory address. On the save of Russia of 17 March 1719, over 60
+game days, every run gave the same random draws and the same commands, byte for byte: six
+without Bellows, and two with Bellows 1.4.1 at its defaults and one more without, 9 November
+2026. That shows the default modules change no draw of the game. It does not show that a
+game without `-seed`, where timing matters, comes out the same. Both orders are normal
+games.
 
 In multiplayer the known ties are safe. The host's AI makes these choices and sends them
 to every player as commands, so every game gets the same choices whoever runs Bellows.
