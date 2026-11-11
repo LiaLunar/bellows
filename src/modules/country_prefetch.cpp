@@ -10,7 +10,7 @@
 // structured exception handler, so a country freed while a save loads cannot take the game down.
 //
 // "on" prefetches on every day. "verify" prefetches only on every other day and times each daily update by the
-// class of the day (country_prefetch_core.hpp: prefetch days, plain days, first days of a month), so one game
+// class of the day (country_prefetch_core.hpp: prefetch days, plain days, 1st and 2nd of a month), so one game
 // gives both arms over the same years. A background thread writes the counters every 5 s to
 // country_prefetch.tsv in the data directory.
 #include "country_prefetch_core.hpp"
@@ -110,7 +110,7 @@ void Detour(void* country) {
     InterlockedIncrement64(&EU4SB_CountryPrefetchStats.requests);
     const unsigned char* root = *g_rootGlobal;
     const cp::DayClass day = root != nullptr ? cp::ClassOf(sb::Read<std::int32_t>(root, g_rootDate)) : cp::kPlainDay;
-    // "verify": no prefetch on first days of a month, so their time is the game's alone.
+    // "verify": no prefetch on the 1st and 2nd of a month, so their time is the game's alone.
     const bool prefetchToday = !g_verifyOnly || day == cp::kPrefetchDay;
     if (root != nullptr) {
         void* const* array = sb::Read<void* const*>(root, kRootCountries);

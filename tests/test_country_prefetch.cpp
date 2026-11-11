@@ -23,14 +23,15 @@ int main() {
     static_assert(DayOfMonth(Raw(1445, 0) + 23) == 1);  // hours within the day
     static_assert(DayOfMonth(-1) == 0);
 
-    // First days apart, the others alternate.
-    assert(ClassOf(Raw(1445, 31)) == kFirstDay);
+    // The 1st and the 2nd of a month apart, the others alternate.
+    assert(ClassOf(Raw(1445, 31)) == kFirstDay && ClassOf(Raw(1445, 32)) == kFirstDay);
+    assert(ClassOf(Raw(1445, 33)) != kFirstDay && ClassOf(Raw(1445, 30)) != kFirstDay);
     const DayClass a = ClassOf(Raw(1445, 40)), b = ClassOf(Raw(1445, 41)), c = ClassOf(Raw(1445, 42));
     assert(a != kFirstDay && b != kFirstDay && a != b && a == c);
     int counts[kClasses] = {0, 0, 0};
     for (int d = 0; d < kDaysPerYear; ++d) ++counts[ClassOf(Raw(1445, d))];
-    assert(counts[kFirstDay] == 12);
-    assert(counts[kPrefetchDay] + counts[kPlainDay] == 353);
+    assert(counts[kFirstDay] == 24);
+    assert(counts[kPrefetchDay] + counts[kPlainDay] == 341);
     assert(counts[kPrefetchDay] - counts[kPlainDay] <= 1 && counts[kPlainDay] - counts[kPrefetchDay] <= 1);
 
     // Locate: in order, from the start, out of order, absent.

@@ -32,13 +32,15 @@ constexpr int DayOfMonth(std::int32_t raw) noexcept {
 }
 
 // The class of a game day for the "verify" comparison: 0 and 1 alternate by the day number (0: prefetch on, 1:
-// off), 2 is the first day of a month (no prefetch in "verify"). After the monthly tick almost every country refreshes its knowledge and
-// modifiers on that day, which makes it about ten times longer than the others on Anbennar; it is kept apart so
-// that the uneven count of first days in the two halves does not decide the comparison.
+// off), 2 is the first or second day of a month (no prefetch in "verify"). The monthly tick runs in the tick of
+// the 1st after the country loop, so on the 2nd almost every country refreshes its knowledge and modifiers, which
+// makes that loop many times longer than the others on Anbennar. Both days are kept apart so that an uneven count
+// of such days in the two halves does not decide the comparison.
 enum DayClass : int { kPrefetchDay = 0, kPlainDay = 1, kFirstDay = 2, kClasses = 3 };
 
 constexpr DayClass ClassOf(std::int32_t raw) noexcept {
-    if (DayOfMonth(raw) == 1) return kFirstDay;
+    const int day = DayOfMonth(raw);
+    if (day == 1 || day == 2) return kFirstDay;
     return ((raw / kHoursPerDay) & 1) == 0 ? kPrefetchDay : kPlainDay;
 }
 
