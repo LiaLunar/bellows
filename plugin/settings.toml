@@ -182,6 +182,15 @@ description = "Simulation: reads one value from a province's modifiers in place 
 group = "Simulation"
 restart = true
 
+[setting.country_prefetch]
+type = "enum"
+values = [{ name = "off", label = "Off" }, { name = "on", label = "On" }, { name = "verify", label = "Verify" }]
+default = "off"
+label = "Country prefetch"
+description = "Simulation, prototype: while the game updates one country in the daily country loop, a helper thread loads the next country's data into the cache ahead of it (prefetch only, no writes, so the game computes the same). Verify prefetches on every other day and times both kinds of day."
+group = "Simulation"
+restart = true
+
 [setting.port_table]
 type = "enum"
 values = [{ name = "off", label = "Off" }, { name = "on", label = "On" }, { name = "verify", label = "Verify" }]

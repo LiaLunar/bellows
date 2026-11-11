@@ -33,6 +33,7 @@ bool InstallFramePacing(anvil::Host& host, Mode mode);
 bool InstallModifierMerge(anvil::Host& host, Mode mode);
 bool InstallPortTable(anvil::Host& host, Mode mode);
 bool InstallProvinceModifierView(anvil::Host& host, Mode mode);
+bool InstallCountryPrefetch(anvil::Host& host, Mode mode);  // prototype, off by default
 bool InstallArmySearchMemo(anvil::Host& host, Mode mode);
 bool InstallPopsPacing(anvil::Host& host, Mode mode);
 void NotePopsSession(bool multiplayer) noexcept;  // from anvil-game's session event
@@ -89,6 +90,7 @@ void ReportRangeWitness();
 void ReportModifierMerge();
 void ReportPortTable();
 void ReportProvinceModifierView();
+void ReportCountryPrefetch();
 void ReportArmySearchMemo();
 void ReportPopsPacing();
 void ReportNeverThrottle();

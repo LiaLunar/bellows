@@ -58,6 +58,7 @@ DWORD WINAPI FinishAfterReady(void*) {
         {"modifier_merge report", sb::ReportModifierMerge},
         {"port_table report", sb::ReportPortTable},
         {"province_modifier_view report", sb::ReportProvinceModifierView},
+        {"country_prefetch report", sb::ReportCountryPrefetch},
         {"army_search_memo report", sb::ReportArmySearchMemo},
         {"save_compress report", sb::ReportSaveCompress},
         {"transfer_skip report", sb::ReportTransferSkip},
@@ -140,6 +141,8 @@ struct Bellows : anvil::Plugin {
             // hooks the entry of 0x350B80; monthly_probe's hook on it chains.
             {"port_table", cfg::port_table.id, sb::InstallPortTable},
             {"province_modifier_view", cfg::province_modifier_view.id, sb::InstallProvinceModifierView},
+            // prototype, off by default; its hook on 0x2EE280 chains with monthly_probe's.
+            {"country_prefetch", cfg::country_prefetch.id, sb::InstallCountryPrefetch},
             // redirects the call of 0x1022B0 in 0xEAB50; army_search_profile hooks its entry, so both chain.
             {"army_search_memo", cfg::army_search_memo.id, sb::InstallArmySearchMemo},
             {"save_compress", cfg::save_compress.id, sb::InstallSaveCompress},

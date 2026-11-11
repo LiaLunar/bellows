@@ -360,7 +360,7 @@ int main(int argc, char** argv) {
     assert(Logged("config.toml migrated to settings.toml (1 value(s)"));
 
     const std::string rest = ", metascript_subst=off, metascript_blocks=on, attr_cache=verify, zip_profile=on, token_dict_cache=on, "
-                             "token_dict_profile=off, range_profile=on, range_witness=on, frame_pacing=on, pops_pacing=on, never_throttle=on, modifier_merge=on, port_table=on, province_modifier_view=on, army_search_memo=on, save_compress=on, transfer_skip=on, history_add=on, checksum_defer=on, tick_profile=on, army_search_profile=on, score_probe=on, monthly_probe=on";
+                             "token_dict_profile=off, range_profile=on, range_witness=on, frame_pacing=on, pops_pacing=on, never_throttle=on, modifier_merge=on, port_table=on, province_modifier_view=on, country_prefetch=on, army_search_memo=on, save_compress=on, transfer_skip=on, history_add=on, checksum_defer=on, tick_profile=on, army_search_profile=on, score_probe=on, monthly_probe=on";
     if (g_scenario != "refuse") {
         assert(Logged("modules: mimalloc=startup, open_warmup=off, ram_prefetch=off, verifypath_listing=on, "
                       "listing_lookup=on, exists_index=on, trigger_intern=on" + rest));
@@ -456,6 +456,7 @@ int main(int argc, char** argv) {
         };
         for (const auto& [module, mode] : modes) assert(g_values.at(module + ".mode") == mode);
         assert(!g_fields.contains("tick_profile.mode"));  // the diagnostics have no mode field
+        assert(!g_fields.contains("country_prefetch.mode"));  // nor the prototype that is off by default
         for (const char* field : {"exists_index.requests", "exists_index.listings", "verifypath_listing.mismatches",
                                   "attr_cache.verifications", "token_dict_cache.entries", "range_profile.checks",
                                   "range_witness.answered"}) {
