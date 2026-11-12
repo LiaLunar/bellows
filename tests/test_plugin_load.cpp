@@ -3,8 +3,10 @@
 // is this test's own executable and nothing is enabled), the per-module undo
 // when Anvil refuses a change, the config.toml migration, the ready event and
 // the start-up benchmark fields (a stand-in anvil.benchmark that checks every
-// call as Anvil 1.4 does; "old" is an Anvil without the service).
-//   test_plugin_load <bellows.dll> <plugin folder> ok|refuse|old
+// call as Anvil 1.4 does; "old" is an Anvil without the service), and "modules": an Anvil with modules
+// (1.22, ADR 0011) in which the player turned exists_index off and never_throttle (off by default) is
+// not turned on, so only its setting says "on".
+//   test_plugin_load <bellows.dll> <plugin folder> ok|refuse|old|modules
 #include <anvil/anvil_benchmark.h>
 #include <anvil/anvil_game.h>
 #include <anvil/anvil_plugin.h>
@@ -24,6 +26,7 @@
 #include <fstream>
 #include <map>
 #include <mutex>
+#include <set>
 #include <string>
 #include <vector>
 
@@ -130,6 +133,17 @@ const char* SettingString(AnvilPlugin*, AnvilSetting setting) {
     }
 }
 AnvilResult SubscribeSetting(AnvilPlugin*, AnvilSetting, AnvilSettingCallback, void*) { return ANVIL_ERROR_WRONG_KIND; }
+// --- the stand-in module() of Anvil 1.22 ("modules") -----------------------------
+std::vector<std::string> g_moduleCalls;
+unsigned char g_moduleHandles[64] = {};  // a distinct address per module; the stand-in calls ignore `self`
+AnvilResult Module(AnvilPlugin*, const char* module, AnvilPlugin** out) {
+    std::lock_guard lock(g_mutex);
+    *out = nullptr;
+    g_moduleCalls.push_back(module);
+    if (std::string(module) == "exists_index" || std::string(module) == "never_throttle") return ANVIL_ERROR_DISABLED;
+    *out = reinterpret_cast<AnvilPlugin*>(&g_moduleHandles[g_moduleCalls.size() % sizeof(g_moduleHandles)]);
+    return ANVIL_OK;
+}
 AnvilResult RegisterService(AnvilPlugin*, const char*, uint32_t, const void*) { return ANVIL_OK; }
 // --- the stand-in anvil.benchmark ---------------------------------------------
 struct BenchField {
@@ -345,6 +359,7 @@ int main(int argc, char** argv) {
     host.get_service = GetService;
     host.subscribe = Subscribe;
     host.publish = Publish;
+    if (g_scenario == "modules") host.module = Module;  // otherwise null: an Anvil without modules
 
     HMODULE dll = LoadLibraryW(fs::absolute(argv[1]).wstring().c_str());
     assert(dll != nullptr);
@@ -361,7 +376,31 @@ int main(int argc, char** argv) {
 
     const std::string rest = ", metascript_subst=off, metascript_blocks=on, attr_cache=verify, zip_profile=on, token_dict_cache=on, "
                              "token_dict_profile=off, range_profile=on, range_witness=on, frame_pacing=on, pops_pacing=on, never_throttle=on, modifier_merge=on, port_table=on, province_modifier_view=on, army_search_memo=on, save_compress=on, transfer_skip=on, history_add=on, checksum_defer=on, tick_profile=on, army_search_profile=on, score_probe=on, monthly_probe=on";
-    if (g_scenario != "refuse") {
+    const bool modules = g_scenario == "modules";
+    if (modules) {
+        // exists_index turned off in anvil.toml, never_throttle not turned on there: both off, their code not run.
+        std::string after = rest;
+        after.replace(after.find("never_throttle=on"), 17, "never_throttle=off");
+        assert(Logged("modules: mimalloc=startup, open_warmup=off, ram_prefetch=off, verifypath_listing=on, "
+                      "listing_lookup=on, exists_index=off, trigger_intern=on" + after));
+        assert(!Live("swap_pointer " + std::to_string(SYM_FS_EXISTS_SLOT)));
+        assert(Logged("modules off in anvil.toml: exists_index"));
+        assert(Logged("settings.toml turns on never_throttle, but Anvil keeps these modules off by default now"));
+        // "off" in the settings (here open_warmup, ram_prefetch and metascript_subst, migrated from config.toml)
+        // still turns off a module Anvil enabled, with a note.
+        assert(Logged("settings.toml turns off open_warmup, ram_prefetch, metascript_subst with the module setting"));
+        // Every module of [[modules]] asked once, none of the diagnostics.
+        std::lock_guard lock(g_mutex);
+        assert(g_moduleCalls.size() == 23);
+        const std::set<std::string> asked(g_moduleCalls.begin(), g_moduleCalls.end());
+        assert(asked.size() == 23 && asked.contains("mimalloc") && asked.contains("checksum_defer"));
+        for (const char* d : {"zip_profile", "token_dict_profile", "range_profile", "tick_profile", "army_search_profile",
+                              "score_probe", "monthly_probe"}) {
+            assert(!asked.contains(d));
+        }
+    } else if (g_scenario != "refuse") {
+        // No module() in the host: the settings alone decide, as on Anvil 1.21 and older.
+        assert(!Logged("modules off in anvil.toml") && !Logged("with the module setting"));
         assert(Logged("modules: mimalloc=startup, open_warmup=off, ram_prefetch=off, verifypath_listing=on, "
                       "listing_lookup=on, exists_index=on, trigger_intern=on" + rest));
         for (const char* f : {"HeapFree", "HeapReAlloc", "HeapSize", "HeapAlloc", "GetFileAttributesExW",
@@ -446,20 +485,22 @@ int main(int argc, char** argv) {
         std::printf("benchmark: %zu fields declared, %zu set\n", g_fields.size(), g_values.size());
         assert(g_benchErrors.empty());
         assert(g_declares >= 1 && g_dones == 1);
-        const bool ok = g_scenario == "ok";
-        const std::map<std::string, std::string> modes = {
+        const bool ok = g_scenario == "ok" || g_scenario == "modules";
+        std::map<std::string, std::string> modes = {
             {"mimalloc", ok ? "startup" : "failed"}, {"open_warmup", "off"}, {"ram_prefetch", "off"},
             {"verifypath_listing", "on"}, {"exists_index", "on"}, {"trigger_intern", ok ? "on" : "failed"},
             {"metascript_subst", "off"}, {"metascript_blocks", "on"}, {"attr_cache", "verify"},
             {"token_dict_cache", "on"},
             {"range_witness", "on"}, {"frame_pacing", "on"}, {"pops_pacing", "on"}, {"never_throttle", "on"}, {"modifier_merge", "on"}, {"port_table", "on"}, {"province_modifier_view", "on"}, {"army_search_memo", "on"}, {"save_compress", "on"}, {"transfer_skip", "on"}, {"history_add", "on"}, {"checksum_defer", "on"},
         };
+        if (modules) modes["exists_index"] = modes["never_throttle"] = "off";
         for (const auto& [module, mode] : modes) assert(g_values.at(module + ".mode") == mode);
         assert(!g_fields.contains("tick_profile.mode"));  // the diagnostics have no mode field
         for (const char* field : {"exists_index.requests", "exists_index.listings", "verifypath_listing.mismatches",
                                   "attr_cache.verifications", "token_dict_cache.entries", "range_profile.checks",
                                   "range_witness.answered"}) {
-            assert(g_values.contains(field));
+            // exists_index is off in "modules": its code did not run, so its fields stay null.
+            assert(g_values.contains(field) == !(modules && std::string(field).starts_with("exists_index.")));
         }
         // open_warmup and ram_prefetch are off: no open cost, no profile being built, their fields stay null.
         assert(!g_openCost && g_learning.empty());

@@ -1255,8 +1255,16 @@ needs Anvil 1.0 (`api = 2`, `anvil = ">=1.0.0"`, `affects_gameplay = false`).
   handler sets `sb::g_gameReady` (the hot paths read it like the old marker
   byte) and starts a thread for the profiles and the report, since the event
   runs on the game's main thread.
+- **Modules.** Since 2.0 every module but the diagnostics is an Anvil module
+  (`[[modules]]` in `plugin/plugin.toml`, Anvil ADR 0011, Anvil 1.22): `load()` asks
+  `Host::module(name)` for its handle and installs the module through it, so its
+  changes have the module as their owner and the player turns it on or off in
+  Anvil Manager (`enabled_modules` / `disabled_modules`). A module Anvil reports off
+  is not installed. `src/module_switch.hpp` combines that with the module's setting;
+  an Anvil without `module()` leaves the setting alone in charge, as before.
 - **Settings.** `plugin/settings.toml`: one enum per module (`on`/`off`, plus
-  `verify` where the module has it) and `ram_prefetch_budget_mb` (int,
+  `verify` where the module has it; for a module of `[[modules]]` the setting chooses the
+  mode, and its `off` is an alias of `disabled_modules` in 2.x) and `ram_prefetch_budget_mb` (int,
   64–8192), all `restart = true` except `frame_pacing_interval_ms` and
   `frame_pacing_input`, which change while the game runs (see frame_pacing). Overrides are `ANVIL_BELLOWS_<NAME>`; a set
   `EU4SB_<NAME>` is reported in the log with its replacement.
