@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.8.0](https://github.com/happy-dwarf-team/bellows/compare/v1.7.0...v1.8.0) (2026-11-12)
+
+### Features
+
+* With Anvil 1.20 or newer, Bellows' settings and description show in eight languages; the texts are drafts that native speakers have not checked yet. Nothing else changes. ([#184](https://github.com/happy-dwarf-team/bellows/issues/184)) ([a5d6154](https://github.com/happy-dwarf-team/bellows/commit/a5d615471ed90ec419cb0d660ba5e3f4d0b29da6))
+
 ## [1.7.0](https://github.com/happy-dwarf-team/bellows/compare/v1.6.0...v1.7.0) (2026-11-10)
 
 ### Features
