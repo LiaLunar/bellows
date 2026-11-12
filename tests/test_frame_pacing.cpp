@@ -34,6 +34,19 @@ int main() {
     assert(sb::PacedThreshold(0.05f, 0.1f, 0.06, false, with(sb::Waiting::Press)) == 0.1f);
     assert(probes == 0);
 
+    // IntervalFor: index 4 the fastest speed's interval, 0-3 the interval of speeds 1-4, anything else none.
+    assert(sb::IntervalFor(4, 0.1f, 0.0f) == 0.1f);
+    assert(sb::IntervalFor(0, 0.1f, 0.0f) == 0.0f);
+    assert(sb::IntervalFor(3, 0.1f, 0.0f) == 0.0f);
+    assert(sb::IntervalFor(0, 0.1f, 0.16f) == 0.16f);
+    assert(sb::IntervalFor(3, 0.1f, 0.16f) == 0.16f);
+    assert(sb::IntervalFor(4, 0.0f, 0.16f) == 0.0f);
+    assert(sb::IntervalFor(5, 0.1f, 0.16f) == 0.0f);
+    assert(sb::IntervalFor(-1, 0.1f, 0.16f) == 0.0f);
+    // At speeds 1-4 the game's own threshold is 20 ms: 160 ms lengthens it, 10 ms keeps the game's.
+    assert(sb::PacedThreshold(0.02f, sb::IntervalFor(2, 0.1f, 0.16f), 0.05, true, with(sb::Waiting::Nothing)) == 0.16f);
+    assert(sb::PacedThreshold(0.02f, sb::IntervalFor(2, 0.1f, 0.01f), 0.05, true, with(sb::Waiting::Nothing)) == 0.02f);
+
     std::printf("frame_pacing ok\n");
     return 0;
 }

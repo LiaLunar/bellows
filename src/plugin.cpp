@@ -182,14 +182,17 @@ struct Bellows : anvil::Plugin {
         });
         sb::SetRamPrefetchBudget(static_cast<std::uint64_t>(budget));
         sb::SetFramePacingInterval(cfg::frame_pacing_interval_ms.get(),
-                                   cfg::frame_pacing_input.get() == cfg::frame_pacing_input.draw);
+                                   cfg::frame_pacing_input.get() == cfg::frame_pacing_input.draw,
+                                   cfg::frame_pacing_slow_interval_ms.get());
         // restart = false: a change in the overlay applies at the next check of 0x769EA0.
         Guarded("frame_pacing settings", [&] {
             const auto apply = [] {
                 sb::ChangeFramePacing(cfg::frame_pacing_interval_ms.get(),
-                                      cfg::frame_pacing_input.get() == cfg::frame_pacing_input.draw);
+                                      cfg::frame_pacing_input.get() == cfg::frame_pacing_input.draw,
+                                      cfg::frame_pacing_slow_interval_ms.get());
             };
             host.subscribe_setting(cfg::frame_pacing_interval_ms, apply);
+            host.subscribe_setting(cfg::frame_pacing_slow_interval_ms, apply);
             host.subscribe_setting(cfg::frame_pacing_input, apply);
         });
         sb::SetVerifyPathSession(cfg::verifypath_session.get() == cfg::verifypath_session.on);

@@ -1,17 +1,23 @@
 // frame_pacing: at the fastest speed, frames drawn from inside the daily tick come less often
-// (lab docs/simulation-profile.md, "Klatki rysowane w trakcie ticku").
+// (lab docs/simulation-profile.md, "Klatki rysowane w trakcie ticku"); at speeds 1-4 only with
+// frame_pacing_slow_interval_ms above 0 (experimental, off by default, bellows#186).
 //
 // 0x769EA0 is called about 40 times between the stages of the daily tick. It draws a frame
 // (0x14C25A0 with outer = 0) when the time since the last one exceeds a threshold:
 // base [0x245B070] (1.0 unless the player's settings object says otherwise) times a table
 // indexed by the game speed at +0x1E08 (0.02 for indexes 0-3, 0.05 for 4). In the lab these
 // frames took about 16% of the main thread's time at speed 5. A mid hook after the clock read
-// replaces the threshold in xmm6 for index 4 only; the game still decides, with its own clock
+// replaces the threshold in xmm6 for index 4, and for indexes 0-3 when frame_pacing_slow_interval_ms
+// is above 0 (europagiga's Fast Forward Boost scales the base for every speed instead); the game still decides, with its own clock
 // and its own last-frame time, whether to draw. The simulation does not depend on these
 // frames: they only draw and handle input sooner. A second mid hook on the drawing branch
 // counts the frames per speed index.
 //
-// frame_pacing_interval_ms and frame_pacing_input change while the game runs (restart = false, the
+// At speeds 1-4 a day waits for the game's day clock (0x757AD0 adds the frame time to +0x1DF8 and
+// sends the day at 2, 1, 0.5 or 0.2 s), so fewer frames there shorten a day only when the day's
+// work takes longer than that period.
+//
+// frame_pacing_interval_ms, frame_pacing_slow_interval_ms and frame_pacing_input change while the game runs (restart = false, the
 // overlay): the thread that changed them stores the new values, and the next check reads them.
 //
 // With frame_pacing_input = "draw" (the default) frames are skipped only while no input waits: a
@@ -29,8 +35,7 @@
 
 namespace {
 
-constexpr std::int32_t kFastest = 4;  // the last entry of the 5-entry table at 0x1C33E18
-constexpr int kIndexes = 6;           // 0-4, and 5 for anything else
+constexpr int kIndexes = 6;  // 0-4, and 5 for anything else
 
 constexpr int kPeekEvent = 1;                  // SDL_PEEKEVENT
 constexpr std::uint32_t kFirstKey = 0x300;     // SDL_KEYDOWN, up to the text events
@@ -42,6 +47,8 @@ constexpr double kProbeGap = 0.002;            // seconds: the queues are probed
 
 std::atomic<std::int64_t> g_intervalMs{100};  // 0: keep the game's threshold, count only
 std::atomic<float> g_interval{0.1f};          // seconds, the unit of the game's clock in 0x769EA0
+std::atomic<std::int64_t> g_slowMs{0};        // speeds 1-4; 0: the game's threshold
+std::atomic<float> g_slow{0.0f};
 std::atomic<bool> g_drawOnInput{true};
 std::size_t g_speedOffset = 0, g_lastFrameOffset = 0;
 sym::Types::sdl_peep_events::Pointer g_peepEvents = nullptr;
@@ -89,6 +96,7 @@ void WriteFile() {
             std::ofstream out(temp, std::ios::binary | std::ios::trunc);
             out << "key\tvalue\n"
                 << "interval_ms\t" << g_intervalMs.load() << "\n"
+                << "slow_interval_ms\t" << g_slowMs.load() << "\n"
                 << "draw_on_input\t" << (g_drawOnInput.load() ? 1 : 0) << "\n"
                 << "changes\t" << g_changes << "\n"
                 << "replaced\t" << g_replaced << "\n"
@@ -121,21 +129,24 @@ __declspec(dllexport) sb::Stats EU4SB_FramePacingStats = SB_STATS_INIT;
 
 namespace sb {
 
-void SetFramePacingInterval(std::int64_t milliseconds, bool draw_on_input) {
+void SetFramePacingInterval(std::int64_t milliseconds, bool draw_on_input, std::int64_t slow_milliseconds) {
     g_interval.store(static_cast<float>(milliseconds) / 1000.0f, std::memory_order_relaxed);
+    g_slow.store(static_cast<float>(slow_milliseconds) / 1000.0f, std::memory_order_relaxed);
     g_drawOnInput.store(draw_on_input, std::memory_order_relaxed);
     g_intervalMs.store(milliseconds, std::memory_order_relaxed);
+    g_slowMs.store(slow_milliseconds, std::memory_order_relaxed);
 }
 
-void ChangeFramePacing(std::int64_t milliseconds, bool draw_on_input) {
-    SetFramePacingInterval(milliseconds, draw_on_input);
+void ChangeFramePacing(std::int64_t milliseconds, bool draw_on_input, std::int64_t slow_milliseconds) {
+    SetFramePacingInterval(milliseconds, draw_on_input, slow_milliseconds);
     if (EU4SB_FramePacingStats.initialized == 0) return;  // frame_pacing is off: the values wait for its next start
     InterlockedIncrement64(&g_changes);
     InterlockedExchange(&g_dirty, 1);
-    Log(ANVIL_LOG_INFO, "frame_pacing: changed while the game runs: interval %lld ms%s",
+    Log(ANVIL_LOG_INFO, "frame_pacing: changed while the game runs: interval %lld ms%s, speeds 1-4 %lld ms%s",
         static_cast<long long>(milliseconds),
         milliseconds <= 0 ? " (the game's own, counting only)"
-                          : (draw_on_input ? ", the game's interval while input waits" : ", also while input waits"));
+                          : (draw_on_input ? ", the game's interval while input waits" : ", also while input waits"),
+        static_cast<long long>(slow_milliseconds), slow_milliseconds <= 0 ? " (the game's own)" : "");
 }
 
 bool InstallFramePacing(anvil::Host& host, Mode mode) {
@@ -154,13 +165,15 @@ bool InstallFramePacing(anvil::Host& host, Mode mode) {
         InterlockedIncrement64(&g_calls[index]);
         InterlockedIncrement64(&EU4SB_FramePacingStats.requests);
         // Longer than the game's own threshold, except a frame at once for a waiting press.
-        if (index != kFastest || g_intervalMs.load(std::memory_order_relaxed) <= 0) return;
+        const float interval = IntervalFor(index, g_interval.load(std::memory_order_relaxed),
+                                           g_slow.load(std::memory_order_relaxed));
+        if (!(interval > 0.0f)) return;
         const float game = cpu.xmm[6].f32[0];
         // xmm0 = the clock now, [rsi + last_frame_offset] = the time of the last frame (seconds, double).
         const double now = cpu.xmm[0].f64[0];
         const double elapsed = now - sb::Read<double>(reinterpret_cast<const void*>(cpu.rsi), g_lastFrameOffset);
         sb::Waiting waiting = sb::Waiting::Nothing;
-        const float threshold = PacedThreshold(game, g_interval.load(std::memory_order_relaxed), elapsed,
+        const float threshold = PacedThreshold(game, interval, elapsed,
                                                g_drawOnInput.load(std::memory_order_relaxed),
                                                [&] { return waiting = ProbeInput(now); });
         if (waiting == sb::Waiting::Press && threshold == 0.0f) InterlockedIncrement64(&g_inputPress);
@@ -193,12 +206,17 @@ bool InstallFramePacing(anvil::Host& host, Mode mode) {
     } else {
         Log(ANVIL_LOG_INFO, "frame_pacing: the game's own interval, counting only; counters in frame_pacing.tsv every 5 s");
     }
+    if (g_slowMs.load() > 0) {
+        Log(ANVIL_LOG_INFO, "frame_pacing: experimental: frames inside the daily tick at most every %lld ms at speeds 1-4",
+            static_cast<long long>(g_slowMs.load()));
+    }
     return true;
 }
 
 void ReportFramePacing() {
     if (EU4SB_FramePacingStats.initialized == 0) return;
     bench::Get().set("frame_pacing.interval_ms", g_intervalMs.load());
+    bench::Get().set("frame_pacing.slow_interval_ms", g_slowMs.load());
     bench::Get().set("frame_pacing.draw_on_input", g_drawOnInput.load());
 }
 

@@ -1,6 +1,6 @@
 #pragma once
 
-// frame_pacing's choice of threshold for one check of 0x769EA0 at the fastest speed. Plain data; the
+// frame_pacing's choice of threshold for one check of 0x769EA0. Plain data; the
 // module passes the registers and a probe of the input queues, a test passes numbers.
 
 namespace sb {
@@ -10,6 +10,16 @@ enum class Waiting { Nothing, Motion, Press };
 
 // Shortest time between two frames drawn for a waiting press (a frame takes the press out of the queue).
 constexpr double kPressGap = 0.010;
+
+// The speed index at +0x1E08 of the fastest speed: the last entry of the 5-entry table at 0x1C33E18.
+constexpr int kFastestIndex = 4;
+
+// The module's interval for one speed index: frame_pacing_interval_ms at the fastest speed,
+// frame_pacing_slow_interval_ms at speeds 1-4 (indexes 0-3), none (0) for any other index. 0 keeps the
+// game's own threshold.
+constexpr float IntervalFor(int index, float fastest, float slow) noexcept {
+    return index == kFastestIndex ? fastest : (index >= 0 && index < kFastestIndex ? slow : 0.0f);
+}
 
 // The game's own threshold unless the module's interval is longer. With draw_on_input, while input
 // waits: a key press, click or wheel turn gets a frame at once (at most every kPressGap, the only case

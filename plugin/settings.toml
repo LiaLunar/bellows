@@ -220,6 +220,17 @@ description = "Shortest time between frames drawn inside the daily tick at the f
 group = "Simulation"
 restart = false
 
+[setting.frame_pacing_slow_interval_ms]
+type = "int"
+default = 0
+min = 0
+max = 1000
+step = 10
+label = "Frame pacing at speeds 1-4 (ms)"
+description = "Experimental: shortest time between frames drawn inside the daily tick at speeds 1 to 4 (the game's own is 20 ms). 0, the default, keeps the game's. At these speeds a day waits for the game's clock, so this can help only when a day takes longer than its period. Applies at once while frame pacing is on."
+group = "Simulation"
+restart = false
+
 [setting.frame_pacing_input]
 type = "enum"
 values = [{ name = "draw", label = "React at once" }, { name = "wait", label = "Wait for the interval" }]
