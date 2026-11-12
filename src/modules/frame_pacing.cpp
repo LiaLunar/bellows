@@ -15,7 +15,9 @@
 //
 // At speeds 1-4 a day waits for the game's day clock (0x757AD0 adds the frame time to +0x1DF8 and
 // sends the day at 2, 1, 0.5 or 0.2 s), so fewer frames there shorten a day only when the day's
-// work takes longer than that period.
+// work takes longer than that period. Unlike speed 5 (period 0: a day at every outer frame), this
+// changes the game's course: in the lab's repeatability pair at speed 4 an event choice and the next
+// day were posted in the other order from the second day on (lab docs/frame-pacing-slow-speeds-2026-11-12.md).
 //
 // frame_pacing_interval_ms, frame_pacing_slow_interval_ms and frame_pacing_input change while the game runs (restart = false, the
 // overlay): the thread that changed them stores the new values, and the next check reads them.

@@ -395,6 +395,22 @@ drawing branch (`0x769F9A`) counts the frames per speed into
 and only counts. The simulation does not read these frames; what changes is how
 often the screen and input are handled inside long days.
 
+`frame_pacing_slow_interval_ms` (experimental, 0 by default) does the same at
+speeds 1-4 (indexes 0-3) in the same hook, so a second plugin with europagiga's
+Fast Forward Boost would not hook the function again. At these speeds the day
+waits for the game's own clock: `CGameState::Tick` (`0x757AD0`) adds the frame
+time to `+0x1DF8` and posts the next day when it reaches the period of the speed
+(`0x1C33E30`: 2, 1, 0.5, 0.2 s), but not while a nested frame runs (`+0x1E10`,
+set by `0x769EA0` around it), and then drops what was over. Fewer frames inside
+the tick can therefore shorten a day only when the day's own work takes longer
+than the period (README, "Speeds 1 to 4"). Unlike speed 5, where the period is 0
+and a day is posted at every outer frame, the setting changes the game's course:
+in the lab's repeatability pair at speed 4 (`-seed`, `lab-tiebreak`, the 1719 save)
+an event choice and the next day were posted in the other order from the second day
+on, while the game without the setting, with or without Bellows, repeated itself. It
+therefore breaks this plugin's rule that every module gives the game's own answers,
+and stays off by default.
+
 The interval and `frame_pacing_input` are `restart = false`: a change in the
 overlay reaches the module through `Host::subscribe_setting`, on the thread
 that made it, which stores them in atomics the hook reads at every check; the
@@ -1257,8 +1273,8 @@ needs Anvil 1.0 (`api = 2`, `anvil = ">=1.0.0"`, `affects_gameplay = false`).
   runs on the game's main thread.
 - **Settings.** `plugin/settings.toml`: one enum per module (`on`/`off`, plus
   `verify` where the module has it) and `ram_prefetch_budget_mb` (int,
-  64–8192), all `restart = true` except `frame_pacing_interval_ms` and
-  `frame_pacing_input`, which change while the game runs (see frame_pacing). Overrides are `ANVIL_BELLOWS_<NAME>`; a set
+  64–8192), all `restart = true` except `frame_pacing_interval_ms`,
+  `frame_pacing_slow_interval_ms` and `frame_pacing_input`, which change while the game runs (see frame_pacing). Overrides are `ANVIL_BELLOWS_<NAME>`; a set
   `EU4SB_<NAME>` is reported in the log with its replacement.
 - **Migration of `config.toml`.** Anvil reads the player's settings before the
   plugin loads, so on the first start after the update the plugin itself

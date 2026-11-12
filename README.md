@@ -145,6 +145,47 @@ compared with the game without Bellows. This is one machine, one graphics card a
 resolution, and one save: how much a frame costs decides how much `frame_pacing`
 saves, so your years will differ.
 
+### Speeds 1 to 4
+
+`frame_pacing_slow_interval_ms` (experimental, off by default) does at speeds 1–4 what
+`frame_pacing` does at speed 5: it draws frames from inside the daily tick less often.
+The game's own interval at these speeds is 20 ms. At these speeds a day also waits for
+the game's clock (2, 1, 0.5 and 0.2 s at speeds 1 to 4), so fewer frames can help only
+when a day's work takes longer than that.
+
+**It changes the course of the game.** Unlike every other Bellows setting, a game with it
+does not come out as the same game without it. In the lab's repeatability check at speed 4
+(the save of Russia of 17 March 1719, `-seed=12345`, the lab's tie-break plugin, 60 days),
+the game repeated itself without the setting, with Bellows' defaults and without Bellows,
+and with the setting too. But from the second day on, the run with the setting took
+another course: an event choice and the next day were queued in the other order. Speed 5
+and `frame_pacing` are not affected (the release gate's repeatability pair).
+
+Lab measurement, 12 November 2026: EU4 1.37.5 (Steam), original `eu4.exe`, Anvil 1.20.0,
+anvil-game, Tongs 0.30.0 and this build of Bellows with its defaults. The only
+difference between the two setups was the value 0 or 160 ms (160 ms is 8 × 20 ms, the
+factor of europagiga's Fast Forward Boost). One game per run, interleaved, the game on
+processors 1–7, no fixed seed. The base game: the save of Russia, warmed up at speed 5
+to 1 January 1720, then the year 1720 at speed 4 (order 0, 160, 160, 0, 0, 160, 160, 0).
+Anbennar (the mod set above): the save of Verne, warmed up to 1 January 1445, then the
+year 1445 at speed 4 (the same order, in two halves):
+
+| Setup | Base game, 1720 at speed 4 | Median | Anbennar, 1445 at speed 4 | Median |
+| --- | --- | ---: | --- | ---: |
+| `frame_pacing_slow_interval_ms = 0` (default) | 78.86 / 92.39 / 79.14 / 79.56 s | 79.35 s | 97.45 / 98.07 / 102.51 / 102.43 s | 100.25 s |
+| `frame_pacing_slow_interval_ms = 160` | 77.21 / 76.36 / 85.05 / 76.28 s | 76.79 s | 87.47 / 89.44 / 87.71 / 87.07 s | **87.59 s** |
+
+On Anbennar a day at speed 4 takes longer than the clock's 0.2 s, and the setting made
+the year 12.6% shorter: every run with it was faster than every run without it
+(permutation test of the medians, p = 0.06). On the base game a day is close to the
+clock's period. There the year was 3% shorter in the median, but the ranges overlap
+(p = 0.40), so that is not shown. January 1721 at speed 3 took the clock's 0.5 s a day
+in both setups. Frames drawn inside the tick fell from 2.2 to 0.05 a day on the base game
+and from 6.2 to 0.4 on Anbennar. An earlier lab prototype with 100 ms at speeds 1–4
+(8 November, other builds, with a diagnostic module on) made both years slower, by 13% and
+8%; this measurement does not explain the difference. Not measured: speeds 1 and 2,
+multiplayer, GOG, and how the map feels with fewer frames during a long day.
+
 ### Minimized at speed 5
 
 `never_throttle` off and on, with the game window minimized for the measured year,
@@ -346,7 +387,7 @@ about 1.5 s longer than the times above, which stop at `Running application`.
 | `history_add` | **Loading, on by default since 1.2.** Adds an entry the game just read to a dated list without first walking the whole list to see whether that new entry is in it; the list comes out the same. The gain grows with the square of the list, so it depends on the mods: about 0.5 s of "Continue" with the lab's 10 mods (38,000 entries, 154 million list steps), almost nothing on vanilla (4,300 entries, 2 million steps). `"verify"` lets the game walk and compares: 0 differences. See [Loading a save](#loading-a-save) |
 | `checksum_defer` | **Loading, off by default.** At start-up the game reads the files of its version checksum (the code in brackets next to the version on the main menu) while it loads its databases, and the two take turns on the file system. With `"on"` the checksum starts once the databases are loaded: the same files in the same order and the same checksum, ready before the main menu is. Lab: about 1 s less to the main menu on Anbennar, nothing measurable on the base game; the game's logs and the checksum on the menu were the same in every start. `"verify"` only logs the times. See [The checksum after the databases](#the-checksum-after-the-databases) |
 | `listing_lookup` | **Start-up, off by default.** Once a file path passed PhysFS's checks, the game asks each mod folder once more whether the file is there, and tries to open it in every folder that has its parent folder, also where the file is not. With `"on"` (and `verifypath_listing` on) both answers for files that are not there come from the directory listings Bellows already reads; every existing file is still opened by the game. Matters for big mod sets that replace folders: lab, about 3.2 s less to the main menu on Anbennar, nothing measurable on the base game; the game's logs and the checksum on the menu were the same in every start. Every 256th answer is also asked of the game, and a difference turns the module off; `"verify"` asks every time. See [PhysFS lookups from listings](#physfs-lookups-from-listings) |
-| `frame_pacing` | **Simulation, on by default since 0.15.** At the fastest speed, draws frames from inside the daily tick less often while you do nothing (setting `frame_pacing_interval_ms`, 100 ms; the game's own is 50 ms), and at once when a key press, click or wheel turn waits (`frame_pacing_input = "draw"`). The simulation is the same; the map updates about 16 instead of 22 times a second at speed 5 while you do nothing (lab: a year at speed 5 in 20.8 s instead of 23.4 s, on Anbennar 48.4 s instead of 55.4 s, see [A year of Anbennar at speed 5](#a-year-of-anbennar-at-speed-5); a key press at speed 5 handled after 21 ms instead of 51.5 ms in the median, a real key press after 21.6 ms instead of 56.8 ms) |
+| `frame_pacing` | **Simulation, on by default since 0.15.** At the fastest speed, draws frames from inside the daily tick less often while you do nothing (setting `frame_pacing_interval_ms`, 100 ms; the game's own is 50 ms), and at once when a key press, click or wheel turn waits (`frame_pacing_input = "draw"`). The simulation is the same; the map updates about 16 instead of 22 times a second at speed 5 while you do nothing (lab: a year at speed 5 in 20.8 s instead of 23.4 s, on Anbennar 48.4 s instead of 55.4 s, see [A year of Anbennar at speed 5](#a-year-of-anbennar-at-speed-5); a key press at speed 5 handled after 21 ms instead of 51.5 ms in the median, a real key press after 21.6 ms instead of 56.8 ms). Speeds 1–4 keep the game's interval unless you set `frame_pacing_slow_interval_ms` (experimental; it changes the course of the game, see [Speeds 1 to 4](#speeds-1-to-4)) |
 
 Diagnostics, off by default: `zip_profile`, `token_dict_profile`,
 `range_profile`, `tick_profile` (time of each stage of the daily, monthly and
@@ -410,12 +451,13 @@ and the [design notes](docs/design.md#4-correctness-safeguards-d).
 ## Settings
 
 Each module is a setting: `on`, `off` or, where the module has it, `verify`.
-There are five more:
+There are six more:
 
 | Setting | Values |
 | --- | --- |
 | `ram_prefetch_budget_mb` | 64–8192 |
 | `frame_pacing_interval_ms` | 0–1000; 0 keeps the game's own interval |
+| `frame_pacing_slow_interval_ms` | 0–1000; 0 (default) keeps the game's own interval at speeds 1–4. Experimental, and it changes the course of the game, see [Speeds 1 to 4](#speeds-1-to-4) |
 | `frame_pacing_input` | `draw` (default) or `wait`, the 0.12.0 behaviour |
 | `save_compress_parallel` | `off`, `on` or `verify`, used while `save_compress` is on |
 | `verifypath_session` | `off` or `on`, used while `verifypath_listing` is on |
@@ -435,7 +477,7 @@ language: French, German, Spanish, Simplified and Traditional Chinese, Japanese,
 Polish, from [`plugin/translations/`](plugin/translations/). The translations are drafts that native speakers
 have not checked yet; a correction is welcome in an issue or a pull request.
 
-`frame_pacing_interval_ms` and `frame_pacing_input` apply at once when you change
+`frame_pacing_interval_ms`, `frame_pacing_slow_interval_ms` and `frame_pacing_input` apply at once when you change
 them in the Anvil panel (Ctrl+Shift+F12) while `frame_pacing` is on; 0 ms turns
 its effect off until you set another value. Every other setting applies at the
 next start. For one start, an environment variable
@@ -456,7 +498,7 @@ From 1.0 on, every 1.x release keeps these as they are, so a
 
 - the name of every module setting and the meaning of its values (`on`,
   `off`, `verify`, and `startup` for `mimalloc`);
-- `ram_prefetch_budget_mb`, `frame_pacing_interval_ms`, `frame_pacing_input`,
+- `ram_prefetch_budget_mb`, `frame_pacing_interval_ms`, `frame_pacing_slow_interval_ms`, `frame_pacing_input`,
   `save_compress_parallel` and `verifypath_session`, with their ranges and
   values;
 - the oldest Anvil Bellows needs (Anvil 1.7).
