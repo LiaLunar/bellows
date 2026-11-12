@@ -430,6 +430,11 @@ attr_cache = "on"
 ram_prefetch_budget_mb = 2048
 ```
 
+With Anvil 1.20 or newer, the Anvil panel and Anvil Manager show the labels and descriptions of these settings and Bellows' description in the player's
+language: French, German, Spanish, Simplified and Traditional Chinese, Japanese, Korean or
+Polish, from [`plugin/translations/`](plugin/translations/). The translations are drafts that native speakers
+have not checked yet; a correction is welcome in an issue or a pull request.
+
 `frame_pacing_interval_ms` and `frame_pacing_input` apply at once when you change
 them in the Anvil panel (Ctrl+Shift+F12) while `frame_pacing` is on; 0 ms turns
 its effect off until you set another value. Every other setting applies at the
@@ -565,7 +570,7 @@ cmake --install build --config Release --component plugin --prefix dist
 
 The plugin folder as Anvil loads it is `build/plugin/bellows/`. The Anvil SDK
 (the `AnvilPlugin` CMake package, its headers and `anvil.exe`) is the SDK
-archive of the Anvil release `SB_ANVIL_VERSION` in `CMakeLists.txt` (1.7.0),
+archive of the Anvil release `SB_ANVIL_VERSION` in `CMakeLists.txt` (1.20.0),
 downloaded by the first configure and checked against its SHA-256. Use an
 unpacked SDK archive, or one installed from a local Anvil checkout, with
 `-DAnvilPlugin_DIR=<sdk>/cmake`. After changing

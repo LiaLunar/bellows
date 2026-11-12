@@ -99,15 +99,16 @@ jobs:
       - name: Test
         run: ctest --test-dir build -C Release --output-on-failure
 
-      # plugin.toml, symbols.toml and settings.toml against Anvil's schemas, and
-      # plugin/symbols.lock against symbols.toml (the lock comes from
+      # plugin.toml, symbols.toml and settings.toml against Anvil's schemas, every
+      # text of them in all eight files of plugin/translations/ (--complete-translations),
+      # and plugin/symbols.lock against symbols.toml (the lock comes from
       # `anvil check plugin --exe` on the real eu4.exe), as annotations.
       - name: anvil check
         shell: pwsh
         run: |
           $anvil = (Get-Content build/anvil-tool-Release.txt -Raw).Trim()
           & $anvil --version
-          & $anvil check plugin --format github
+          & $anvil check plugin --format github --complete-translations
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
       - name: Package

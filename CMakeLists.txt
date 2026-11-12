@@ -68,8 +68,8 @@ sb_add_zlib(sb_zlib ${zlib_SOURCE_DIR})
 #     release changes both, on purpose, in its own pull request.
 #   - An unpacked SDK archive, or an SDK installed from a local Anvil checkout
 #     (`cmake --install <anvil build> --component sdk`): -DAnvilPlugin_DIR=<sdk>/cmake.
-set(SB_ANVIL_VERSION 1.7.0)
-set(SB_ANVIL_SDK_SHA256 bb81951f0f70d8805b3206f4d73d9c821b9cca8c3dcd58bc74cbbf2fee99f9ee)
+set(SB_ANVIL_VERSION 1.20.0)
+set(SB_ANVIL_SDK_SHA256 4a42d527018b143051c2c0c12ea40aa8096c7b108b7f24b2fb941530e1e2b7dd)
 if(AnvilPlugin_DIR)
     find_package(AnvilPlugin REQUIRED)
 else()
@@ -207,8 +207,9 @@ if(SB_BUILD_TESTS)
             COMMAND test_plugin_load $<TARGET_FILE:bellows> ${CMAKE_BINARY_DIR}/plugin/bellows ${scenario})
     endforeach()
     # plugin/symbols.lock matches plugin/symbols.toml and the last `anvil check --exe`
-    # on the real eu4.exe was clean; also checks plugin.toml and settings.toml.
-    add_test(NAME symbols_lock COMMAND ${SB_ANVIL_TOOL} check ${CMAKE_CURRENT_SOURCE_DIR}/plugin)
+    # on the real eu4.exe was clean; also checks plugin.toml, settings.toml and that
+    # every text has a translation in all eight files of plugin/translations/.
+    add_test(NAME symbols_lock COMMAND ${SB_ANVIL_TOOL} check ${CMAKE_CURRENT_SOURCE_DIR}/plugin --complete-translations)
 endif()
 
 # Offline checks of save_compress on compressed saves (tools/save_compress_offline.cpp): with zlib 1.2.8,
@@ -236,10 +237,11 @@ if(SB_BUILD_SAVE_TOOLS)
     endif()
 endif()
 
-# Plugin folder layout: <prefix>/bellows/{plugin.toml, symbols.toml, settings.toml, bellows.dll, profiles/, LICENSE}
+# Plugin folder layout: <prefix>/bellows/{plugin.toml, symbols.toml, settings.toml, bellows.dll, profiles/, translations/, LICENSE}
 install(TARGETS bellows RUNTIME DESTINATION bellows COMPONENT plugin)
 install(FILES plugin/plugin.toml plugin/symbols.toml plugin/settings.toml LICENSE DESTINATION bellows COMPONENT plugin)
 install(DIRECTORY plugin/profiles DESTINATION bellows COMPONENT plugin)
+install(DIRECTORY plugin/translations DESTINATION bellows COMPONENT plugin FILES_MATCHING PATTERN "*.toml")
 # Third-party code compiled into the DLL (MIT): ship its license texts.
 install(FILES ${mimalloc_SOURCE_DIR}/LICENSE DESTINATION bellows/third-party RENAME mimalloc-LICENSE.txt COMPONENT plugin)
 install(FILES ${tomlplusplus_SOURCE_DIR}/LICENSE DESTINATION bellows/third-party RENAME tomlplusplus-LICENSE.txt COMPONENT plugin)
