@@ -8,6 +8,7 @@
 #include <algorithm>
 #include <cassert>
 #include <cstdio>
+#include <filesystem>
 
 namespace {
 
@@ -76,6 +77,10 @@ int main() {
     const std::wstring copy = root + L"\\copy";
     const std::wstring user = root + L"\\user";
     const std::wstring modAbs = root + L"\\workshop\\111";
+    // The folder is named after the process ID and the test leaves its files behind. Process IDs repeat quickly under
+    // Wine (and in a prefix that is kept between runs), so start from an empty folder, not from a previous run's.
+    std::error_code ignored;
+    std::filesystem::remove_all(root, ignored);
     Dir(root);
 
     // A GOG install has its own user folder beside Steam's.
