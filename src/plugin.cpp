@@ -1,6 +1,7 @@
 // Bellows: the Anvil plugin (API 2, C++ wrapper anvil.hpp).
 #include "benchmark.hpp"
 #include "common.hpp"
+#include "module_switch.hpp"
 #include "modules/modules.hpp"
 #include "rename.hpp"
 #include "settings.hpp"
@@ -11,6 +12,7 @@
 
 #include <cctype>
 #include <filesystem>
+#include <optional>
 #include <string>
 #include <vector>
 
@@ -92,11 +94,65 @@ bool Overridden(const std::string& name) {
 }
 
 struct Module {
-    const char* name;  // also the setting's name in plugin/settings.toml
+    const char* name;  // also the setting's name in plugin/settings.toml, and the module's id in plugin.toml
     AnvilSetting setting;
     bool (*install)(anvil::Host&, sb::Mode);
+    // A module of plugin.toml's [[modules]] (Anvil 1.22, ADR 0011), with its `default`; the diagnostics are
+    // not: they stay settings of the plugin itself.
+    bool declared = false;
+    bool default_on = true;
     sb::Mode mode = sb::Mode::Off;
+    sb::ModuleSwitch state = sb::ModuleSwitch::NoModules;
+    std::optional<anvil::Host> handle;  // the module's host; the plugin's own without modules
 };
+
+// A module of [[modules]]: `default` is the setting's default other than "off" (tests/test_module_switch.cpp).
+constexpr bool kOn = true, kOff = false;
+Module Declared(const char* name, AnvilSetting setting, bool (*install)(anvil::Host&, sb::Mode), bool default_on) {
+    Module m{name, setting, install};
+    m.declared = true;
+    m.default_on = default_on;
+    return m;
+}
+
+// Asks Anvil about each module of [[modules]] (Anvil 1.22, ADR 0011) and sets what it runs as
+// (sb::ResolveModule). Without modules in the host (an older Anvil) nothing changes: the settings decide.
+template <size_t N> void ResolveModules(anvil::Host& host, Module (&modules)[N]) {
+    std::string turned_off, need_list, old_off;
+    for (auto& m : modules) {
+        if (!m.declared) continue;
+        try {
+            m.handle = host.module(m.name);
+            m.state = m.handle ? sb::ModuleSwitch::Enabled : sb::ModuleSwitch::Disabled;
+        } catch (const anvil::Error& e) {
+            // UNSUPPORTED: an Anvil without modules. NOT_DECLARED would be a plugin.toml out of step with the
+            // table above (tests/test_module_switch.cpp checks it); the module then runs as before.
+            if (e.result() != ANVIL_ERROR_UNSUPPORTED) sb::Log(ANVIL_LOG_WARNING, "%s: %s", m.name, e.what());
+            m.state = sb::ModuleSwitch::NoModules;
+        }
+        const sb::ModuleState r = sb::ResolveModule(m.state, m.mode, m.default_on);
+        m.mode = r.mode;
+        std::string* list = r.note == sb::ModuleNote::NeedsEnabledList ? &need_list
+                            : r.note == sb::ModuleNote::OffBySetting   ? &old_off
+                            // a module off by default and left so is not news
+                            : m.state == sb::ModuleSwitch::Disabled && m.default_on ? &turned_off
+                                                                                    : nullptr;
+        if (list != nullptr) *list += std::string(list->empty() ? "" : ", ") + m.name;
+    }
+    if (!turned_off.empty()) sb::Log(ANVIL_LOG_INFO, "modules off in anvil.toml: %s", turned_off.c_str());
+    if (!need_list.empty()) {
+        sb::Log(ANVIL_LOG_WARNING, "settings.toml turns on %s, but Anvil keeps these modules off by default now: "
+                                   "turn them on in Anvil Manager or add \"bellows.<module>\" to enabled_modules in "
+                                   "anvil/anvil.toml (the setting still chooses \"verify\")",
+                need_list.c_str());
+    }
+    if (!old_off.empty()) {
+        sb::Log(ANVIL_LOG_WARNING, "settings.toml turns off %s with the module setting; this works in Bellows 2.x only: "
+                                   "turn them off in Anvil Manager or add \"bellows.<module>\" to disabled_modules in "
+                                   "anvil/anvil.toml",
+                old_off.c_str());
+    }
+}
 
 struct Bellows : anvil::Plugin {
     void load(anvil::Host& host) override {
@@ -115,37 +171,37 @@ struct Bellows : anvil::Plugin {
         });
 
         Module modules[] = {
-            {"mimalloc", cfg::mimalloc.id, sb::InstallMimalloc},  // first: before the game's runtime allocates
-            {"open_warmup", cfg::open_warmup.id, sb::InstallOpenWarmup},  // early: its threads must run ahead of the game
-            {"ram_prefetch", cfg::ram_prefetch.id, sb::InstallRamPrefetch},  // early as well: workers decode ahead of the game
-            {"verifypath_listing", cfg::verifypath_listing.id, sb::InstallVerifyPathListing},
-            {"listing_lookup", cfg::listing_lookup.id, sb::InstallListingLookup},  // prototype, off; needs verifypath_listing
-            {"exists_index", cfg::exists_index.id, sb::InstallExistsIndex},
-            {"trigger_intern", cfg::trigger_intern.id, sb::InstallTriggerIntern},
-            {"metascript_subst", cfg::metascript_subst.id, sb::InstallMetascriptSubst},
-            {"metascript_blocks", cfg::metascript_blocks.id, sb::InstallMetascriptBlocks},
-            {"attr_cache", cfg::attr_cache.id, sb::InstallAttrCache},
+            Declared("mimalloc", cfg::mimalloc.id, sb::InstallMimalloc, kOn),  // first: before the game's runtime allocates
+            Declared("open_warmup", cfg::open_warmup.id, sb::InstallOpenWarmup, kOn),  // early: its threads must run ahead of the game
+            Declared("ram_prefetch", cfg::ram_prefetch.id, sb::InstallRamPrefetch, kOn),  // early as well: workers decode ahead of the game
+            Declared("verifypath_listing", cfg::verifypath_listing.id, sb::InstallVerifyPathListing, kOn),
+            Declared("listing_lookup", cfg::listing_lookup.id, sb::InstallListingLookup, kOff),  // prototype, off; needs verifypath_listing
+            Declared("exists_index", cfg::exists_index.id, sb::InstallExistsIndex, kOn),
+            Declared("trigger_intern", cfg::trigger_intern.id, sb::InstallTriggerIntern, kOn),
+            Declared("metascript_subst", cfg::metascript_subst.id, sb::InstallMetascriptSubst, kOn),
+            Declared("metascript_blocks", cfg::metascript_blocks.id, sb::InstallMetascriptBlocks, kOn),
+            Declared("attr_cache", cfg::attr_cache.id, sb::InstallAttrCache, kOff),
             {"zip_profile", cfg::zip_profile.id, sb::InstallZipProfile},  // diagnostic, off by default
             // token_dict_cache and token_dict_profile redirect the same call: both chain, the profile then counts
             // only the cache's misses.
-            {"token_dict_cache", cfg::token_dict_cache.id, sb::InstallTokenDictCache},
+            Declared("token_dict_cache", cfg::token_dict_cache.id, sb::InstallTokenDictCache, kOn),
             {"token_dict_profile", cfg::token_dict_profile.id, sb::InstallTokenDictProfile},  // diagnostic
             {"range_profile", cfg::range_profile.id, sb::InstallRangeProfile},  // diagnostic
             // range_witness answers before 0x3526B0 runs: range_profile then sees only the walks it still makes.
-            {"range_witness", cfg::range_witness.id, sb::InstallRangeWitness},
-            {"frame_pacing", cfg::frame_pacing.id, sb::InstallFramePacing},
-            {"pops_pacing", cfg::pops_pacing.id, sb::InstallPopsPacing},
-            {"never_throttle", cfg::never_throttle.id, sb::InstallNeverThrottle},
-            {"modifier_merge", cfg::modifier_merge.id, sb::InstallModifierMerge},
+            Declared("range_witness", cfg::range_witness.id, sb::InstallRangeWitness, kOn),
+            Declared("frame_pacing", cfg::frame_pacing.id, sb::InstallFramePacing, kOn),
+            Declared("pops_pacing", cfg::pops_pacing.id, sb::InstallPopsPacing, kOn),
+            Declared("never_throttle", cfg::never_throttle.id, sb::InstallNeverThrottle, kOff),
+            Declared("modifier_merge", cfg::modifier_merge.id, sb::InstallModifierMerge, kOn),
             // hooks the entry of 0x350B80; monthly_probe's hook on it chains.
-            {"port_table", cfg::port_table.id, sb::InstallPortTable},
-            {"province_modifier_view", cfg::province_modifier_view.id, sb::InstallProvinceModifierView},
+            Declared("port_table", cfg::port_table.id, sb::InstallPortTable, kOn),
+            Declared("province_modifier_view", cfg::province_modifier_view.id, sb::InstallProvinceModifierView, kOn),
             // redirects the call of 0x1022B0 in 0xEAB50; army_search_profile hooks its entry, so both chain.
-            {"army_search_memo", cfg::army_search_memo.id, sb::InstallArmySearchMemo},
-            {"save_compress", cfg::save_compress.id, sb::InstallSaveCompress},
-            {"transfer_skip", cfg::transfer_skip.id, sb::InstallTransferSkip},
-            {"history_add", cfg::history_add.id, sb::InstallHistoryAdd},
-            {"checksum_defer", cfg::checksum_defer.id, sb::InstallChecksumDefer},  // prototype, off by default
+            Declared("army_search_memo", cfg::army_search_memo.id, sb::InstallArmySearchMemo, kOn),
+            Declared("save_compress", cfg::save_compress.id, sb::InstallSaveCompress, kOn),
+            Declared("transfer_skip", cfg::transfer_skip.id, sb::InstallTransferSkip, kOn),
+            Declared("history_add", cfg::history_add.id, sb::InstallHistoryAdd, kOn),
+            Declared("checksum_defer", cfg::checksum_defer.id, sb::InstallChecksumDefer, kOff),  // prototype, off by default
             // diagnostic; its hook on 0x769EA0 sits at the entry, frame_pacing's inside the function.
             {"tick_profile", cfg::tick_profile.id, sb::InstallTickProfile},
             {"army_search_profile", cfg::army_search_profile.id, sb::InstallArmySearchProfile},  // diagnostic
@@ -180,6 +236,7 @@ struct Bellows : anvil::Plugin {
                 }
             }
         });
+        ResolveModules(host, modules);
         sb::SetRamPrefetchBudget(static_cast<std::uint64_t>(budget));
         sb::SetFramePacingInterval(cfg::frame_pacing_interval_ms.get(),
                                    cfg::frame_pacing_input.get() == cfg::frame_pacing_input.draw);
@@ -198,16 +255,19 @@ struct Bellows : anvil::Plugin {
                                                                                                               : 0);
 
         std::string summary;
-        for (const auto& m : modules) {
+        for (auto& m : modules) {
             bool active = false;
             try {
-                active = m.install(host, m.mode);
+                // A module's changes belong to its handle (Anvil 1.22); the diagnostics' to the plugin.
+                anvil::Host& owner = m.handle ? *m.handle : host;
+                if (m.state != sb::ModuleSwitch::Disabled) active = m.install(owner, m.mode);
             } catch (const std::exception& e) {
                 // Mostly anvil::Error: Anvil refused a change (and logged why). The module's
                 // sb::Undo removed its other changes; the other modules stay.
                 sb::Log(ANVIL_LOG_WARNING, "%s: %s; module off", m.name, e.what());
             }
             const std::string mode = active ? sb::ModeName(m.mode) : (m.mode == sb::Mode::Off ? "off" : "failed");
+            // "off" for a module the player turned off in anvil.toml, as for one off by its setting.
             summary += std::string(summary.empty() ? "" : ", ") + m.name + "=" + (mode == "failed" ? "FAILED" : mode);
             sb::bench::SetMode(m.name, mode.c_str());
         }

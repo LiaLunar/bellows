@@ -18,8 +18,9 @@ Players can also subscribe on the
 [Steam Workshop](https://steamcommunity.com/sharedfiles/filedetails/?id=3823747170).
 The team's other tools for EU4 are on [happydwarf.dev](https://happydwarf.dev/).
 
-Bellows needs **Anvil 1.7 or newer** and EU4 1.37.5 (Steam, Windows 64-bit) or
-1.37.5.2 (GOG, Windows 64-bit); the GOG build 1.37.5.0 needs Anvil 1.15 or newer. Anvil checks every game address against `eu4.exe`
+Bellows needs **Anvil 1.22 or newer** (its modules are Anvil modules, see [Modules and
+settings](#settings); Bellows 1.8 runs on Anvil 1.7 to 1.21) and EU4 1.37.5 (Steam, Windows
+64-bit), 1.37.5.2 or 1.37.5.0 (GOG, Windows 64-bit). Anvil checks every game address against `eu4.exe`
 before it loads Bellows ([`plugin/symbols.toml`](plugin/symbols.toml),
 [design §6d](docs/design.md#6d-the-gog-build-13752-d)). On another build, or on
 any mismatch, it skips the plugin, gives the reason in `anvil/anvil.log`, and the
@@ -409,8 +410,29 @@ and the [design notes](docs/design.md#4-correctness-safeguards-d).
 
 ## Settings
 
-Each module is a setting: `on`, `off` or, where the module has it, `verify`.
-There are five more:
+**Modules.** Each module of the table above (but the diagnostics) is an Anvil module
+(Anvil 1.22, `[[modules]]` in [`plugin/plugin.toml`](plugin/plugin.toml)). You turn it on or off
+in Anvil Manager, Plugins tab, under Bellows, or in `anvil/anvil.toml` by its name
+`bellows.<module>`:
+
+```toml
+disabled_modules = ["bellows.frame_pacing"]   # on by default, turned off
+enabled_modules = ["bellows.never_throttle"]  # off by default, turned on
+```
+
+A module that is off runs no code at all. A choice applies at the next start. Every module
+gives the game's own answers (`affects_gameplay = false`), so ironman and multiplayer
+change nothing.
+
+Each module also has a setting of the same name. It chooses how an enabled module runs:
+`on`, or `verify` where the module has it (`startup` for `mimalloc`). In Bellows 2.x its
+`off` still turns the module off, with a line in `anvil/anvil.log` that points to
+`disabled_modules`; that alias goes in 3.0. A module that is off by default (`attr_cache`,
+`listing_lookup`, `never_throttle`, `checksum_defer`) is turned on in the Manager or with
+`enabled_modules`. `on` or `verify` in its setting alone no longer turns it on, and the log
+says so. The diagnostics stay settings, `on` or `off`.
+
+There are five more settings:
 
 | Setting | Values |
 | --- | --- |
@@ -426,11 +448,11 @@ The defaults, labels and descriptions are in
 default, for example:
 
 ```toml
-attr_cache = "on"
+exists_index = "verify"
 ram_prefetch_budget_mb = 2048
 ```
 
-With Anvil 1.20 or newer, the Anvil panel and Anvil Manager show the labels and descriptions of these settings and Bellows' description in the player's
+The Anvil panel and Anvil Manager show the labels and descriptions of these settings and Bellows' description in the player's
 language: French, German, Spanish, Simplified and Traditional Chinese, Japanese, Korean or
 Polish, from [`plugin/translations/`](plugin/translations/). The translations are drafts that native speakers
 have not checked yet; a correction is welcome in an issue or a pull request.
@@ -454,15 +476,17 @@ migrations stay in every 1.x release.
 From 1.0 on, every 1.x release keeps these as they are, so a
 `settings.toml` written for 1.0 means the same in any later 1.x:
 
-- the name of every module setting and the meaning of its values (`on`,
-  `off`, `verify`, and `startup` for `mimalloc`);
+- the name of every module (`bellows.<module>` in `anvil.toml`) and of its
+  setting, and the meaning of the setting's values (`on`, `verify`, and
+  `startup` for `mimalloc`; `off` is an alias of `disabled_modules` that goes in 3.0);
 - `ram_prefetch_budget_mb`, `frame_pacing_interval_ms`, `frame_pacing_input`,
   `save_compress_parallel` and `verifypath_session`, with their ranges and
   values;
-- the oldest Anvil Bellows needs (Anvil 1.7).
+- the oldest Anvil Bellows needs (Anvil 1.22).
 
 A release that renames or removes one of these, gives a value another
-meaning or needs a newer Anvil is 2.0. A module's default may still change in
+meaning or needs a newer Anvil is a new major version. 2.0 moved the switches
+of the modules to Anvil's module lists and needs Anvil 1.22. A module's default may still change in
 a minor release, after the checks in [docs/release-gate.md](docs/release-gate.md);
 the changelog says so. Not covered: the diagnostics (`zip_profile`,
 `token_dict_profile`, `range_profile`, `tick_profile`, `army_search_profile`,
@@ -528,7 +552,7 @@ release.
 
 ## Install / uninstall
 
-[Install Anvil](https://anvil.happydwarf.dev/docs/install/) 1.7 or newer first. It
+[Install Anvil](https://anvil.happydwarf.dev/docs/install/) 1.22 or newer first. It
 includes the `anvil-game` plugin Bellows needs. Then
 [install the plugin](https://anvil.happydwarf.dev/docs/install-plugins/) one of
 these ways:

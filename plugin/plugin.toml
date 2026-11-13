@@ -4,7 +4,7 @@ version = "1.8.0"
 authors = ["Happy Dwarf Team"]
 description = "Faster Europa Universalis IV start-up, simulation and saves, with no change to game files or rules."
 api = 2
-anvil = ">=1.7.0"
+anvil = ">=1.22.0"   # [[modules]]: an older Anvil refuses the manifest
 entry = "bellows.dll"
 # Early: mimalloc must replace the heap imports before the game's C runtime
 # allocates, and the warm-up threads must run ahead of the game.
@@ -20,3 +20,151 @@ repository = "https://github.com/happy-dwarf-team/bellows"
 [[dependencies]]
 id = "anvil-game"
 version = "^1"
+
+# Modules (Anvil 1.22, ADR 0011): the player turns each one on or off in the Manager
+# (enabled_modules / disabled_modules in anvil.toml). Each has a setting of the same name for
+# its mode ("verify", mimalloc's "startup"); for the 2.x releases that setting's "off" still
+# turns a module off. None changes the simulation. name and description are the setting's
+# label and description, so the translations cover them; tests/test_module_switch.cpp checks it.
+
+[[modules]]
+id = "mimalloc"
+name = "mimalloc"
+description = "Faster memory allocator for the game's C runtime: for the whole game session, or only until the main menu (later allocations use the Windows heap)."
+affects_gameplay = false
+
+[[modules]]
+id = "open_warmup"
+name = "Open warm-up"
+description = "Opens the files the game will need ahead of it on parallel threads (meant for the first start after a reboot)."
+affects_gameplay = false
+
+[[modules]]
+id = "ram_prefetch"
+name = "RAM prefetch"
+description = "Reads and unpacks the DLC archive members the game will need into RAM on worker threads."
+affects_gameplay = false
+
+[[modules]]
+id = "verifypath_listing"
+name = "PhysFS path checks"
+description = "Answers PhysFS path checks from directory listings."
+affects_gameplay = false
+
+[[modules]]
+id = "listing_lookup"
+name = "PhysFS lookups from listings"
+description = "Start-up: answers the file system's second look at a folder (does the file exist, open a file that is not there) from the directory listings of PhysFS path checks (used while verifypath_listing is on). Existing files are still opened by the game. Saves the failed opens a big mod set such as Anbennar makes in every folder it overrides. Verify asks the game every time and counts differences."
+affects_gameplay = false
+default = false
+
+[[modules]]
+id = "exists_index"
+name = "File existence index"
+description = "Answers \"does this file exist\" for the modifier icon check."
+affects_gameplay = false
+
+[[modules]]
+id = "trigger_intern"
+name = "Trigger profile lookup"
+description = "Faster lookup of each trigger in the game's trigger profile at the end of loading."
+affects_gameplay = false
+
+[[modules]]
+id = "metascript_subst"
+name = "Parameter substitution"
+description = "Single-pass $parameter$ substitution in scripted effects and triggers."
+affects_gameplay = false
+
+[[modules]]
+id = "metascript_blocks"
+name = "Conditional blocks"
+description = "Single-pass resolution of [[parameter] ...] blocks in scripted effects and triggers (big gain on mods with large scripted effects, e.g. Anbennar)."
+affects_gameplay = false
+
+[[modules]]
+id = "attr_cache"
+name = "Missing-file cache"
+description = "Remembers \"file not found\" answers for game and mod files during start-up (at most ~0.1 s next to the other modules)."
+affects_gameplay = false
+default = false
+
+[[modules]]
+id = "token_dict_cache"
+name = "Tokenizer keyword cache"
+description = "Caches the script tokenizer's keyword lookups."
+affects_gameplay = false
+
+[[modules]]
+id = "range_witness"
+name = "Country range check"
+description = "Simulation, not start-up: answers the country range check from the province that was in range last time; same answers as the game's code."
+affects_gameplay = false
+
+[[modules]]
+id = "frame_pacing"
+name = "Frame pacing at speed 5"
+description = "Simulation: at the fastest speed, draws frames from inside the daily tick less often while you do nothing (see the interval), so a year passes about 10% sooner; a key press or click still gets a frame at once. The simulation is the same; the map updates about 16 instead of 22 times a second at speed 5."
+affects_gameplay = false
+
+[[modules]]
+id = "pops_pacing"
+name = "Online service pacing"
+description = "Simulation: at the fastest speed, runs the game's Paradox online-service callbacks every 500 ms instead of twice a frame. With nothing to deliver, each run makes the main thread sleep 1 ms. Multiplayer keeps the game's rate. Verify runs them as the game does and counts what would be left out."
+affects_gameplay = false
+
+[[modules]]
+id = "never_throttle"
+name = "Full speed while minimized"
+description = "Simulation: while a single-player game runs at speed 5, the game skips its own waits of up to 100 ms a frame, which it makes while the window is minimized. A minimized year then takes about 40-60% less time; with the window visible nothing changes. Uses more processor time per second while minimized at speed 5. Pauses, menus, other speeds and multiplayer keep the game's waits."
+affects_gameplay = false
+default = false
+
+[[modules]]
+id = "modifier_merge"
+name = "Modifier merge index"
+description = "Simulation: adds large modifier lists (each country's modifiers to every unit's in the monthly update) with an index instead of a scan per entry, so a year at speed 5 passes about 5% sooner; the same entries, order and values. Verify runs the game's merge and compares."
+affects_gameplay = false
+
+[[modules]]
+id = "port_table"
+name = "Port table"
+description = "Simulation: rebuilds a country's table of the nearest port from one list of its ports instead of walking its provinces and relations again for every province of the map; the same table. Verify runs the game's function and compares."
+affects_gameplay = false
+
+[[modules]]
+id = "province_modifier_view"
+name = "Province modifier view"
+description = "Simulation: reads one value from a province's modifiers in place instead of copying the whole list first (in the daily country update and the AI); the same value. Verify runs the game's copy and compares."
+affects_gameplay = false
+
+[[modules]]
+id = "army_search_memo"
+name = "AI army search memo"
+description = "Simulation: in the AI's daily search for each army, in a path search and when a unit's moves from a province are listed, works out once whether the army ignores forts' zones of control and what its speed modifier is, instead of for every move; the same answers. Verify runs the game's check every time and compares."
+affects_gameplay = false
+
+[[modules]]
+id = "save_compress"
+name = "Save compression"
+description = "Saving: compressed saves (compress_autosave and the like) without the game's byte-at-a-time CRC-32; the file is byte for byte the game's. Verify runs the game's own compression as well, writes its result and compares the two."
+affects_gameplay = false
+
+[[modules]]
+id = "transfer_skip"
+name = "Skip transfer compression"
+description = "Loading in single player: does not compress a text save for a multiplayer transfer that nobody receives; the game loads the same file as before. Hosted multiplayer is left as it is. Verify keeps the game's copy and checks that nothing reads it."
+affects_gameplay = false
+
+[[modules]]
+id = "history_add"
+name = "Dated lists while loading"
+description = "Loading: adds an entry the game just read to a dated list without first walking the whole list to see whether that new entry is in it. The list comes out the same. Verify lets the game walk and compares."
+affects_gameplay = false
+
+[[modules]]
+id = "checksum_defer"
+name = "Checksum after the databases"
+description = "Loading: the game's checksum task starts reading files only once the databases are loaded, so it no longer competes with them for the file system lock. Same files, order and checksum shown in the menu; about 1 s off the start of a big mod set such as Anbennar, nothing measurable on the base game. Verify only logs the task's times."
+affects_gameplay = false
+default = false

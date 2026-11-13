@@ -6,7 +6,7 @@ Bellows makes EU4 reach the main menu much sooner and lets the years pass more t
 
 ![](https://anvil.happydwarf.dev/workshop/bellows-steps.png)
 
-Get Anvil Manager from [anvil.happydwarf.dev](https://anvil.happydwarf.dev/). Bellows needs Anvil 1.7 or newer (take the latest) and EU4 1.37.5 (Steam; GOG's 1.37.5.2 and 1.37.5.0 too, see the FAQ). If Windows warns about Anvil Manager, choose **More info**, then **Run anyway**. On any other version Bellows politely stays out of the way.
+Get Anvil Manager from [anvil.happydwarf.dev](https://anvil.happydwarf.dev/). Bellows needs Anvil 1.22 or newer (take the latest) and EU4 1.37.5 (Steam; GOG's 1.37.5.2 and 1.37.5.0 too, see the FAQ). If Windows warns about Anvil Manager, choose **More info**, then **Run anyway**. On any other version Bellows politely stays out of the way.
 
 ![](https://anvil.happydwarf.dev/workshop/bellows-tiles-title.png)
 
@@ -34,10 +34,10 @@ It hasn't in our tests. It changes how fast the game starts and runs, not its ru
 Sometimes. If you load the same save twice, the AI can make a different choice the second time, and from there the two games go their own ways. That happens without Bellows too, just less often: when the AI weighs two equally good options, a tiny difference in timing can tip it either way. The rules stay the same, and both are normal games. In multiplayer the host's AI decides for everyone, so all players get the same choices; in our tests with Bellows on the host, the game stayed in sync for about 200 game days.
 
 ### Can it go faster while the game is minimized?
-Yes, with **Full speed while minimized** in Bellows' **Simulation** settings, off by default. A minimized game normally waits a tenth of a second every frame; with the setting on, a single-player game at speed 5 skips that wait. On our test machine a minimized year took about 60% less time without mods and about 40% less with Anbennar, and the game used more processor time meanwhile. With the window in front nothing changes, and in multiplayer the setting does nothing.
+Yes, with the **Full speed while minimized** module, off by default: turn it on under Bellows in Anvil Manager's **Plugins** tab. A minimized game normally waits a tenth of a second every frame; with the setting on, a single-player game at speed 5 skips that wait. On our test machine a minimized year took about 60% less time without mods and about 40% less with Anbennar, and the game used more processor time meanwhile. With the window in front nothing changes, and in multiplayer the setting does nothing.
 
 ### Anything else that is off by default?
-**Checksum after the databases** in the **Loading** settings takes about another second off the start of a big mod set such as Anbennar, and changes nothing else. Press **Ctrl+Shift+F12**, turn it on and restart the game.
+**Checksum after the databases** takes about another second off the start of a big mod set such as Anbennar, and changes nothing else. Turn the module on under Bellows in Anvil Manager's **Plugins** tab and restart the game.
 
 ### I play on GOG. Can I use it?
 Yes, the GOG builds 1.37.5.2 and 1.37.5.0, with the latest Anvil. GOG has no Workshop: install Bellows from the **Catalog** tab in Anvil Manager or from [GitHub](https://github.com/happy-dwarf-team/bellows/releases). Same plugin, same forge, different road.
