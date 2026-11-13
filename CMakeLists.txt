@@ -68,8 +68,8 @@ sb_add_zlib(sb_zlib ${zlib_SOURCE_DIR})
 #     release changes both, on purpose, in its own pull request.
 #   - An unpacked SDK archive, or an SDK installed from a local Anvil checkout
 #     (`cmake --install <anvil build> --component sdk`): -DAnvilPlugin_DIR=<sdk>/cmake.
-set(SB_ANVIL_VERSION 1.20.0)
-set(SB_ANVIL_SDK_SHA256 4a42d527018b143051c2c0c12ea40aa8096c7b108b7f24b2fb941530e1e2b7dd)
+set(SB_ANVIL_VERSION 1.22.0)
+set(SB_ANVIL_SDK_SHA256 e13aaa6c9cac9e3dcce264773701d76f99d8291cbaadc3d8a1e9000949f5f06a)
 if(AnvilPlugin_DIR)
     find_package(AnvilPlugin REQUIRED)
 else()

@@ -570,7 +570,7 @@ cmake --install build --config Release --component plugin --prefix dist
 
 The plugin folder as Anvil loads it is `build/plugin/bellows/`. The Anvil SDK
 (the `AnvilPlugin` CMake package, its headers and `anvil.exe`) is the SDK
-archive of the Anvil release `SB_ANVIL_VERSION` in `CMakeLists.txt` (1.20.0),
+archive of the Anvil release `SB_ANVIL_VERSION` in `CMakeLists.txt` (1.22.0),
 downloaded by the first configure and checked against its SHA-256. Use an
 unpacked SDK archive, or one installed from a local Anvil checkout, with
 `-DAnvilPlugin_DIR=<sdk>/cmake`. After changing
