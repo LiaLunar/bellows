@@ -146,7 +146,13 @@ void StartupModeReturnsMemory() {
     const double collected = CommitMiB();
     std::printf("mimalloc_heap: commit after the frees %.0f MiB, after the frame-time collect %.0f MiB\n", freed,
                 collected);
-    assert(freed - collected > 150.0);
+    // Wine reports no private usage (PrivateUsage stays 0), so the size of the return cannot be measured there;
+    // the collect itself still ran (CollectMimallocIfDue above) and the checks after it still apply.
+    if (freed == 0.0 && collected == 0.0) {
+        std::printf("mimalloc_heap: skipped the size check, the process reports no private usage (Wine)\n");
+    } else {
+        assert(freed - collected > 150.0);
+    }
     assert(SB_HeapFree(kHeap, 0, last));  // a small free afterwards: no collect
     assert(!sb::CollectMimallocIfDue());
     leave = true;
